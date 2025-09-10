@@ -1,17 +1,13 @@
 import gzip
 import os
 import pysam
-import re
 import sys
+from .common import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX, STLFR_INVALID_RX
 
-INVALID_10x = "N" * 16
-INVALID_HAPLOTAGGING = "A00C00B00D00"
-INVALID_STLFR = "0_0_0"
-INVALID_TELLSEQ = "N" * 18
-stlfrINVALID = re.compile("^0_|_0_|_0$")
-HAPLOTAGGING_RX = re.compile(r'\s?BX:Z:(A[0-9]{2}C[0-9]{2}B[0-9]{2}D[0-9]{2})')
-STLFR_RX = re.compile(r'#([0-9]+_[0-9]+_[0-9]+)(\s|$)')
-TELLSEQ_RX = re.compile(r':([ATCGN]+)(\s|$)')
+def print_error(text: str):
+    """Print the error text and exit with code 1"""
+    print(text)
+    sys.exit(1)
 
 def safe_read(file_path: str):
     """returns the proper file opener for reading if a file_path is gzipped"""
@@ -23,14 +19,14 @@ def safe_read(file_path: str):
         return open(file_path, 'r')
 
 
-def which_linkedread(fastq: str) -> str:
+def which_linkedread(fastq: str, n: int = 100) -> str:
     """
     Scans the first 100 records of a FASTQ file and tries to determine the barcode technology
     Returns one of: "haplotagging", "stlfr", "tellseq", or "none"
     """
     with pysam.FastxFile(fastq, persist=False) as fq:
         for i,record in enumerate(fq, 1):
-            if i > 100:
+            if i > n:
                 break
             if record.comment and HAPLOTAGGING_RX.search(record.comment):
                 return "haplotagging"
@@ -44,11 +40,11 @@ class FQRecord():
     def __init__(self, pysamfq, FORWARD: bool, bc: str, length: int):
         """Initialize a FASTQ record. FORWARD denotes if it's a forward read, bc is the barcode type, length is the length"""
         self.forward = FORWARD
-        fr = "1:N:" if self.forward else "2:N:"
+        fr = 1 if self.forward else 2
         comments = pysamfq.comment.strip().split()
         designation = [i for i in comments if i.startswith(fr)]
-        self.illumina_new = designation[0] if designation else f"{fr}0:CAGATC"
-        self.illumina_old = "/1" if self.forward else "/2"
+        self.illumina_new = designation[0] if designation else f"{fr}:N:0:CAGATC"
+        self.illumina_old = f"/{fr}"
         self.id = pysamfq.name.rstrip(self.illumina_old)
         self.comment = "\t".join(i for i in comments if not i.startswith(fr))
         self.seq = pysamfq.sequence
@@ -60,13 +56,13 @@ class FQRecord():
             if self.id.endswith("#"):
                 # is invalid
                 self.id = self.id.rstrip("#")
-                self.barcode = INVALID_STLFR
+                self.barcode = "0_0_0"
                 self.valid = False
             else:
                 _id = pysamfq.name.split("#")
                 self.barcode = _id.pop(-1)
                 self.id = "#".join(_id)
-                self.valid = not bool(stlfrINVALID.search(self.barcode))
+                self.valid = not bool(STLFR_INVALID_RX.search(self.barcode))
         elif bc == "10x":
             # identify the first N bases and remove it from the seq and qual of R1
             if self.forward:
@@ -78,7 +74,7 @@ class FQRecord():
             if self.id.endswith(":"):
                 # is invalid
                 self.id = self.id.rstrip(":")
-                self.barcode = INVALID_TELLSEQ
+                self.barcode = "N" * 18
                 self.valid = False
             else:
                 _id = pysamfq.name.split(":")
@@ -90,7 +86,7 @@ class FQRecord():
             bc = [i for i in self.comment.split() if i.startswith("BX:Z")]
             if len(bc) < 1:
                 # is invalid
-                self.barcode = INVALID_HAPLOTAGGING
+                self.barcode = "A00C00B00D00"
             else:
                 self.barcode = bc.pop().removeprefix("BX:Z:")
             self.comment = "\t".join(i for i in self.comment.split() if not i.startswith("BX:Z"))
