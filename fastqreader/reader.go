@@ -4,9 +4,7 @@ package fastqreader
 
 import (
 	"bufio"
-	"io"
 	"log"
-	"regexp"
 	"strings"
 )
 
@@ -21,29 +19,6 @@ type FastQRecord struct {
 	Barcode   []byte
 	Valid     bool
 	Header    string
-}
-
-/*
-* A utility function to compare two slices
- */
-func SliceCompare(a []byte, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-
-}
-
-func Min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
 }
 
 /*
@@ -82,50 +57,53 @@ func OpenFastQ(R1 string, R2 string) (*FastQReader, error) {
 	return res, nil
 }
 
-//func readUntilWhitespace(b string) string {
-//	idx := strings.IndexFunc(b, unicode.IsSpace)
-//	if idx == -1 {
-//		return b // No whitespace found, return entire slice
-//	}
-//	return b[:idx]
-//}
-
 /* Parse a read header and find the barcode. Return the sanitized header, barcode, and 1/0 whether it's valid or not */
-func ParseHeader(seq_id string) (string, []byte, bool) {
+func ParseHeader(seq_id, lrType string) (string, []byte, bool) {
 	var _barcode []byte
 	var _valid bool
+	var bxMatches []string
+	var vxMatches []string
 
 	// stringify the input
 	// get the first part before the whitespaces
 	_id := strings.Fields(seq_id)[0]
 	_header := _id[:len(_id)-2]
 
-	// regex match BX:Z:*
-	bxRe := regexp.MustCompile(`BX:Z:(\S+)\s`)
-	bxMatches := bxRe.FindStringSubmatch(seq_id)
-	if len(bxMatches) > 1 {
-		_barcode = []byte(bxMatches[1])
+	// find the barcode based on the type
+	if lrType == "standard" {
+		bxMatches = standardRe.FindStringSubmatch(seq_id)
+	} else if lrType == "haplotagging" {
+		bxMatches = haplotaggingRe.FindStringSubmatch(seq_id)
+	} else if lrType == "stlfr" {
+		bxMatches = stlfrRe.FindStringSubmatch(_id)
 	} else {
+		bxMatches = tellseqRe.FindStringSubmatch(_id)
+	}
+
+	if len(bxMatches) <= 1 {
 		return "", []byte(""), false
 	}
-	// regex match VX:i:[01]
-	vxRe := regexp.MustCompile(`VX:i:([01])\s`)
-	vxMatches := vxRe.FindStringSubmatch(seq_id)
-	if len(vxMatches) > 1 {
-		if vxMatches[1] == "0" {
+	barcode := bxMatches[1]
+
+	// barcode exists so we need to find if it's valid or not
+	if lrType == "standard" {
+		_valid = strings.Contains(seq_id, "VX:i:1")
+	} else {
+		vxMatches = invalidRe.FindStringSubmatch(barcode)
+		if len(vxMatches) > 1 {
 			_valid = false
 		} else {
 			_valid = true
 		}
 	}
+
+	_barcode = []byte(barcode)
+
 	return _header, _barcode, _valid
 }
 
-/*
-- Read a single record from a fastQ file
-*/
-func (fqr *FastQReader) ReadOneLine(result *FastQRecord) error {
-
+// Read a single record from a fastQ file
+func (fqr *FastQReader) ReadOneLine(result *FastQRecord, lrType string) error {
 	/* Search for the next start-of-record.*/
 	for {
 		fqr.Line++
@@ -139,7 +117,7 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord) error {
 		}
 		if R1_line[0] == byte('@') {
 			/* Found it! */
-			result.Header, result.Barcode, result.Valid = ParseHeader(string(R1_line[1:]))
+			result.Header, result.Barcode, result.Valid = ParseHeader(string(R1_line[1:]), lrType)
 			break
 		} else {
 			log.Printf("Bad line in R1: %v at %v", string(R1_line), fqr.Line)
@@ -178,103 +156,59 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord) error {
 	return nil
 }
 
-/*
- * Decide of two reads come from different barcodes
- */
-func DifferentBarcode(a []byte, b []byte) bool {
-	if SliceCompare(a, b) {
-		return false
-	} else {
-		return true
+// Read a single record from a fastQ file, intended for inferring the linked-read barcode type
+func (fqr *FastQReader) InferReadType() (string, error) {
+	var barcode_type string
+
+	/* Search for the next start-of-record.*/
+	for {
+		fqr.Line++
+		R1_line, err := fqr.R1Buffer.ReadString(byte('\n'))
+		if err != nil {
+			return "unknown", err
+		}
+		R2_line, err := fqr.R2Buffer.ReadString(byte('\n'))
+		if err != nil {
+			return "unknown", err
+		}
+		if R1_line[0] == byte('@') {
+			/* Found it! */
+			barcode_type = findBC(R1_line)
+			break
+		} else {
+			log.Printf("Bad line in R1: %v at %v", string(R1_line), fqr.Line)
+			log.Printf("Bad line in R2: %v at %v", string(R2_line), fqr.Line)
+		}
 	}
+	return barcode_type, nil
 }
 
-/*
- * Reaturn an array of all of the reads with the same barcode.
- * "space" may be null or may be the result of a previous call to this function.
- * If present the array will be destructively re-used
- */
-func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, error, bool) {
-	new_barcode := false
-	if fqr.DefferedError != nil {
-		return nil, fqr.DefferedError, false
+func findBC(seq_id string) string {
+	var bxMatches []string
+	var _id string
+
+	// stringify the input
+	// get the first part before the whitespaces
+	_id = strings.Fields(seq_id)[0]
+
+	// find the barcode based on the type
+	// standard
+	bxMatches = standardRe.FindStringSubmatch(seq_id)
+	if len(bxMatches) > 1 {
+		return "standard"
 	}
-	var record_array []FastQRecord
-	if space == nil {
-		/* Allocate some space, guessing at most 1 million reads per
-		 * barcode. GO will transparently extend this array if needed
-		 */
-		record_array = make([]FastQRecord, 0, 1000000)
-	} else {
-		/* Re-use (but truncate) space */
-		record_array = (*space)[0:0]
+	bxMatches = haplotaggingRe.FindStringSubmatch(seq_id)
+	if len(bxMatches) > 1 {
+		return "haplotagging"
 	}
-
-	var index = 0
-
-	/* Is there a pending element from a previous call that needs to be
-	 * put in the output?
-	 */
-	if fqr.Pending != nil {
-		record_array = append(record_array, *fqr.Pending)
-		fqr.Pending = nil
-		index++
+	bxMatches = stlfrRe.FindStringSubmatch(_id)
+	if len(bxMatches) > 1 {
+		return "stlfr"
 	}
-
-	/* Load fastQ records into record_array */
-	for ; index < 30000; index++ {
-		record_array = append(record_array, FastQRecord{})
-		err := fqr.ReadOneLine(&record_array[index])
-
-		if err != nil {
-			/* Something went wrong. If we have data, return it and
-			 * defer the error to the next invocation. Otherwise,
-			 * return the error now.
-			 */
-			if err != io.EOF {
-				log.Printf("Error: %v", err)
-			}
-
-			if index == 0 {
-				return nil, err, false
-			} else {
-				fqr.DefferedError = err
-				break
-			}
-		}
-
-		if DifferentBarcode(record_array[0].Barcode, record_array[index].Barcode) {
-			/* Just transitioned to a new barcode. This record needs to
-			 * be defered for next time we're called (since its on the
-			 * _new_ barcode).
-			 */
-			fqr.Pending = new(FastQRecord)
-			*fqr.Pending = record_array[index]
-			new_barcode = true
-			break
-		} else if fqr.LastBarcode != nil && !DifferentBarcode(record_array[0].Barcode, fqr.LastBarcode) && index >= 200 {
-			new_barcode = false
-			log.Printf("abnormal break: %s", string(record_array[0].Barcode))
-			break
-		}
-
+	bxMatches = tellseqRe.FindStringSubmatch(_id)
+	if len(bxMatches) > 1 {
+		return "tellseq"
 	}
-	if len(record_array) > 0 {
-		tmp := make([]byte, len(record_array[0].Barcode))
-		copy(tmp, record_array[0].Barcode)
-		fqr.LastBarcode = tmp
-	}
-	//log.Printf("Load %v record %s %s %s %s", index, string(record_array[0].Barcode), string(record_array[index].Barcode), string(record_array[0].Barcode), string(record_array[index].Barcode))
-	/* Truncate the last record of the array. It is either eroneous and ill defined
-	 * or it belongs to the next GEM.
-	 */
-
-	end := len(record_array)
-	if new_barcode || fqr.DefferedError == io.EOF {
-		end -= 1
-	} else if fqr.DefferedError != io.EOF {
-		return record_array[0:end], nil, false
-	}
-	return record_array[0:end], nil, true
+	return "unknown"
 
 }

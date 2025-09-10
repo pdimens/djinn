@@ -1,94 +1,121 @@
 package fastqreader
 
 import (
+	"iter"
 	"log"
+	"math/rand"
 	"regexp"
 )
 
-var bxRe = regexp.MustCompile(`BX:Z:(\S+)\s`)
+var standardRe = regexp.MustCompile(`BX:Z:(\S+)\s`)
 var vxRe = regexp.MustCompile(`VX:i:([01])\s`)
-
+var invalidRe = regexp.MustCompile(`^0_|_0_|_0$|00|N`)
 var haplotaggingRe = regexp.MustCompile(`BX:Z:(A\d{2}C\d{2}B\d{2}D\d{2})\s`)
-
 var stlfrRe = regexp.MustCompile(`#([0-9]+_[0-9]+_[0-9]+)\s`)
-var stlfrInvalidRe = regexp.MustCompile(`^0_|_0_|_0$`)
-
 var tellseqRe = regexp.MustCompile(`:([ATCGN]+)\s`)
-
-/*Return true if the fastq record is in Standard format*/
-func isStandardized(seq_id string) bool {
-	// regex match BX:Z:*
-	bxMatches := bxRe.FindStringSubmatch(seq_id)
-	if len(bxMatches) <= 1 {
-		return false
-	}
-	// regex match VX:i:[01]
-	vxMatches := vxRe.FindStringSubmatch(seq_id)
-	if len(vxMatches) > 1 {
-		return true
-	} else {
-		return false
-	}
-}
-
-/*Return true if the fastq record is in haplotagging format*/
-func isHaplotagging(seq_id string) bool {
-	// regex match BX:Z:AxxCxxBxxDxx
-	bxMatches := haplotaggingRe.FindStringSubmatch(seq_id)
-	if len(bxMatches) > 1 {
-		return true
-	}
-	return false
-}
-
-/*Return true if the fastq record is in stlfr format*/
-func isStlfr(seq_id string) bool {
-	// regex match #1_2_3
-	bxMatches := stlfrRe.FindStringSubmatch(seq_id)
-	if len(bxMatches) > 1 {
-		return true
-	}
-	return false
-}
-
-/*Return true if the fastq record is in stlfr format*/
-func isTellseq(seq_id string) bool {
-	// regex match :ATCGN
-	bxMatches := tellseqRe.FindStringSubmatch(seq_id)
-	if len(bxMatches) > 1 {
-		return true
-	}
-	return false
-}
 
 /*
 Parse through the first 200 records of a paired-end fastq and figure out what kind of
 format it's in. Returns early if a format is detected.
 */
-func FindFastqFormat(r1, r2 string) (string, error) {
-	var record FastQRecord
+func FindFastqFormat(r1, r2 string) string {
 	var err error
+	var barcode_type string = "unknown"
+
 	fqr, err := OpenFastQ(r1, r2)
 
 	if err != nil {
-		return "", err
+		log.Fatal(err)
 	}
 
 	for range 200 {
-		err := fqr.ReadOneLine(&record)
+		barcode_type, err = fqr.InferReadType()
 		if err != nil {
-			return "", err
+			log.Fatal("Error processing the input FASTQ files.")
 		}
-		if isStandardized(record.Header) {
-			return "standard", nil
-		} else if isHaplotagging(record.Header) {
-			return "haplotagging", nil
-		} else if isStlfr(record.Header) {
-			return "stlfr", nil
-		} else if isTellseq(record.Header) {
-			return "tellseq", nil
+		if barcode_type != "unknown" {
+			return barcode_type
 		}
 	}
 	log.Fatal("Unable to identify the input FASTQ files as one of haplotagging, stLFR, or TELLseq. Unable to proceed.")
-	return "unknown", nil
+	return "unknown"
+}
+
+// Product generates the Cartesian product of input slices
+func product[T any](inputs ...[]T) iter.Seq[[]T] {
+	return func(yield func([]T) bool) {
+		if len(inputs) == 0 {
+			return
+		}
+
+		// Check if any input is empty
+		for _, input := range inputs {
+			if len(input) == 0 {
+				return
+			}
+		}
+
+		indices := make([]int, len(inputs))
+		result := make([]T, len(inputs))
+
+		for {
+			// Build current combination
+			for i, idx := range indices {
+				result[i] = inputs[i][idx]
+			}
+
+			// Yield current combination
+			if !yield(result) {
+				return
+			}
+
+			// Generate next indices (like odometer)
+			carry := 1
+			for i := len(indices) - 1; i >= 0 && carry > 0; i-- {
+				indices[i] += carry
+				if indices[i] >= len(inputs[i]) {
+					indices[i] = 0
+					carry = 1
+				} else {
+					carry = 0
+				}
+			}
+
+			// If we've cycled through all combinations
+			if carry > 0 {
+				break
+			}
+		}
+	}
+}
+
+// Create a slice of N repetitions of value V
+func sliceRepeat[T []string](N int, V T) []T {
+	retval := make([]T, 0, N)
+	for range N {
+		Vshuff := V
+		for i := len(Vshuff) - 1; i > 0; i-- {
+			j := rand.Intn(i + 1)
+			Vshuff[i], Vshuff[j] = Vshuff[j], Vshuff[i]
+		}
+		retval = append(retval, Vshuff)
+	}
+	return retval
+}
+
+// StringProduct is a convenience function for string combinations
+func BarcodeGenerator() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		bases := []string{"A", "T", "C", "G"}
+		inputs := sliceRepeat(20, bases)
+		for combo := range product(inputs...) {
+			result := ""
+			for _, s := range combo {
+				result += s
+			}
+			if !yield(result) {
+				return
+			}
+		}
+	}
 }
