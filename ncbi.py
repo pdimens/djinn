@@ -9,6 +9,20 @@ BC_QUAL = "I"*20
 SPACER_NUC = "N"*10
 SPACER_QUAL = "!"*10
 
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
+@click.argument('r1_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
+@click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
+def ncbibam(r1_fq, r2_fq):
+    """
+    Convert FASTQ files to BAM for NCBI submission
+
+    The input FASTQ files must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
+    you run the risk of NCBI removing any barcode information stored in the sequence header.
+    Writes to `stdout`.
+    """
+    sys.exec(f'samtools import -O BAM -T "*" {r1_fq} {r2_fq}')
+
+
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
 @click.option('-m', '--barcode-map',  is_flag = True, default = False, help = 'Write a map of the barcode-to-nucleotide conversion')
 @click.option('-p', '--prefix', required=True, type = str, help = "Output file name prefix")
