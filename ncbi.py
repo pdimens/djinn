@@ -12,9 +12,9 @@ SPACER_QUAL = "!"*10
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
 @click.argument('r1_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 @click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
-def ncbibam(r1_fq, r2_fq):
+def ncbi(r1_fq, r2_fq):
     """
-    Convert FASTQ files to BAM for NCBI submission
+    Convert FASTQ files to unaligned BAM for NCBI
 
     The input FASTQ files must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
     you run the risk of NCBI removing any barcode information stored in the sequence header.
@@ -30,7 +30,7 @@ def ncbibam(r1_fq, r2_fq):
 @click.option('-s', '--scan', show_default = True, default = 100, type = click.IntRange(min=1), help = 'Number of reads to scan to identify barcode location and format')
 @click.argument('r1_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 @click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
-def ncbi(prefix, r1_fq, r2_fq, scan, preserve_invalid, barcode_map):
+def ncbi_fastq(prefix, r1_fq, r2_fq, scan, preserve_invalid, barcode_map):
     """
     Convert FASTQ files for NCBI submission
 
