@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools"
+
+[project]
+name = "djinn"
+version = "0.0.0"
+authors = [{name = "Pavel Dimens"}]
+description = "Convert your linked-read data between formats, almost like magic."
+requires-python = ">=3.11"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "GPL-3.0-or-later"
+dependencies = [
+    'click>8.0',
+    'rich-click>=1.8',
+    'pysam>=0.23'
+]
+
+[project.scripts]
+djinn = "djinn.__main__:cli"
+
+[project.urls]
+Homepage = "https://github.com/pdimens/harpy"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["test/*", ".deprecated/*", "resources/*", ".github/*"]
+
