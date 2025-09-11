@@ -1,9 +1,10 @@
 import pysam
 import rich_click as click
 import subprocess
+import os
 import sys
-from .utils import print_error, which_linkedread
-from .common import generic_parser, _ncbi
+from djinn.utils import print_error, which_linkedread
+from djinn.common import generic_parser, _ncbi
 
 BC_QUAL = "I"*20
 SPACER_NUC = "N"*10
@@ -14,13 +15,13 @@ SPACER_QUAL = "!"*10
 @click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 def ncbi(r1_fq, r2_fq):
     """
-    Convert FASTQ files to unaligned BAM for NCBI
+    Convert FASTQ files to BAM for NCBI
 
     The input FASTQ files must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
     you run the risk of NCBI removing any barcode information stored in the sequence header.
     Writes to `stdout`.
     """
-    sys.exec(f'samtools import -O BAM -T "*" {r1_fq} {r2_fq}')
+    os.system(f'samtools import -O BAM -T "*" -1 {r1_fq} -2 {r2_fq}')
 
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")

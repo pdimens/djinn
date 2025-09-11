@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=80"]
-build-backend = "setuptools"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "djinn"
@@ -20,7 +20,7 @@ dependencies = [
 djinn = "djinn.__main__:cli"
 
 [project.urls]
-Homepage = "https://github.com/pdimens/harpy"
+Homepage = "https://github.com/pdimens/djinn"
 
 [tool.setuptools.packages.find]
 where = ["."]

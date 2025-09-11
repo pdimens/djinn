@@ -2,15 +2,15 @@ import os
 import pysam
 import sys
 import rich_click as click
-from .common import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, TELLSEQ_HAPLOTAGGING_INVALID_RX
-from .utils import print_error
+from djinn.common import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, TELLSEQ_HAPLOTAGGING_INVALID_RX
+from djinn.utils import print_error
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('sam', metavar="BAM", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 def standardize_bam(sam, style):
     """
-    Move barcode to BX:Z/VX:i tags in alignments
+    Move barcodes to BX:Z/VX:i alignment tags
 
     If barcodes are present in the sequence name (stlfr, tellseq), this method moves the barcode to the `BX:Z`
     tag of the alignment, maintaining the same barcode style by default. If moved to or already in a `BX:Z` tag,

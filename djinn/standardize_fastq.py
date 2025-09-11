@@ -4,8 +4,8 @@ from itertools import zip_longest
 import os
 import rich_click as click
 import pysam
-from .utils import compress_fq, FQRecord, print_error, which_linkedread
-from .common import haplotagging, tellseq, stlfr, tenx
+from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
+from djinn.common import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
@@ -14,7 +14,7 @@ from .common import haplotagging, tellseq, stlfr, tenx
 @click.argument('r2_fastq', metavar="R2_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 def standardize_fastq(prefix, r1_fastq, r2_fastq, style):
     """
-    Move barcodes to BX:Z/VX:i tags in sequence headers
+    Move barcodes to BX:Z/VX:i header tags
 
     This conversion moves the barcode to the `BX:Z` tag in fastq records, maintaining the same barcode type by default (auto-detected).
     See `harpy convert fastq` for the location and format expectations for different linked-read technologies.
@@ -91,7 +91,7 @@ def standardize_fastq(prefix, r1_fastq, r2_fastq, style):
                 R2_out.write(str(_r2.convert("standard", _r2.barcode)))
     if convert:
         bc_out.close()
-        # bgzip compress the output, one file per thread
+    # bgzip compress the output, one file per thread
     with ThreadPoolExecutor(max_workers=2) as executor:
         executor.submit(compress_fq, f"{prefix}.R1.fq")
         executor.submit(compress_fq, f"{prefix}.R2.fq")

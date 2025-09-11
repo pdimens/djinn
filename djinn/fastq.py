@@ -3,8 +3,8 @@ from itertools import zip_longest
 import os
 import pysam
 import rich_click as click
-from .utils import compress_fq, FQRecord, print_error, which_linkedread
-from .common import haplotagging, tellseq, stlfr
+from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
+from djinn.common import haplotagging, tellseq, stlfr
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
 @click.option('-o','--output', type = str, metavar= "PREFIX", help='file prefix for output fastq files', required=True)
