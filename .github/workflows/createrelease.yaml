@@ -1,3 +1,11 @@
+name: Release Versioned Tarball
+
+on:
+  push:
+    tags:
+    - '*' # Push events of any tag created
+
+jobs:
   build_tarball:
     name: Upload Release Tarball
     runs-on: ubuntu-latest
