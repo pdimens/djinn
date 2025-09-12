@@ -39,7 +39,7 @@ def std_bam(sam, style):
             BX = haplotagging()
 
     with (
-        pysam.AlignmentFile(sam, require_index=False) as samfile, 
+        pysam.AlignmentFile(sam, require_index=False, check_sq=False) as samfile, 
         pysam.AlignmentFile(sys.stdout, "wb", template=samfile) as outfile,
     ):
         for record in samfile.fetch(until_eof=True):
