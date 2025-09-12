@@ -2,6 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest
 import os
+import sys
 import rich_click as click
 import pysam
 from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
@@ -29,7 +30,6 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
-    convert = None
     BC_TYPE = which_linkedread(r1_fastq)
     if not BC_TYPE:
         print_error(f"Error: undertermined file type\nUnable to determine the linked-read barcode type after scanning the first 100 records of {os.path.basename(r1_fastq)}. Please make sure the format is one of haplotagging, stlfr, or tellseq. 10X-style with the barcode as the first 16 nucleotides of read 1 is not supported here.")
@@ -40,12 +40,12 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
 
     if style:
         bc_out = open(f"{prefix}.bc", "w")
-        convert = style.lower()
-        if convert == "tellseq":
+        style = style.lower()
+        if style == "tellseq":
             BX = tellseq()
-        if convert == "10x":
+        elif style == "10x":
             BX = tenx()
-        elif convert == "stlfr":
+        elif style == "stlfr":
             BX = stlfr()
         else:
             BX = haplotagging()
@@ -59,13 +59,13 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, BC_TYPE, 0)
-                if convert:
+                if style:
                     if _r1.barcode not in BX.inventory:
                         if _r1.valid:
                             try:
                                 BX.inventory[_r1.barcode] = BX.next()
                             except StopIteration:
-                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {convert} barcodes from.")
+                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
                         else:
                             BX.inventory[_r1.barcode] = BX.invalid
                         # write the barcode to file
@@ -75,13 +75,13 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                 R1_out.write(str(_r1.convert("standard", _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, BC_TYPE, 0)
-                if convert:
+                if style:
                     if _r2.barcode not in BX.inventory:
                         if _r2.valid:
                             try:
                                 BX.inventory[_r2.barcode] = BX.next()
                             except StopIteration:
-                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {convert} barcodes from.")
+                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
                         else:
                             BX.inventory[_r2.barcode] = BX.invalid
                         # write the barcode to file
@@ -89,7 +89,7 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                     # overwrite the record's barcode
                     _r2.barcode = BX.inventory[_r2.barcode]
                 R2_out.write(str(_r2.convert("standard", _r2.barcode)))
-    if convert:
+    if style:
         bc_out.close()
     # bgzip compress the output, one file per thread
     with ThreadPoolExecutor(max_workers=2) as executor:
