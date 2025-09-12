@@ -9,7 +9,7 @@ BC_QUAL = "I"*20
 SPACER_NUC = "N"*10
 SPACER_QUAL = "!"*10
 
-@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('r1_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 @click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 def to_ncbi(r1_fq, r2_fq):
@@ -28,7 +28,7 @@ def to_ncbi(r1_fq, r2_fq):
     if fq.returncode == 1:
         print(f"Error: samtools failure\nSamtools was unable to process your input files. See the error log from samtools import:\n\033[33m{fq.stderr}\033[0m")
 
-@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('prefix', required=True, type = str, nargs=1)
 @click.argument('bam', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 def from_ncbi(prefix, bam):
@@ -45,7 +45,7 @@ def from_ncbi(prefix, bam):
     if fq.returncode == 1:
         print(f"Error: samtools failure\nSamtools was unable to process your input file. See the error log from samtools fastq:\n\033[33m{fq.stderr}\033[0m")
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "https://pdimens.github.io/djinn/ncbi/")
 @click.option('-m', '--barcode-map',  is_flag = True, default = False, help = 'Write a map of the barcode-to-nucleotide conversion')
 @click.option('-p', '--prefix', required=True, type = str, help = "Output file name prefix")
 @click.option('-i', '--preserve-invalid',  is_flag = True, default = False, help = 'Retain the uniqueness of invalid barcodes')

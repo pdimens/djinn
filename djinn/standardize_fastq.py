@@ -8,7 +8,7 @@ import pysam
 from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
 from djinn.common import haplotagging, tellseq, stlfr, tenx
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
 @click.argument('r1_fastq', metavar="R1_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)

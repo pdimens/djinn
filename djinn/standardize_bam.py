@@ -5,7 +5,7 @@ import rich_click as click
 from djinn.common import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, TELLSEQ_HAPLOTAGGING_INVALID_RX
 from djinn.utils import print_error
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#bam")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('sam', metavar="BAM", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 def std_bam(sam, style):
