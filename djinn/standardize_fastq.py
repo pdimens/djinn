@@ -12,9 +12,9 @@ from djinn.common import haplotagging, tellseq, stlfr, tenx
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
 @click.argument('r1_fastq', metavar="R1_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('r2_fastq', metavar="R2_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
-def standardize_fastq(prefix, r1_fastq, r2_fastq, style):
+def std_fastq(prefix, r1_fastq, r2_fastq, style):
     """
-    Move barcodes to BX:Z/VX:i header tags
+    Move barcodes to `BX`/`VX` sequence header tags
 
     This conversion moves the barcode to the `BX:Z` tag in fastq records, maintaining the same barcode type by default (auto-detected).
     See `harpy convert fastq` for the location and format expectations for different linked-read technologies.

@@ -1,0 +1,84 @@
+name: Test Djinn
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CACHE_NUMBER: 0  # increase to reset cache manually
+
+jobs:
+  Tests:
+    name: "Tests"
+    runs-on: ubuntu-latest
+    steps:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Mamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          init-shell: bash
+          generate-run-shell: true
+          environment-file: resources/djinn.yaml
+          cache-environment: true
+          post-cleanup: 'all'
+      - name: Install Djinn
+        id: djinnbuild
+        shell: micromamba-shell {0}
+        run: |
+          python3 -m pip install --upgrade build && python3 -m build && \
+          pip install --no-deps dist/*.whl
+
+      - name: fastq-stlfr
+        shell: micromamba-shell {0}
+        run: |
+          djinn fastq -o result stlfr test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+      - name: fastq-tellseq
+        shell: micromamba-shell {0}
+        run: |
+          djinn fastq -o result tellseq test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+      - name: fastq-10x
+        shell: micromamba-shell {0}
+        run: |
+          djinn fastq -o result 10x test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+
+      - name: to-ncbi
+        shell: micromamba-shell {0}
+        run: |
+          djinn to-ncbi test/*.gz > result.bam &&
+          samtools view result.bam
+      - name: from-ncbi
+        shell: micromamba-shell {0}
+        run: |
+          djinn from-ncbi -o result test/test.bam &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+
+      - name: std-bam
+        shell: micromamba-shell {0}
+        run: |
+          djinn std-bam -s stlfr test/test.bam > result.bam &&\
+          samtools view result.bam
+      - name: std-fastq
+        shell: micromamba-shell {0}
+        run: |
+          djinn std-fastq -s tellseq result test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz

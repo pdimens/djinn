@@ -2,10 +2,10 @@
 
 import rich_click as click
 
-from djinn.ncbi import ncbi
+from djinn.ncbi import from_ncbi, to_ncbi
 from djinn.fastq import fastq
-from djinn.standardize_bam import standardize_bam
-from djinn.standardize_fastq import standardize_fastq
+from djinn.standardize_bam import std_bam
+from djinn.standardize_fastq import std_fastq
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = False
@@ -18,21 +18,27 @@ click.rich_click.COMMAND_GROUPS = {
     "djinn":
         [
             {
-                "name": "Commands",
-                "commands": ["fastq", "ncbi", "standardize-bam", "standardize-fastq"],
+                "name": "Conversion",
+                "commands": ["fastq", "from-ncbi", "to-ncbi"],
                 "panel_styles": {"border_style": "magenta"}
+            },
+            {
+                "name": "Standardization",
+                "commands": ["std-bam", "std-fastq"],
+                "panel_styles": {"border_style": "blue"}
             }
         ]
 }
 
-@click.group(options_metavar='', context_settings={"help_option_names" : ["-h", "--help"]})
-@click.version_option("0.0.0", prog_name="djinn")
+@click.group(options_metavar='', context_settings={"help_option_names" : []})
+@click.version_option("0.0.0", prog_name="djinn", hidden = True)
 def cli():
     """
     Convert between linked-read formats and barcode styles
     """
 
-cli.add_command(ncbi)
+cli.add_command(from_ncbi)
+cli.add_command(to_ncbi)
 cli.add_command(fastq)
-cli.add_command(standardize_bam)
-cli.add_command(standardize_fastq)
+cli.add_command(std_bam)
+cli.add_command(std_fastq)

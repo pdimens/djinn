@@ -13,16 +13,41 @@ SPACER_QUAL = "!"*10
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
 @click.argument('r1_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
 @click.argument('r2_fq', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
-def ncbi(r1_fq, r2_fq):
+def to_ncbi(r1_fq, r2_fq):
     """
-    Convert FASTQ files to BAM for NCBI
+    Convert FASTQ files to BAM for NCBI submission
 
     The input FASTQ files must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
     you run the risk of NCBI removing any barcode information stored in the sequence header.
-    Writes to `stdout`.
+    If the barcodes are in default tellseq/stlfr format, use `std-fastq` to move the barcode into
+    the BX tag. Writes to `stdout`.
     """
+    fq = subprocess.run(
+        f'samtools import -O BAM -T "*" -1 {r1_fq} -2 {r2_fq}'.split(),
+        stderr = subprocess.PIPE      
+    )
+    if fq.returncode == 1:
+        print(f"Error: samtools failure\nSamtools was unable to process your input files. See the error log from samtools import:\n\033[33m{fq.stderr}\033[0m")
+
+
     os.system(f'samtools import -O BAM -T "*" -1 {r1_fq} -2 {r2_fq}')
 
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
+@click.argument('prefix', required=True, type = str, nargs=1)
+@click.argument('bam', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=1)
+def from_ncbi(prefix, bam):
+    """
+    Convert BAM files from NCBI to FASTQ
+
+    This method converts the unaligned linked-read BAM files that were uploaded to NCBI. It is the
+    opposite/complement to `to-ncbi` for retrieval. 
+    """
+    fq = subprocess.run(
+        f'samtools fastq -N -c 6 -T "*" -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {bam}'.split(),
+        stderr = subprocess.PIPE      
+    )
+    if fq.returncode == 1:
+        print(f"Error: samtools failure\nSamtools was unable to process your input file. See the error log from samtools fastq:\n\033[33m{fq.stderr}\033[0m")
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
 @click.option('-m', '--barcode-map',  is_flag = True, default = False, help = 'Write a map of the barcode-to-nucleotide conversion')
