@@ -1,7 +1,6 @@
 import pysam
 import rich_click as click
 import subprocess
-import os
 import sys
 from djinn.utils import print_error, which_linkedread
 from djinn.common import generic_parser, _ncbi
@@ -28,9 +27,6 @@ def to_ncbi(r1_fq, r2_fq):
     )
     if fq.returncode == 1:
         print(f"Error: samtools failure\nSamtools was unable to process your input files. See the error log from samtools import:\n\033[33m{fq.stderr}\033[0m")
-
-
-    os.system(f'samtools import -O BAM -T "*" -1 {r1_fq} -2 {r2_fq}')
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/harpy/ncbi")
 @click.argument('prefix', required=True, type = str, nargs=1)
