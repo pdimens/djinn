@@ -1,0 +1,25 @@
+
+name: Publish Docs with Retype
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - docs
+
+jobs:
+  publish:
+    name: Publish to retype branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs
+      - uses: retypeapp/action-build@latest
+        with:
+          key: ${{ secrets.RETYPE_KEY }}
+      - uses: retypeapp/action-github-pages@latest
+        with:
+          branch: website
+          update-branch: true
