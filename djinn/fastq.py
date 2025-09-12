@@ -7,7 +7,7 @@ from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
 from djinn.common import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
-@click.option('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
+@click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('fq2', metavar="R2_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
