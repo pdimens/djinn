@@ -5,9 +5,9 @@ icon: home
 hidden: true
 ---
 
-![djinn logo](static/djinn.png)
+<img src="static/djinn.png" width="600">
 
-Convert linked-read FASTQ and BAM files
+You're here because you have linked-read data and might want to convert it between different linked-read formats. FASTQ and BAM files
 
 ## Convert files
 Djinn converts between linked-read data formats. It supports:
