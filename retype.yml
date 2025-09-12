@@ -1,0 +1,52 @@
+start:
+  pro: true
+nav:
+  mode: stack
+input: .
+output: .retype
+url: pdimens.github.io/djinn/
+meta:
+  title: " | Djinn"
+footer:
+  copyright: "&copy; Copyright {{ year }}. All rights reserved."
+showSidebarFilter: false
+theme:
+  base:
+    base-link-weight: 500
+    nav-item-text-active-weight: 700
+    image-rounded: 0.75rem
+    nav-item-text-stack: "#1e66f5"
+branding:
+  title:
+  label: v1.0
+  logo: static/djinn.png
+  logoDark: static/djinn.png
+  logoAlign: left
+favicon: static/favicon.png
+search:
+  mode: partial
+edit:
+  repo: "https://github.com/pdimens/djinn/edit"
+  base: /
+  branch: "docs"
+links:retype.yml
+- text: Therkildsen Lab
+  link: https://www.therkildsenlab.org/
+  icon: https://www.therkildsenlab.org/uploads/1/4/5/5/145548022/published/new-logo-smaller.png
+  target: blank
+- text: Cornell GIH
+  link: https://www.genomicsinnovation.cornell.edu/
+  icon: static/biotech.png
+  target: blank
+- text: Source
+  link: https://github.com/pdimens/djinn
+  icon: mark-github
+  target: blank
+- text: Submit Issue
+  link: https://github.com/pdimens/djinn/issues/new/
+  icon: bug
+  target: blank
+exclude:
+  - "src/"
+  - "test/"
+  - "djinn/"
