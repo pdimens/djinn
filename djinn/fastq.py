@@ -7,17 +7,16 @@ from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
 from djinn.common import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/convert")
-@click.option('-o','--output', type = str, metavar= "PREFIX", help='file prefix for output fastq files', required=True)
+@click.option('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('fq2', metavar="R2_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
-def fastq(target,fq1,fq2,output):
+def fastq(target,fq1,fq2,prefix):
     """
     Convert between linked-read FASTQ formats
     
     Autodetects the input data format and takes the positional argument `TARGET` specifying the target data format.
-    10X input data requires a `--barcodes` file containing one nucleotide barcode per line to
-    determine which barcodes are valid/invalid. In all cases, a file will be created with
+    10X data as input (where the barcode is in the sequence) is not supported. In all cases, a file will be created with
     the barcode conversion map. Requires 2 threads.
     
     | from/to      | barcode format                                     | example                     |
@@ -32,8 +31,6 @@ def fastq(target,fq1,fq2,output):
         print_error(f"Error: identical conversion target\nThe input file was inferred to be {from_}, which is identical to the conversion target {target}. The formats must be different from each other. If the input data is not {from_}, then it is formatted incorrectly for whatever technology it was generated with.")
     to_ = target.lower()
 
-    # for barcodes, use sample() so the barcodes don't all start with AAAAAAAAAAAAA (or 1)
-    # it's not functionally important, but it does make the barcodes *look* more distinct
     if to_ == "tellseq":
         BX = tellseq()
     elif to_ == "stlfr":
@@ -44,15 +41,15 @@ def fastq(target,fq1,fq2,output):
         BX = haplotagging()
 
     # create the output directory in case it doesn't exist
-    if os.path.dirname(output):
-        os.makedirs(os.path.dirname(output), exist_ok=True)
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
 
     with (
         pysam.FastxFile(fq1, persist=False) as R1,
         pysam.FastxFile(fq2, persist=False) as R2,
-        open(f"{output}.R1.fq", "w") as R1_out,
-        open(f"{output}.R2.fq", "w") as R2_out,
-        open(f"{output}.bc", "w") as bc_out
+        open(f"{prefix}.R1.fq", "w") as R1_out,
+        open(f"{prefix}.R2.fq", "w") as R2_out,
+        open(f"{prefix}.bc", "w") as bc_out
     ):
         for r1,r2 in zip_longest(R1,R2):
             if r1:
@@ -88,5 +85,5 @@ def fastq(target,fq1,fq2,output):
     
     # bgzip compress the output, one file per thread
     with ThreadPoolExecutor(max_workers=2) as executor:
-        executor.submit(compress_fq, f"{output}.R1.fq")
-        executor.submit(compress_fq, f"{output}.R2.fq")
+        executor.submit(compress_fq, f"{prefix}.R1.fq")
+        executor.submit(compress_fq, f"{prefix}.R2.fq")
