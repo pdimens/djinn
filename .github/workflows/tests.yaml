@@ -54,7 +54,7 @@ jobs:
       - name: fastq-10x
         shell: micromamba-shell {0}
         run: |
-          djinn fastq -o result 10x test/*.gz &&\
+          djinn fastq result 10x test/*.gz &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
 
