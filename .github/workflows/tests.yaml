@@ -42,13 +42,13 @@ jobs:
       - name: fastq-stlfr
         shell: micromamba-shell {0}
         run: |
-          djinn fastq -o result stlfr test/*.gz &&\
+          djinn fastq result stlfr test/*.gz &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
       - name: fastq-tellseq
         shell: micromamba-shell {0}
         run: |
-          djinn fastq -o result tellseq test/*.gz &&\
+          djinn fastq result tellseq test/*.gz &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
       - name: fastq-10x
