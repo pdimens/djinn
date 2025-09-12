@@ -40,7 +40,7 @@ class FQRecord():
     def __init__(self, pysamfq, FORWARD: bool, bc: str, length: int):
         """Initialize a FASTQ record. FORWARD denotes if it's a forward read, bc is the barcode type, length is the length"""
         self.forward = FORWARD
-        fr = 1 if self.forward else 2
+        fr = "1" if self.forward else "2"
         comments = pysamfq.comment.strip().split()
         designation = [i for i in comments if i.startswith(fr)]
         self.illumina_new = designation[0] if designation else f"{fr}:N:0:CAGATC"
