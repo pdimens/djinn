@@ -43,4 +43,5 @@ In all cases, a file will be created with the barcode conversion map.
 | `TARGET`          | [!badge variant="info" text="required"] target format for output FASTQ files  |
 | `FQ1`             | [!badge variant="info" text="required"] forward reads of FASTQ pair           |
 | `FQ2`             | [!badge variant="info" text="required"] reverse reads of FASTQ pair           |
+| `-b` `--barcodes` | [!badge variant="info" text="conditional"] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data  |
 
