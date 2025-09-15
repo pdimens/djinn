@@ -20,6 +20,11 @@ files into a single unaligned BAM file without any data loss (and also free up d
 `samtools` command in each direction (`samtools import` and `samtools fastq`), but as a convenience, Djinn provides a `to-ncbi`
 wrapper to accomplish this.
 
+!!! Barcode Placement
+**For this to work as intended** the barcodes should be stored in the `BX:Z` tag (or some other SAM-compliant tag e.g. `BC:Z`).
+It's possible NCBI will still strip the read name from alignment records.
+!!!
+
 ```bash losslessly convert to unaligned BAM
 djinn to-ncbi file.R1.fq file.R2.fq > out.bam
 

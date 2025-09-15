@@ -21,8 +21,19 @@ djinn data/orcs_stlfr stlfr data/orcs.R1.fq.gz data/orcs.R2.fq.gz
 ```
 
 Auto-detects the input format as one of 10X, haplotagging, TELLseq, or stLFR,
-and converts it to the format provided as the `TARGET` positional argument.
+and converts it to the format provided as the `TARGET` positional argument. If the
+input data is in 10X format, where the barcode is the first [usually] 16 bases in the R1 sequence,
+you will need to provide a `--barcode` file that lets Djinn know what barcodes to look for.
 In all cases, a file will be created with the barcode conversion map.
+
+==- example `--barcode` file
+```
+ATGGAAGCCGTAGTTA
+ACGGAAGCCGTAGTTC
+ATGGAAGAAATAGTTA
+ATGTTTGCCGTAGTTT
+```
+===
 
 ### :icon-move-to-end: Conversion targets
 
