@@ -134,3 +134,33 @@ def compress_fq(fq: str):
     except Exception as e:
         print(f"Failed to compress {fq}: {str(e)}")
         sys.exit(1)
+
+def validate_barcodefile(infile: str, limit: int = 60) -> list[str]:
+    """
+    Does validations to make sure it's one length, within a length limit, one per line, and nucleotides. Returns
+    a list of the barcodes.
+    """
+    barcodes = set()
+    lengths = set()
+    nucleotides = {'A','C','G','T'}
+    
+    def validate(line_num, bc_line):
+        barcode = bc_line.rstrip()
+        if len(barcode.split()) > 1:
+            print_error(f"Error: incorrect barcode format\nThere must be one barcode per line, but multiple entries were detected on line {line_num} in {infile}")
+        if not set(barcode).issubset(nucleotides) or barcode != barcode.upper():
+            print_error(f"Error: incorrect barcode format\nInvalid barcode format on line {line_num }: {barcode}.\nBarcodes in {infile} must be captial letters and only contain standard nucleotide characters ATCG.")
+        return len(barcode)
+    with safe_read(infile) as bc_file:
+        for line,bc in enumerate(bc_file, 1):
+            length = validate(line, bc)
+            if length > limit:
+                print_error(f"Error: barcodes too long\nBarcodes in {infile} are {length}bp and cannot exceed a length of {limit}. Please use shorter barcodes.")
+            lengths.add(length)
+            if len(lengths) > 1:
+                str_len = ", ".join(str(_length) for _length in lengths)
+                print_error(f"Error: inconsistent length\nBarcodes in {infile} must all be a single length, but multiple lengths were detected: {str_len}")
+            barcodes.add(bc)
+    if not lengths:
+        print_error(f"Error: no barcodes detecte\nNo barcodes were found in {infile}. Please check the input file.")
+    return list(barcodes)

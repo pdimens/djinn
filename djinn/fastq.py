@@ -3,15 +3,16 @@ from itertools import zip_longest
 import os
 import pysam
 import rich_click as click
-from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
+from djinn.utils import compress_fq, FQRecord, print_error, validate_barcodefile, which_linkedread
 from djinn.common import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert_fastq/")
+@click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [from 10x only]', required=False)
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('fq2', metavar="R2_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
-def fastq(target,fq1,fq2,prefix):
+def fastq(target,fq1,fq2,prefix, barcodes):
     """
     Convert between linked-read FASTQ formats
     
@@ -27,6 +28,9 @@ def fastq(target,fq1,fq2,prefix):
     | tellseq      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |
     """
     from_ = which_linkedread(fq1)
+    if from_ == "none" and not barcodes:
+        print_error("Error: no barcodes provided\nThe input file was inferred to be 10X format, which requires a list of --barcodes so Djinn knows how to identify legitimate barcodes from the sequences.")
+
     if from_ == target:
         print_error(f"Error: identical conversion target\nThe input file was inferred to be {from_}, which is identical to the conversion target {target}. The formats must be different from each other. If the input data is not {from_}, then it is formatted incorrectly for whatever technology it was generated with.")
     to_ = target.lower()
@@ -39,6 +43,11 @@ def fastq(target,fq1,fq2,prefix):
         BX = tenx()
     else:
         BX = haplotagging()
+
+    if from_ == "none":
+        from_ = "10x"
+        barcodelist = validate_barcodefile(barcodes)
+        BX.length = len(barcodelist[0])
 
     # create the output directory in case it doesn't exist
     if os.path.dirname(prefix):
@@ -55,6 +64,8 @@ def fastq(target,fq1,fq2,prefix):
             if r1:
                 _r1 = FQRecord(r1, True, from_, BX.length)
                 if _r1.barcode not in BX.inventory:
+                    if from_ == "10x":
+                        _r1.valid = _r1.barcode in barcodelist
                     if _r1.valid:
                         try:
                             BX.inventory[_r1.barcode] = BX.next()
@@ -66,9 +77,14 @@ def fastq(target,fq1,fq2,prefix):
                 converted_bc = BX.inventory[_r1.barcode]
                 R1_out.write(str(_r1.convert(to_, converted_bc)))
             if r2:
-                _bc = from_
+                if r1 and from_ == "10x":
+                    _bc = _r1.barcode
+                elif not r1 and from_ == "10x":
+                    _bc = "N" * BX.length
+                else:
+                    _bc = from_
                 # if input format is 10x, copy the barcode to R2
-                _r2 = FQRecord(r2, False, _bc, BX.length)
+                _r2 = FQRecord(r2, False, _bc, 0)
                 # check the inventory for existing barcode match
                 if _r2.barcode not in BX.inventory:
                     # if it's just tellseq<->10x, keep the existing nucleotide barcode
