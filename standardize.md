@@ -3,7 +3,7 @@ label: Standard Format
 description: Convert linked-read data to the Standard format
 category: [fastq, bam]
 tags: [fastq,bam]
-icon: arrow-switch
+icon: checklist
 order: 10
 ---
 

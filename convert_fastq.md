@@ -3,7 +3,7 @@ label: Convert FASTQ
 description: Convert between linked-read FASTQ data formats
 category: [fastq]
 tags: [fastq]
-icon: arrow-switch
+icon: git-compare
 order: 10
 ---
 
@@ -20,7 +20,7 @@ djinn fastq PREFIX TARGET FQ1 FQ2
 djinn data/orcs_stlfr stlfr data/orcs.R1.fq.gz data/orcs.R2.fq.gz
 ```
 
-Auto-detects the input format as one of haplotagging, TELLseq, or stLFR (10X is not supported as input),
+Auto-detects the input format as one of 10X, haplotagging, TELLseq, or stLFR,
 and converts it to the format provided as the `TARGET` positional argument.
 In all cases, a file will be created with the barcode conversion map.
 
