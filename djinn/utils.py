@@ -135,7 +135,7 @@ def compress_fq(fq: str):
         print(f"Failed to compress {fq}: {str(e)}")
         sys.exit(1)
 
-def validate_barcodefile(infile: str, limit: int = 60) -> list[str]:
+def validate_barcodefile(infile: str, limit: int = 60) -> set[str]:
     """
     Does validations to make sure it's one length, within a length limit, one per line, and nucleotides. Returns
     a list of the barcodes.
@@ -163,4 +163,4 @@ def validate_barcodefile(infile: str, limit: int = 60) -> list[str]:
             barcodes.add(bc)
     if not lengths:
         print_error(f"Error: no barcodes detecte\nNo barcodes were found in {infile}. Please check the input file.")
-    return list(barcodes)
+    return barcodes

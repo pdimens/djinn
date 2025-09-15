@@ -7,7 +7,7 @@ from djinn.utils import compress_fq, FQRecord, print_error, validate_barcodefile
 from djinn.common import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert_fastq/")
-@click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [from 10x only]', required=False)
+@click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
@@ -16,9 +16,9 @@ def fastq(target,fq1,fq2,prefix, barcodes):
     """
     Convert between linked-read FASTQ formats
     
-    Autodetects the input data format and takes the positional argument `TARGET` specifying the target data format.
-    10X data as input (where the barcode is in the sequence) is not supported. In all cases, a file will be created with
-    the barcode conversion map. Requires 2 threads.
+    Auto-detects the input data format and takes the positional argument `TARGET` specifying the target data format.
+    10X data as input requires a `--barcodes` file (often called a barcode whitelist) so djinn can identify the inline
+    barcodes. In all cases, a file will be created with the barcode conversion map. Requires 2 threads.
     
     | from/to      | barcode format                                     | example                     |
     |:-------------|:---------------------------------------------------|:----------------------------|
