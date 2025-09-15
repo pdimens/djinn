@@ -2,7 +2,7 @@ import gzip
 import os
 import pysam
 import sys
-from .common import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX, STLFR_INVALID_RX
+from djinn.common import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX, STLFR_INVALID_RX
 
 def print_error(text: str):
     """Print the error text and exit with code 1"""

@@ -7,7 +7,7 @@ TELLSEQ_HAPLOTAGGING_INVALID_RX = re.compile(r"(?:N|[ABCD]00)")
 HAPLOTAGGING_RX = re.compile(r'\s?BX:Z:(A[0-9]{2}C[0-9]{2}B[0-9]{2}D[0-9]{2})')
 STLFR_RX = re.compile(r'#([0-9]+_[0-9]+_[0-9]+)(\s|$)')
 TELLSEQ_RX = re.compile(r':([ATCGN]+)(\s|$)')
-TELLSEQ_STLFR_RX = re.compile(r"(?:\:[ATCGN]+$|#\d+_\d+_\d+$)")
+TELLSEQ_STLFR_RX = re.compile(r"(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))")
 
 class haplotagging():
     def __init__(self):
@@ -77,8 +77,6 @@ class _ncbi():
             return "".join(next(self.invalid))
         except TypeError:
             return self.invalid
-
-
 
 class generic_parser():
     def __init__(self, bx_type: str):

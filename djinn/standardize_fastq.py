@@ -2,7 +2,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest
 import os
-import sys
 import rich_click as click
 import pysam
 from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
