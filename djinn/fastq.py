@@ -99,7 +99,4 @@ def fastq(target,fq1,fq2,prefix, barcodes):
                 converted_bc = BX.inventory[_r2.barcode]
                 R2_out.write(str(_r2.convert(to_, converted_bc)))
     
-    # bgzip compress the output, one file per thread
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        executor.submit(compress_fq, f"{prefix}.R1.fq")
-        executor.submit(compress_fq, f"{prefix}.R2.fq")
+    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")

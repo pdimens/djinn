@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import gzip
 import os
 import pysam
@@ -126,7 +127,13 @@ class FQRecord():
                 self.comment = "\t".join(_comments)
         return self
 
-def compress_fq(fq: str):
+def compress_fq(fq1: str, fq2: str):
+    '''bgzip compress the output, one thread per file'''
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(_compress_fq, fq1)
+        executor.submit(_compress_fq, fq2)
+
+def _compress_fq(fq: str):
     """use pysam bgzip to compress fastq and delete the original"""
     try:
         pysam.tabix_compress(fq, f"{fq}.gz", force=True)

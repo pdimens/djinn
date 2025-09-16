@@ -1,10 +1,71 @@
+from itertools import zip_longest
 import random
 import os
+import pysam
 import re
 import rich_click as click
 import subprocess
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
-from djinn.utils import which_linkedread
+from djinn.utils import compress_fq, FQRecord, which_linkedread
+
+def downsample_fastq(fq1, fq2, prefix, downsample):
+    from_ = which_linkedread(fq1)
+    barcodes = list(extract_barcodes_fq(from_, fq1, fq2))
+    n_bc = len(barcodes)
+    random.shuffle(barcodes)
+
+    if downsample < 1:
+        downsample = int(n_bc * downsample)
+    else:
+        downsample = int(downsample)
+        if n_bc < downsample:
+            raise ValueError(f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
+    barcodes = barcodes[:n_bc]
+    with open(f"{prefix}.bc", "w") as bc_out:
+        bc_out.write("\n".join(barcodes))
+
+    with (
+        pysam.FastxFile(fq1, persist=False) as R1,
+        pysam.FastxFile(fq2, persist=False) as R2,
+        open(f"{prefix}.R1.fq", "w") as R1_out,
+        open(f"{prefix}.R2.fq", "w") as R2_out,
+    ):
+        for r1,r2 in zip_longest(R1,R2):
+            if r1:
+                _r1 = FQRecord(r1, True, from_, 0)
+                if _r1.barcode in barcodes:
+                    R1_out.write(str(_r1.convert(from_, _r1.barcode)))
+            if r2:
+                _r2 = FQRecord(r2, False, from_, 0)
+                if _r2.barcode in barcodes:
+                    R2_out.write(str(_r2.convert(from_, _r2.barcode)))
+
+    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
+
+def downsample_sam(bam, prefix, downsample):
+    #TODO I think there needs to be a which_linkedread for bam
+    from_ = which_linkedread(fq1)
+    barcodes = list(extract_barcodes_sam(from_, bam))
+    n_bc = len(barcodes)
+    random.shuffle(barcodes)
+
+    if downsample < 1:
+        downsample = int(n_bc * downsample)
+    else:
+        downsample = int(downsample)
+        if n_bc < downsample:
+            raise ValueError(f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
+    barcodes = barcodes[:n_bc]
+    with open(f"{prefix}.bc", "w") as bc_out:
+        bc_out.write("\n".join(barcodes))
+    if not os.path.exists(f"{bam}.bai"):
+        pysam.index(bam)
+
+    pysam.view("-O BAM", f"-o {prefix}.bam", "-h", f"-D BX:{prefix}.bc", bam)
+    #TODO THESE NEED TO BE FIXED
+    subprocess.run("samtools view -O BAM -h -D {params}:{input.bc_list} {input.bam} > {output.bam}".split())
+
+
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option('-b', '--barcode-tag', type = str, default = "BX", show_default = True, help = 'Tag that contains the barcode')
