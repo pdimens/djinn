@@ -1,10 +1,10 @@
-from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest
 import os
 import pysam
 import rich_click as click
-from djinn.utils import compress_fq, FQRecord, print_error, validate_barcodefile, which_linkedread
-from djinn.common import haplotagging, tellseq, stlfr, tenx
+from djinn.utils.file_ops import compress_fq, print_error, validate_barcodefile, which_linkedread
+from djinn.utils.fq_tools import FQRecord
+from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert_fastq/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)

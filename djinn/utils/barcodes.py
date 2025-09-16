@@ -4,10 +4,18 @@ import re
 
 STLFR_INVALID_RX = re.compile("^0_|_0_|_0$")
 TELLSEQ_HAPLOTAGGING_INVALID_RX = re.compile(r"(?:N|[ABCD]00)")
+ANY_INVALID = re.compile(r"(?:N|[ABCD]00|^0_|_0_|_0$)")
 HAPLOTAGGING_RX = re.compile(r'\s?BX:Z:(A[0-9]{2}C[0-9]{2}B[0-9]{2}D[0-9]{2})')
+#HAPLOTAGGING_SIMPLE = re.compile(r'(A[0-9]{2}C[0-9]{2}B[0-9]{2}D[0-9]{2})')
 STLFR_RX = re.compile(r'#([0-9]+_[0-9]+_[0-9]+)(\s|$)')
+#STLFR_SIMPLE = re.compile(r'([0-9]+_[0-9]+_[0-9]+)$')
 TELLSEQ_RX = re.compile(r':([ATCGN]+)(\s|$)')
+#TELLSEQ_SIMPLE = re.compile(r'([ATCGN]+)$')
+
 TELLSEQ_STLFR_RX = re.compile(r"(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))")
+
+def is_invalid(bc: str) -> bool:
+    return bool(ANY_INVALID.search(bc))
 
 class haplotagging():
     def __init__(self):
@@ -78,25 +86,3 @@ class _ncbi():
         except TypeError:
             return self.invalid
 
-class generic_parser():
-    def __init__(self, bx_type: str):
-        self.bx_type = bx_type
-        self.regex = re.compile(r"(?:\:[ATCGN]+$|#\d+_\d+_\d+$)")
-
-    def process_barcode(self, record):
-        if self.bx_type == "haplotagging":
-            bx = [i for i in record.comment.split() if i.startswith("BX:Z:")]
-            if bx:
-                self.barcode = bx[0].removeprefix("BX:Z:")
-            else:
-                self.barcode = None
-        else:
-            bx = self.regex.search(record.name)
-            if bx:
-                self.barcode = bx[0][1:]
-            else:
-                self.barcode = None
-        if self.barcode:
-            self.valid = "0" in bx.split("_") or bool(re.search(r"(?:N|[ABCD]00)", bx))
-        else:
-            self.valid = 0

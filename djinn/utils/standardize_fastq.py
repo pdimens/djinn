@@ -1,17 +1,11 @@
 
-from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest
 import os
-import rich_click as click
 import pysam
-from djinn.utils import compress_fq, FQRecord, print_error, which_linkedread
-from djinn.common import haplotagging, tellseq, stlfr, tenx
+from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
+from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
+from djinn.utils.fq_tools import FQRecord
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
-@click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
-@click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
-@click.argument('r1_fastq', metavar="R1_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
-@click.argument('r2_fastq', metavar="R2_fastq", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 def std_fastq(prefix, r1_fastq, r2_fastq, style):
     """
     Move barcodes to `BX`/`VX` sequence header tags
@@ -91,6 +85,4 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
     if style:
         bc_out.close()
     # bgzip compress the output, one file per thread
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        executor.submit(compress_fq, f"{prefix}.R1.fq")
-        executor.submit(compress_fq, f"{prefix}.R2.fq")
+    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")

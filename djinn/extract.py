@@ -1,11 +1,13 @@
 import pysam
+import re
 import sys
 import rich_click as click
-from djinn.utils import which_linkedread
-from djinn.common import FQRecord, TELLSEQ_STLFR_RX
+from djinn.utils.file_ops import which_linkedread
+from djinn.utils.barcodes import TELLSEQ_STLFR_RX
+from djinn.utils.fq_tools import FQRecord
 
 
-def extract_barcodes_sam(barcode_type: str, bamfile: str) -> set[str]:
+def extract_barcodes_sam(bamfile: str) -> set[str]:
     barcodes = set()
     with pysam.AlignmentFile(bamfile, check_sq=False) as infile:
         for record in infile:
@@ -31,17 +33,32 @@ def extract_barcodes_fq(barcode_type: str, fq1: str, fq2: str) -> set[str]:
             barcodes.add(_r2.barcode)
     return barcodes
 
+
+#TODO NEED TO CONSOLIDATE HOW SAM LOOKS FOR BARCODES
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/workflows/extract")
-@click.argument('barcode-tag', type = str, required = True)
+@click.argument('barcode-tag', type = str, default = "BX")
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
 def extract(barcode_tag, inputs):
     '''
-    Extracts all the barcodes present in a SAM/BAM file. Can optionally subsample the barcodes. The invalid parameter specifies a proportion of invalid barcodes to output.
+    Extract all barcodes in BAM/FASTQ file(s)
+
+    Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Writes to stdout.    
     '''
-    if len(inputs) == 2:
+    if len(inputs) > 2:
+        raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
+    if len(inputs) == 1:
+        if not inputs[0].lower().endswith(".bam"):
+            raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
+        for i in extract_barcodes_sam(barcode_tag, inputs):
+            sys.stdout.write(f"{i}\n")
+
+    else:
         from_ = which_linkedread(inputs[0])
         for i in extract_barcodes_fq(from_, inputs[0], inputs[1]):
             sys.stdout.write(f"{i}\n")
-    else:
-        for i in extract_barcodes_sam(barcode_tag, inputs):
-            sys.stdout.write(f"{i}\n")
+        if inputs[0] == inputs[1]:
+            raise click.BadParameter('the two input files cannot be identical', param_hint="INPUT")
+        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
+        for i in inputs:
+            if not re_ext.search(i):
+                raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
