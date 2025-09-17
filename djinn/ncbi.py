@@ -23,8 +23,8 @@ def ncbi(prefix, inputs):
             raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
 
         fq = subprocess.run(
-            f'samtools fastq -N -c 6 -T "*" -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
-            stderr = subprocess.PIPE      
+            f'samtools fastq -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
+            stderr = subprocess.PIPE
         )
         if fq.returncode == 1:
             print(f"Error: samtools failure\nSamtools was unable to process your input file. See the error log from samtools fastq:\n\033[33m{fq.stderr}\033[0m")
@@ -38,7 +38,7 @@ def ncbi(prefix, inputs):
                 raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
 
         fq = subprocess.run(
-            f'samtools import -O BAM -T "*" -1 {inputs[0]} -2 {inputs[1]}'.split(),
+            f'samtools import -@ 2 -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
             stderr = subprocess.PIPE      
         )
         if fq.returncode == 1:

@@ -24,7 +24,7 @@ def standardize(prefix, inputs, style):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
-        ## checks and validations ##
+    ## checks and validations ##
     if len(inputs) > 2:
         raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
     if len(inputs) == 1:
