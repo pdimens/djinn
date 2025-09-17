@@ -7,6 +7,7 @@ from djinn.extract import extract
 from djinn.fastq import fastq
 from djinn.ncbi import ncbi
 from djinn.standardize import standardize
+from djinn.hicspoof import hic_spoof
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = False
@@ -20,7 +21,7 @@ click.rich_click.COMMAND_GROUPS = {
         [
             {
                 "name": "Commands",
-                "commands": ["fastq", "ncbi", "standardize"],
+                "commands": ["fastq", "hic-spoof", "ncbi", "standardize"],
                 "panel_styles": {"border_style": "magenta"}
             },
             {
@@ -38,8 +39,9 @@ def cli():
     Convert between linked-read formats and barcode styles
     """
 
-cli.add_command(ncbi)
-cli.add_command(extract)
 cli.add_command(downsample)
+cli.add_command(extract)
 cli.add_command(fastq)
+cli.add_command(hic_spoof)
+cli.add_command(ncbi)
 cli.add_command(standardize)

@@ -6,7 +6,6 @@ from djinn.utils.file_ops import which_linkedread
 from djinn.utils.barcodes import TELLSEQ_STLFR_RX
 from djinn.utils.fq_tools import FQRecord
 
-
 def extract_barcodes_sam(bamfile: str) -> set[str]:
     barcodes = set()
     with pysam.AlignmentFile(bamfile, check_sq=False) as infile:
@@ -26,17 +25,17 @@ def extract_barcodes_fq(barcode_type: str, fq1: str, fq2: str) -> set[str]:
     ):
         barcodes = set()
         for _r1 in R1:
-            _r1 = FQRecord(R1, True, barcode_type, 0)
+            _r1 = FQRecord(_r1, True, barcode_type, 0)
             barcodes.add(_r1.barcode)
         for _r2 in R2:
-            _r2 = FQRecord(R2, False, barcode_type, 0)
+            _r2 = FQRecord(_r2, False, barcode_type, 0)
             barcodes.add(_r2.barcode)
     return barcodes
 
 
 #TODO NEED TO CONSOLIDATE HOW SAM LOOKS FOR BARCODES
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/workflows/extract")
-@click.argument('barcode-tag', type = str, default = "BX")
+@click.option('--barcode-tag', type = str, default = "BX")
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
 def extract(barcode_tag, inputs):
     '''

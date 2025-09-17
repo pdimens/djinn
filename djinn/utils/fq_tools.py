@@ -1,3 +1,5 @@
+from itertools import product
+import random
 from djinn.utils.barcodes import STLFR_INVALID_RX
 
 class FQRecord():
@@ -90,3 +92,41 @@ class FQRecord():
                 self.comment = "\t".join(_comments)
         return self
 
+
+class FQPool():
+    def __init__(self):
+        """Initialize a FASTQ record pool for a specific barcode bc"""
+        self.barcode = None
+        self.forward = []
+        self.reverse = []
+
+    def add(self, fq1, fq2) -> None:
+        '''add a read pair to the pool'''
+        self.forward.append(fq1)
+        self.reverse.append(fq2)
+
+    def randomize_id(self) -> str:
+        '''return a random stringified integer between 1000 and 99999'''
+        return str(random.randint(1000, 99999))
+
+    def spoof_hic(self, r1_filecon, r2_filecon):
+        '''
+        Create all possible unique combinations of forward and reverse reads and write to open file
+        connections r1_filecon and r2_filecon. Randomizes the last three numbers in the sequence ID
+        in the process to make sure reads don't have identical read headers.
+        '''
+        n = range(len(self.forward))
+        for i in product(n, n):
+            r1 = self.forward[i[0]]
+            seq_id = r1.id.split(":")[:4]
+            for j in range(3):
+                seq_id.append(self.randomize_id())
+            # combine all the random additions
+            seq_id = ":".join(seq_id)
+            r1.id = seq_id
+            
+            r2 = self.reverse[i[1]]
+            r2.id = seq_id
+            # write to file
+            r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
+            r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
