@@ -34,7 +34,7 @@ def extract_barcodes_fq(barcode_type: str, fq1: str, fq2: str) -> set[str]:
 
 
 #TODO NEED TO CONSOLIDATE HOW SAM LOOKS FOR BARCODES
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/harpy/workflows/extract")
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
 @click.option('--barcode-tag', type = str, default = "BX")
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
 def extract(barcode_tag, inputs):
