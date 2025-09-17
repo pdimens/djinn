@@ -105,27 +105,3 @@ def which_linkedread(fastq: str, n: int = 100) -> str:
             if TELLSEQ_RX.search(record.name):
                 return "tellseq"
     return "none"
-
-#def which_linkedread_sam(sam: str, n: int = 100) -> str:
-#    """
-#    Scans the first 100 records of a FASTQ file and tries to determine the barcode technology
-#    Returns one of: "haplotagging", "[standard-]stlfr", "[standard-]tellseq", or "none"
-#    """
-#    with pysam.AlignmentFile(sam, persist=False) as _sam:
-#        for i,record in enumerate(_sam, 1):
-#            if i > n:
-#                break
-#            if record.has_tag("BX"):
-#                bx = record.get_tag("BX")
-#                if HAPLOTAGGING_SIMPLE.search(bx):
-#                    return "haplotagging"
-#                elif STLFR_SIMPLE.search(bx):
-#                    return "standard-stlfr"
-#                elif TELLSEQ_SIMPLE.search(bx):
-#                    return "standard-tellseq"
-#            else:    
-#                if STLFR_RX.search(record.name):
-#                    return "stlfr"
-#                if TELLSEQ_RX.search(record.name):
-#                    return "tellseq"
-#    return "none"
