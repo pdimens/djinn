@@ -9,10 +9,16 @@ from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
 from djinn.utils.file_ops import compress_fq, which_linkedread
 from djinn.utils.fq_tools import FQRecord
 
-def downsample_fastq(fq1, fq2, prefix, downsample):
+#TODO IMPLEMENT RANDOM SEED RNG
+
+def downsample_fastq(fq1, fq2, prefix, downsample, keep_invalid):
     from_ = which_linkedread(fq1)
-    barcodes = list(extract_barcodes_fq(from_, fq1, fq2))
-    #TODO DEAL WITH INVALIDS
+    if keep_invalid:
+        barcodes = extract_barcodes_fq(from_, fq1, fq2, separate_invalid = False)
+    else:
+        barcodes, invalid = extract_barcodes_fq(from_, fq1, fq2, separate_invalid = True)
+    barcodes = list(barcodes)
+
     n_bc = len(barcodes)
     random.shuffle(barcodes)
 
@@ -44,9 +50,13 @@ def downsample_fastq(fq1, fq2, prefix, downsample):
 
     compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
 
-def downsample_sam(bam, prefix, downsample):
-    barcodes = list(extract_barcodes_sam(bam))
-    #TODO LOGIC FOR FILTERING INVALID
+def downsample_sam(bam, prefix, downsample, keep_invalid):
+    if keep_invalid:
+        barcodes = extract_barcodes_sam(bam, separate_invalid = False)
+    else:
+        barcodes, invalids = extract_barcodes_sam(bam, separate_invalid = True)
+    barcodes = list(barcodes)
+
     n_bc = len(barcodes)
     random.shuffle(barcodes)
 
@@ -64,13 +74,12 @@ def downsample_sam(bam, prefix, downsample):
 
     pysam.view("-O BAM", f"-o {prefix}.bam", "-h", f"-D BX:{prefix}.bc", bam)
     #TODO THESE NEED TO BE FIXED
-    subprocess.run("samtools view -O BAM -h -D {params}:{input.bc_list} {input.bam} > {output.bam}".split())
-
+    #subprocess.run("samtools view -O BAM -h -D {params}:{input.bc_list} {input.bam} > {output.bam}".split())
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
-@click.option('-b', '--barcode-tag', type = str, default = "BX", show_default = True, help = 'Tag that contains the barcode')
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
-@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
+@click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
+#@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
 @click.option('-p', '--prefix', type = click.Path(exists = False), default = "downsampled", show_default = True, help = 'Prefix for output file(s)')
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
@@ -80,8 +89,8 @@ def downsample(inputs, invalid, output_dir, prefix, downsample, random_seed):
     
     Downsamples a FASTQ read pair or BAM file by barcode to keep all records containing `-d` randomly sampled barcodes.
     If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total
-    number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to specify the proportion of
-    invalid barcodes to consider for sampling.
+    number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to specify if invalid barcodes
+    should be included in downsampling.
 
     **FASTQ Input**
     - expects two files, R1 and R2 (can be gzipped)
@@ -103,7 +112,7 @@ def downsample(inputs, invalid, output_dir, prefix, downsample, random_seed):
     if len(inputs) == 1:
         if not inputs[0].lower().endswith(".bam"):
             raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
-        downsample_sam(inputs[0], prefix, downsample)
+        downsample_sam(inputs[0], prefix, downsample, invalid)
 
     else:
         if inputs[0] == inputs[1]:
@@ -112,4 +121,4 @@ def downsample(inputs, invalid, output_dir, prefix, downsample, random_seed):
         for i in inputs:
             if not re_ext.search(i):
                 raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
-        downsample_fastq(inputs[0], inputs[0], prefix, downsample)
+        downsample_fastq(inputs[0], inputs[0], prefix, downsample, invalid)
