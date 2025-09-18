@@ -61,23 +61,63 @@ jobs:
       - name: to-ncbi
         shell: micromamba-shell {0}
         run: |
-          djinn to-ncbi test/*.gz > result.bam &&
+          djinn ncbi result test/*.gz &&
           samtools view result.bam
       - name: from-ncbi
         shell: micromamba-shell {0}
         run: |
-          djinn from-ncbi result test/test.bam &&\
+          djinn ncbi result test/test.bam &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
 
       - name: std-bam
         shell: micromamba-shell {0}
         run: |
-          djinn std-bam -s stlfr test/test.bam > result.bam &&\
+          djinn standardize -s stlfr result test/test.bam &&\
           samtools view result.bam
       - name: std-fastq
         shell: micromamba-shell {0}
         run: |
-          djinn std-fastq -s tellseq result test/*.gz &&\
+          djinn standardize -s tellseq result test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+
+      - name: downsample-fastq
+        shell: micromamba-shell {0}
+        run: |
+          djinn downsample -d 2 result test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+      - name: downsample-bam
+        shell: micromamba-shell {0}
+        run: |
+          djinn downsample -d 2 result test/test.bam &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+
+      - name: extract-fastq
+        shell: micromamba-shell {0}
+        run: djinn extract test/*.gz
+      - name: extract-bam
+        shell: micromamba-shell {0}
+        run: djinn extract test/test.bam
+
+      - name: sort-fastq
+        shell: micromamba-shell {0}
+        run: |
+          djinn sort BX result test/test.bam &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+      - name: sort-bam
+        shell: micromamba-shell {0}
+        run: |
+          djinn sort BX result test/*.gz &&\
+          zcat result.R1.fq.gz &&\
+          zcat result.R2.fq.gz
+
+      - name: hic-spoof
+        shell: micromamba-shell {0}
+        run: |
+          djinn hic-spoof result test/*.gz &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
