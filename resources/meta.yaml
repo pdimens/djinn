@@ -1,6 +1,6 @@
 {% set name = "djinn" %}
 {% set version = "1.0.0" %}
-{% set sha256 = "e3efda26512e9824936264a31a5e5a9fbd862603f8bb99a4a8cdf101915d3577" %}
+{% set sha256 = "4443d0bf87fef5e3e75a5e06e320a3e954fb280d81c464e20e187e6b6037fa75" %}
 
 package:
   name: {{ name }}
@@ -30,7 +30,7 @@ requirements:
     - click >=8.3
     - pysam >=0.23
     - python >=3.11
-    - rich-click =1.8
+    - rich-click =1.9
     - samtools >=1.22
 
 test:
