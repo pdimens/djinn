@@ -1,4 +1,4 @@
-![djinn logo](resources/djinn.png)
+![djinn logo](https://raw.githubusercontent.com/pdimens/djinn/refs/heads/docs/static/djinn.png)
 
 Convert linked-read FASTQ and BAM files
 
