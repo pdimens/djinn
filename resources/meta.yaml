@@ -1,6 +1,6 @@
 {% set name = "djinn" %}
 {% set version = "1.0.0" %}
-{% set sha256 = "" %}
+{% set sha256 = "e3efda26512e9824936264a31a5e5a9fbd862603f8bb99a4a8cdf101915d3577" %}
 
 package:
   name: {{ name }}
@@ -27,13 +27,11 @@ requirements:
     - pip
     - setuptools-scm >=8
   run:
-    - click =8
+    - click >=8.3
     - pysam >=0.23
     - python >=3.11
     - rich-click =1.8
     - samtools >=1.22
-
-
 
 test:
   commands:

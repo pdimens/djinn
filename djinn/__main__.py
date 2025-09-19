@@ -10,6 +10,7 @@ from djinn.ncbi import ncbi
 from djinn.sort import sort
 from djinn.standardize import standardize
 
+click.rich_click.THEME = "quartz-modern"
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = False
 click.rich_click.SHOW_METAVARS_COLUMN = False
@@ -21,14 +22,12 @@ click.rich_click.COMMAND_GROUPS = {
     "djinn":
         [
             {
-                "name": "Commands",
-                "commands": ["fastq", "hic-spoof", "ncbi", "standardize"],
-                "panel_styles": {"border_style": "magenta"}
+                "name": "Conversion Commands",
+                "commands": ["fastq", "hic-spoof", "ncbi", "standardize"]
             },
             {
                 "name": "Other Tools",
-                "commands": ["downsample", "extract", "sort"],
-                "panel_styles": {"border_style": "blue"}
+                "commands": ["downsample", "extract", "sort"]
             }
         ]
 }
