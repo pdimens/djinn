@@ -89,7 +89,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = click.Path(exists = False))
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
-def downsample(prefix, inputs, invalid, output_dir, downsample, random_seed):
+def downsample(prefix, inputs, invalid, downsample, random_seed):
     """
     Downsample data by barcode
     
