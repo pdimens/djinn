@@ -23,7 +23,7 @@ def ncbi(prefix, inputs):
             stderr = subprocess.PIPE
         )
         if fq.returncode == 1:
-            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{fq.stderr}\033[0m")
+            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{fq.stderr.decode()}\033[0m")
 
     else:
         fq = subprocess.run(
@@ -31,7 +31,7 @@ def ncbi(prefix, inputs):
             stderr = subprocess.PIPE      
         )
         if fq.returncode == 1:
-            print("samtools failure", f"Samtools was unable to process your input files. See the error log from samtools import:\n\033[31m{fq.stderr}\033[0m")
+            print_error("samtools failure", f"Samtools was unable to process your input files. See the error log from samtools import:\n\033[31m{fq.stderr.decode()}\033[0m")
 
 
 #BC_QUAL = "I"*20

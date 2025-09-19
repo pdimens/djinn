@@ -24,7 +24,7 @@ def sort(samtag,prefix,inputs):
             stderr = subprocess.PIPE
         )
         if sam_sort.returncode == 1:
-            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools sort:\n\033[31m{sam_sort.stderr}\033[0m")
+            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools sort:\n\033[31m{sam_sort.stderr.decode()}\033[0m")
 
     else:
         sam_import = subprocess.Popen(
@@ -45,4 +45,4 @@ def sort(samtag,prefix,inputs):
         )
 
         if sam_fastq.returncode == 1:
-            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{sam_fastq.stderr}\033[0m")
+            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{sam_fastq.stderr.decode()}\033[0m")
