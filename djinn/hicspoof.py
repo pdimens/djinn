@@ -6,14 +6,14 @@ from djinn.utils.fq_tools import FQRecord, FQPool
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('prefix', required=True, type = str)
-@click.argument('inputs', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=2)
+@click.argument('inputs', required=True, type=click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), nargs=2)
 def hic_spoof(prefix, inputs):
     """
     Convert linked-read fastq into fake HI-C data
 
     Reads with the same barcode will have their forward/reverse reads combinatorally
     rearranged to mimic the long-range data captured with HI-C. The resulting
-    fastq files will be in TELLseq\-_ish_ format (original barcode appended
+    fastq files will be in TELLseq-ish format (original barcode appended
     to sequence ID). See the documentation for more details.
     
     **Input FASTQ files must be sorted by barcode**

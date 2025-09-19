@@ -4,7 +4,7 @@ import subprocess
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('prefix', required=True, type = str)
-@click.argument('inputs', required=True, type=click.Path(dir_okay=False,readable=True,resolve_path=True), nargs=-1)
+@click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), nargs=-1)
 def ncbi(prefix, inputs):
     """
     FASTQ ⇆ BAM conversion for/from NCBI

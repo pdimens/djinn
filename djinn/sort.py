@@ -2,11 +2,10 @@ import re
 import rich_click as click
 import subprocess
 
-#BAM
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/sort/")
 @click.argument('samtag', metavar="SAM_tag", type = str, required = True, nargs=1)
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
-@click.argument('inputs', metavar="inputs(s)", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=-1)
+@click.argument('inputs', type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, nargs=-1)
 def sort(prefix, inputs, samtag):
     """
     Sort FASTQ/BAM by barcode

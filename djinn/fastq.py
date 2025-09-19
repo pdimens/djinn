@@ -10,8 +10,8 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
-@click.argument('fq1', metavar="R1_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
-@click.argument('fq2', metavar="R2_FASTQ", type = click.Path(dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
+@click.argument('fq1', metavar="R1_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
+@click.argument('fq2', metavar="R2_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
 def fastq(target,fq1,fq2,prefix, barcodes):
     """
     Convert between linked-read FASTQ formats
