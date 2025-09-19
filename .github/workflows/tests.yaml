@@ -111,7 +111,7 @@ jobs:
       - name: sort-bam
         shell: micromamba-shell {0}
         run: |
-          djinn sort BX result test/*.gz &&\
+          djinn sort BX result test/test.bam &&\
           zcat result.R1.fq.gz &&\
           zcat result.R2.fq.gz
 
