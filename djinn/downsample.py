@@ -115,4 +115,4 @@ def downsample(prefix, inputs, invalid, downsample, random_seed):
     if len(inputs) == 1:
         downsample_sam(inputs[0], prefix, downsample, invalid, random_seed)
     else:
-        downsample_fastq(inputs[0], inputs[0], prefix, downsample, invalid, random_seed)
+        downsample_fastq(inputs[0], inputs[1], prefix, downsample, invalid, random_seed)

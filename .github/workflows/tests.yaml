@@ -92,8 +92,7 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn downsample -d 2 result test/test.bam &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          samtools view result.bam
 
       - name: extract-fastq
         shell: micromamba-shell {0}

@@ -11,7 +11,7 @@ class FQRecord():
         designation = [i for i in comments if i.startswith(fr)]
         self.illumina_new = designation[0] if designation else f"{fr}:N:0:CAGATC"
         self.illumina_old = f"/{fr}"
-        self.id = pysamfq.name.rstrip(self.illumina_old)
+        self.id = pysamfq.name.removesuffix(self.illumina_old)
         self.comment = "\t".join(i for i in comments if not i.startswith(fr))
         self.seq = pysamfq.sequence
         self.qual = pysamfq.quality
