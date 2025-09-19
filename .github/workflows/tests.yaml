@@ -112,8 +112,7 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn sort BX result test/test.bam &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          zcat result.bam
 
       - name: hic-spoof
         shell: micromamba-shell {0}
