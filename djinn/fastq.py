@@ -29,10 +29,10 @@ def fastq(target,fq1,fq2,prefix, barcodes):
     """
     from_ = which_linkedread(fq1)
     if from_ == "none" and not barcodes:
-        print_error("Error: no barcodes provided\nThe input file was inferred to be 10X format, which requires a list of --barcodes so Djinn knows how to identify legitimate barcodes from the sequences.")
+        print_error("no barcodes provided", "The input file was inferred to be 10X format, which requires a list of --barcodes so Djinn knows how to identify legitimate barcodes from the sequences.")
 
     if from_ == target:
-        print_error(f"Error: identical conversion target\nThe input file was inferred to be {from_}, which is identical to the conversion target {target}. The formats must be different from each other. If the input data is not {from_}, then it is formatted incorrectly for whatever technology it was generated with.")
+        print_error("identical conversion target", f"The input file was inferred to be {from_}, which is identical to the conversion target {target}. The formats must be different from each other. If the input data is not {from_}, then it is formatted incorrectly for whatever technology it was generated with.")
     to_ = target.lower()
 
     if to_ == "tellseq":
@@ -70,7 +70,7 @@ def fastq(target,fq1,fq2,prefix, barcodes):
                         try:
                             BX.inventory[_r1.barcode] = BX.next()
                         except StopIteration:
-                            print_error(f"Error: too many barcodes\nThere are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
+                            print_error("too many barcodes", f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
                     else:
                         BX.inventory[_r1.barcode] = BX.invalid
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
@@ -92,7 +92,7 @@ def fastq(target,fq1,fq2,prefix, barcodes):
                         try:
                             BX.inventory[_r2.barcode] = BX.next()
                         except StopIteration:
-                            print_error(f"Error: too many barcodes\nThere are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
+                            print_error("too many barcodes", f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
                     else:
                         BX.inventory[_r2.barcode] = BX.invalid
                     bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")

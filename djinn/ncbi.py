@@ -1,10 +1,11 @@
 import re
 import rich_click as click
 import subprocess
+from djinn.utils.file_ops import print_error, validate_fq_sam
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('prefix', required=True, type = str)
-@click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), nargs=-1)
+@click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def ncbi(prefix, inputs):
     """
     FASTQ ⇆ BAM conversion for/from NCBI
@@ -16,33 +17,21 @@ def ncbi(prefix, inputs):
     two FASTQ files.
     """
     ## checks and validations ##
-    if len(inputs) > 2:
-        raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
     if len(inputs) == 1:
-        if not inputs[0].lower().endswith(".bam"):
-            raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
-
         fq = subprocess.run(
             f'samtools fastq -@ 1 -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
             stderr = subprocess.PIPE
         )
         if fq.returncode == 1:
-            print(f"Error: samtools failure\nSamtools was unable to process your input file. See the error log from samtools fastq:\n\033[33m{fq.stderr}\033[0m")
+            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{fq.stderr}\033[0m")
 
     else:
-        if inputs[0] == inputs[1]:
-            raise click.BadParameter('the two input files cannot be identical', param_hint="INPUT")
-        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
-        for i in inputs:
-            if not re_ext.search(i):
-                raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
-
         fq = subprocess.run(
             f'samtools import -@ 1 -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
             stderr = subprocess.PIPE      
         )
         if fq.returncode == 1:
-            print(f"Error: samtools failure\nSamtools was unable to process your input files. See the error log from samtools import:\n\033[33m{fq.stderr}\033[0m")
+            print("samtools failure", f"Samtools was unable to process your input files. See the error log from samtools import:\n\033[31m{fq.stderr}\033[0m")
 
 
 #BC_QUAL = "I"*20

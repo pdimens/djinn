@@ -25,7 +25,7 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
     """
     BC_TYPE = which_linkedread(r1_fastq)
     if not BC_TYPE:
-        print_error(f"Error: undertermined file type\nUnable to determine the linked-read barcode type after scanning the first 100 records of {os.path.basename(r1_fastq)}. Please make sure the format is one of haplotagging, stlfr, or tellseq. 10X-style with the barcode as the first 16 nucleotides of read 1 is not supported here.")
+        print_error("undertermined file type", f"Unable to determine the linked-read barcode type after scanning the first 100 records of {os.path.basename(r1_fastq)}. Please make sure the format is one of haplotagging, stlfr, or tellseq. 10X-style with the barcode as the first 16 nucleotides of read 1 is not supported here.")
     
     # create the output directory in case it doesn't exist
     if os.path.dirname(prefix):
@@ -58,7 +58,7 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                             try:
                                 BX.inventory[_r1.barcode] = BX.next()
                             except StopIteration:
-                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
+                                print_error("too many barcodes", f"There are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
                         else:
                             BX.inventory[_r1.barcode] = BX.invalid
                         # write the barcode to file
@@ -74,7 +74,7 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                             try:
                                 BX.inventory[_r2.barcode] = BX.next()
                             except StopIteration:
-                                print_error(f"Error: too many barcodes\nThere are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
+                                print_error("too many barcodes", f"There are more {BC_TYPE} barcodes in the input data than it is possible to generate {style} barcodes from.")
                         else:
                             BX.inventory[_r2.barcode] = BX.invalid
                         # write the barcode to file

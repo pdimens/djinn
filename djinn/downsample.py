@@ -4,7 +4,7 @@ import pysam
 import re
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
-from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
+from djinn.utils.file_ops import compress_fq, print_error, validate_fq_sam, which_linkedread
 from djinn.utils.fq_tools import FQRecord
 
 def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float) -> None:
@@ -80,7 +80,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
     try:
         pysam.view("-O", "BAM", "-o", f"{prefix}.bam", "-h", "-D", f"BX:{prefix}.bc", bam, catch_stdout=False)
     except pysam.SamtoolsError as e:
-        print_error(f"Error: samtools experienced an error\nFiltering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
+        print_error("samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
@@ -88,7 +88,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
 #@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = click.Path(exists = False))
-@click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
+@click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def downsample(prefix, inputs, invalid, downsample, random_seed):
     """
     Downsample data by barcode
@@ -112,19 +112,7 @@ def downsample(prefix, inputs, invalid, downsample, random_seed):
     | `1` | adds all invalid barcodes to the sampling pool |
     | 0<`i`<1| keeps `i` proprotion of invalids in the sampling pool |
     """
-    ## checks and validations ##
-    if len(inputs) > 2:
-        raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
     if len(inputs) == 1:
-        if not inputs[0].lower().endswith(".bam"):
-            raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
         downsample_sam(inputs[0], prefix, downsample, invalid, random_seed)
-
     else:
-        if inputs[0] == inputs[1]:
-            raise click.BadParameter('the two input files cannot be identical', param_hint="INPUT")
-        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
-        for i in inputs:
-            if not re_ext.search(i):
-                raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
         downsample_fastq(inputs[0], inputs[0], prefix, downsample, invalid, random_seed)

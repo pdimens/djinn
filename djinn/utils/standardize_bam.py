@@ -41,7 +41,7 @@ def std_bam(prefix, sam, style):
             if record.has_tag("BX"):
                 bx_sanitized = str(record.get_tag("BX"))
                 if record.has_tag("VX"):
-                    print_error(f"Error: BX/VX tags present\nThe BX:Z and VX:i tags are already present in {os.path.basename(sam)} and does not need to be standardized.")
+                    print_error("BX/VX tags present", f"The BX:Z and VX:i tags are already present in {os.path.basename(sam)} and does not need to be standardized.")
             if record.has_tag("BX"):
                 bx_sanitized = str(record.get_tag("BX"))
                 # try to split by "_" (stlfr) and if any of the ints are zero, it's invalid
@@ -74,7 +74,7 @@ def std_bam(prefix, sam, style):
                         try:
                             BX.inventory[bx_sanitized] = BX.next()
                         except StopIteration:
-                            print_error(f"Error: too many barcodes\nThere are more barcodes in the input data than it is possible to generate {convert} barcodes from.")
+                            print_error("too many barcodes", f"There are more barcodes in the input data than it is possible to generate {convert} barcodes from.")
                     else:
                         BX.inventory[bx_sanitized] = BX.invalid
                     bc_out.write(f"{bx_sanitized}\t{BX.inventory[bx_sanitized]}\n")

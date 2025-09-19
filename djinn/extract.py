@@ -2,7 +2,7 @@ import pysam
 import re
 import sys
 import rich_click as click
-from djinn.utils.file_ops import which_linkedread
+from djinn.utils.file_ops import validate_fq_sam, which_linkedread
 from djinn.utils.barcodes import ANY_INVALID, TELLSEQ_STLFR_RX
 from djinn.utils.fq_tools import FQRecord
 
@@ -61,7 +61,7 @@ def extract_barcodes_fq(barcode_type: str, fq1: str, fq2: str, separate_invalid:
     return barcodes
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
-@click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), nargs=-1)
+@click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def extract(inputs):
     '''
     Extract all barcodes in BAM/FASTQ file(s)
@@ -70,23 +70,10 @@ def extract(inputs):
     inputs expect barcodes to follow the standard haplotagging (BX tag), stlfr (@seq_id#barcode), or tellseq
     (@seq_id:barcode) formats.  Writes to stdout.
     '''
-    if len(inputs) > 2:
-        raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
     if len(inputs) == 1:
-        if not inputs[0].lower().endswith(".bam"):
-            raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
-        
         for i in extract_barcodes_sam(inputs[0]):
             sys.stdout.write(f"{i}\n")
-
     else:
-        if inputs[0] == inputs[1]:
-            raise click.BadParameter('the two input files cannot be identical', param_hint="INPUT")
-        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
-        for i in inputs:
-            if not re_ext.search(i):
-                raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
-
         from_ = which_linkedread(inputs[0])
         for i in extract_barcodes_fq(from_, inputs[0], inputs[1]):
             sys.stdout.write(f"{i}\n")

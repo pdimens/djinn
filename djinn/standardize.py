@@ -2,11 +2,11 @@ import re
 import rich_click as click
 from djinn.utils.standardize_bam import std_bam
 from djinn.utils.standardize_fastq import std_fastq
-
+from djinn.utils.file_ops import validate_fq_sam
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
-@click.argument('inputs', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, nargs=-1)
+@click.argument('inputs', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_fq_sam, nargs=-1)
 def standardize(prefix, inputs, style):
     """
     Move barcodes to `BX`/`VX` sequence header tags
@@ -24,20 +24,8 @@ def standardize(prefix, inputs, style):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
-    ## checks and validations ##
-    if len(inputs) > 2:
-        raise click.BadParameter('inputs must be 1 BAM file or 2 FASTQ files.', param_hint="INPUT")
     if len(inputs) == 1:
-        if not inputs[0].lower().endswith(".bam"):
-            raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")
         std_bam(prefix, inputs[0], style)
-
     else:
-        if inputs[0] == inputs[1]:
-            raise click.BadParameter('the two input files cannot be identical', param_hint="INPUT")
-        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
-        for i in inputs:
-            if not re_ext.search(i):
-                raise click.BadParameter('inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.', param_hint="INPUT")  
         std_fastq(prefix, inputs[0], inputs[0], style)
 

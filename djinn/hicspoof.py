@@ -23,7 +23,7 @@ def hic_spoof(prefix, inputs):
     """
     from_ = which_linkedread(inputs[0])
     if from_ == "none":
-        print_error("Error: unknown input format\nThe input FASTQ files were not recognized as either haplotagging, stlfr, or tellseq formats. Please check that they conform to format standards for those chemistries.")
+        print_error("unknown input format", "The input FASTQ files were not recognized as either haplotagging, stlfr, or tellseq formats. Please check that they conform to format standards for those chemistries.")
 
     # create the output directory in case it doesn't exist
     if os.path.dirname(prefix):

@@ -41,12 +41,13 @@ class generic_parser():
             else:
                 self.barcode = None
         if self.barcode:
-            self.valid = "0" in bx.split("_") or bool(re.search(r"(?:N|[ABCD]00)", bx))
+            self.valid = "0" in self.barcode.split("_") or bool(re.search(r"(?:N|[ABCD]00)", self.barcode))
         else:
             self.valid = 0
 
-def print_error(text: str):
+def print_error(title:str,text: str):
     """Print the error text and exit with code 1"""
+    print(f"\033[33mError: {title}\033[0m")
     print(text)
     sys.exit(1)
 
@@ -59,7 +60,7 @@ def safe_read(file_path: str):
     except gzip.BadGzipFile:
         return open(file_path, 'r')
 
-def validate_barcodefile(infile: str, limit: int = 60) -> set[str]:
+def validate_barcodefile(infile: str, limit: int = 60) -> set:
     """
     Does validations to make sure it's one length, within a length limit, one per line, and nucleotides. Returns
     a list of the barcodes.
@@ -71,22 +72,22 @@ def validate_barcodefile(infile: str, limit: int = 60) -> set[str]:
     def validate(line_num, bc_line):
         barcode = bc_line.rstrip()
         if len(barcode.split()) > 1:
-            print_error(f"Error: incorrect barcode format\nThere must be one barcode per line, but multiple entries were detected on line {line_num} in {infile}")
+            print_error("incorrect barcode format", f"There must be one barcode per line, but multiple entries were detected on line {line_num} in {infile}")
         if not set(barcode).issubset(nucleotides) or barcode != barcode.upper():
-            print_error(f"Error: incorrect barcode format\nInvalid barcode format on line {line_num }: {barcode}.\nBarcodes in {infile} must be captial letters and only contain standard nucleotide characters ATCG.")
+            print_error("incorrect barcode format", f"Invalid barcode format on line {line_num }: {barcode}.\nBarcodes in {infile} must be captial letters and only contain standard nucleotide characters ATCG.")
         return len(barcode)
     with safe_read(infile) as bc_file:
         for line,bc in enumerate(bc_file, 1):
             length = validate(line, bc)
             if length > limit:
-                print_error(f"Error: barcodes too long\nBarcodes in {infile} are {length}bp and cannot exceed a length of {limit}. Please use shorter barcodes.")
+                print_error("barcodes too long", f"Barcodes in {infile} are {length}bp and cannot exceed a length of {limit}. Please use shorter barcodes.")
             lengths.add(length)
             if len(lengths) > 1:
                 str_len = ", ".join(str(_length) for _length in lengths)
-                print_error(f"Error: inconsistent length\nBarcodes in {infile} must all be a single length, but multiple lengths were detected: {str_len}")
+                print_error("inconsistent length", f"Barcodes in {infile} must all be a single length, but multiple lengths were detected: {str_len}")
             barcodes.add(bc)
     if not lengths:
-        print_error(f"Error: no barcodes detecte\nNo barcodes were found in {infile}. Please check the input file.")
+        print_error("no barcodes detected", f"No barcodes were found in {infile}. Please check the input file.")
     return barcodes
 
 def which_linkedread(fastq: str, n: int = 100) -> str:
@@ -105,3 +106,24 @@ def which_linkedread(fastq: str, n: int = 100) -> str:
             if TELLSEQ_RX.search(record.name):
                 return "tellseq"
     return "none"
+
+def validate_fq_sam(ctx, param, value):
+    """
+    Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
+    """
+    if len(value) > 2:
+        print_error("incorrect number of input files","Inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.")
+        sys.exit(1)
+
+    if len(value) == 1:
+        if not value[0].lower().endswith(".bam") or value[0].lower().endswith(".sam"):
+            print_error('unrecognized format','Inputs must be 1 SAM (.sam|.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.')
+
+    else:
+        if value[0] == value[1]:
+            print_error('identical fastq files', 'The two input fastq files cannot be the same file')
+        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
+        for i in value:
+            if not re_ext.search(i):
+                print_error('unrecognized format', 'Inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.')
+    return value
