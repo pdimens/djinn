@@ -38,13 +38,13 @@ def sort(samtag,prefix,inputs,threads):
         )
 
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ {threads_sort} -O SAM -t {samtag}".split(),
+            f"samtools sort -@ {threads_sort -1} -O SAM -t {samtag}".split(),
             stdout = subprocess.PIPE,
             stdin = sam_import.stdout
         )
 
         sam_fastq = subprocess.run(
-            f'samtools fastq -@ {threads_fastq} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
+            f'samtools fastq -@ {threads_fastq -1} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
             stdin = sam_sort.stdout,
             stderr = subprocess.PIPE
         )
