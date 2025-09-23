@@ -20,7 +20,7 @@ def sort(samtag,prefix,inputs,threads):
 
     if len(inputs) == 1:
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ {threads} -O BAM -o {prefix}.bam -t {samtag} {inputs[0]}".split(),
+            f"samtools sort -@ {threads-1} -O BAM -o {prefix}.bam -t {samtag} {inputs[0]}".split(),
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE
         )
@@ -28,19 +28,23 @@ def sort(samtag,prefix,inputs,threads):
             print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools sort:\n\033[31m{sam_sort.stderr.decode()}\033[0m")
 
     else:
+        quotient, remainder = divmod(threads - 2, 2)
+        threads_sort = quotient + remainder
+        threads_fastq = quotient
+
         sam_import = subprocess.Popen(
             f'samtools import -@ 1 -T * {inputs[0]} {inputs[1]}'.split(),
             stdout = subprocess.PIPE
         )
 
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ {threads - 5} -O SAM -t {samtag}".split(),
+            f"samtools sort -@ {threads_sort} -O SAM -t {samtag}".split(),
             stdout = subprocess.PIPE,
             stdin = sam_import.stdout
         )
 
         sam_fastq = subprocess.run(
-            f'samtools fastq -@ 1 -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
+            f'samtools fastq -@ {threads_fastq} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
             stdin = sam_sort.stdout,
             stderr = subprocess.PIPE
         )
