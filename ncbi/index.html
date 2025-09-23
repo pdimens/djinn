@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811273026517">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811953272378">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
 
     <!-- Primary Meta Tags -->
-    <title>NCBI Storage | Djinn</title>
-    <meta name="title" content="NCBI Storage | Djinn">
+    <title> Convert to/from NCBI format | Djinn</title>
+    <meta name="title" content=" Convert to/from NCBI format | Djinn">
     <meta name="description" content="Convert linked-read data to unaligned BAM for NCBI subission">
 
     <!-- Canonical -->
@@ -20,24 +20,24 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pdimens.github.io/djinn/ncbi/">
-    <meta property="og:title" content="NCBI Storage | Djinn">
+    <meta property="og:title" content=" Convert to/from NCBI format | Djinn">
     <meta property="og:description" content="Convert linked-read data to unaligned BAM for NCBI subission">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://pdimens.github.io/djinn/ncbi/">
-    <meta property="twitter:title" content="NCBI Storage | Djinn">
+    <meta property="twitter:title" content=" Convert to/from NCBI format | Djinn">
     <meta property="twitter:description" content="Convert linked-read data to unaligned BAM for NCBI subission">
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.811273026517" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.811953272378" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811273026517" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811953272378" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811273026517" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811273026517" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811953272378" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811953272378" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -236,10 +236,10 @@
                                 <!-- Rendered if sidebar right is enabled -->
                                 <div id="retype-sidebar-right-toggle"></div>
                                 <!-- Page content  -->
-<doc-anchor-target id="ncbi-storage" class="break-words">
+<doc-anchor-target id="convert-tofrom-ncbi-format" class="break-words">
     <h1>
-        <doc-anchor-trigger class="header-anchor-trigger" to="#ncbi-storage">#</doc-anchor-trigger>
-        <span>NCBI Storage</span>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#convert-tofrom-ncbi-format">#</doc-anchor-trigger>
+        <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.126.64a1.748 1.748 0 0 1 1.75 0l8.25 4.762c.103.06.199.128.286.206a.75.75 0 0 1 .554.96c.023.113.035.23.035.35v3.332a.75.75 0 0 1-1.5 0V7.64l-7.75 4.474V22.36a.75.75 0 0 1-1.125.65l-8.75-5.052a1.75 1.75 0 0 1-.875-1.515V6.917c0-.119.012-.236.035-.35a.749.749 0 0 1 .554-.96c.088-.078.184-.146.286-.205L9.126.639Zm.875 10.173v.001l7.75-4.474-7.625-4.402a.248.248 0 0 0-.25 0L2.251 6.34Zm-8.5-3.175v8.803c0 .09.048.172.125.216l7.625 4.402v-8.947Z"/><path d="m16.617 17.5 2.895-2.702a.75.75 0 0 0-1.024-1.096l-4.285 4a.75.75 0 0 0 0 1.096l4.285 4a.75.75 0 1 0 1.024-1.096L16.617 19h6.633a.75.75 0 0 0 0-1.5h-6.633Z"/></g></g></svg> Convert to/from NCBI format</span>
     </h1>
 </doc-anchor-target>
 <div class="-mt-3 mb-12 flex flex-wrap text-sm text-gray-400 dark:text-dark-350 items-center print:justify-center">
@@ -252,6 +252,40 @@ which means any useful information in the read headers disappears. This applies 
 formats, where the barcode is encoded in the sequence header, and thus vanishes from the public archive when uploaded to
 NCBI. Obviously this isn&#x27;t great, so we propose a simple approach to solving this problem: uploading sequence data as
 unaligned BAM files (recommended).</p>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi PREFIX INPUTS...</code></pre>
+</doc-codeblock></div>
+<doc-anchor-target id="running-options">
+    <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#running-options">#</doc-anchor-trigger>
+        <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
+    </h2>
+</doc-anchor-target>
+<div class="table-wrapper scrollbar overflow-hidden">
+<table class="compact">
+<thead>
+<tr>
+<th style="text-align: left;">argument</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code v-pre>PREFIX</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> output filename prefix</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>INPUTS</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> FASTQ pair or SAM/BAM file</td>
+</tr>
+</tbody>
+</table>
+</div>
 <doc-anchor-target id="convert-to-unaligned-bam">
     <h2>
         <doc-anchor-trigger class="header-anchor-trigger" to="#convert-to-unaligned-bam">#</doc-anchor-trigger>
@@ -284,7 +318,7 @@ It&#x27;s possible NCBI will still strip the read name from alignment records.</
 </div>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">losslessly convert to unaligned BAM</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn to-ncbi file.R1.fq file.R2.fq &gt; out.bam
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi file.R1.fq file.R2.fq &gt; out.bam
 
 # is equivalent to #
 samtools import -O BAM -T &quot;*&quot; -1 file.R1.fq file.R2.fq &gt; out.bam</code></pre>
@@ -298,7 +332,7 @@ samtools import -O BAM -T &quot;*&quot; -1 file.R1.fq file.R2.fq &gt; out.bam</c
 <p>The reverse of this process is conspicuously named <code v-pre>from-ncbi</code>.</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">losslessly convert to fastq from unaligned BAM</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn from-ncbi PREFIX infile.bam
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi PREFIX infile.bam
 
 # is equivalent to #
 samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam</code></pre>
@@ -328,20 +362,20 @@ samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz in
                             
                                 <nav id="retype-nextprev" class="print:hidden flex mt-14">
                                     <div class="w-1/2">
-                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../convert_fastq/">
+                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../downsample/">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                                             <span>
                                                 <span class="block text-xs font-normal text-base-text-muted">Previous</span>
-                                                <span class="block mt-1">Convert FASTQ</span>
+                                                <span class="block mt-1">Downsample</span>
                                             </span>
                                         </a>
                                     </div>
                             
                                     <div class="w-1/2">
-                                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../standardize/">
+                                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../sort/">
                                             <span>
                                                 <span class="block text-xs font-normal text-right text-base-text-muted">Next</span>
-                                                <span class="block mt-1">Standard Format</span>
+                                                <span class="block mt-1">Sort</span>
                                             </span>
                                             <svg xmlns="http://www.w3.org/2000/svg" class="ml-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19.92 12.38a1 1 0 00-.22-1.09l-7-7a.996.996 0 10-1.41 1.41l5.3 5.3H5c-.55 0-1 .45-1 1s.45 1 1 1h11.59l-5.29 5.29a.996.996 0 000 1.41c.19.2.44.3.7.3s.51-.1.71-.29l7-7c.09-.09.16-.21.21-.33z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                                         </a>
