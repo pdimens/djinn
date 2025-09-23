@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811954836102">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811956767577">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -32,12 +32,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.811954836102" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.811956767577" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811954836102" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811956767577" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811954836102" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811954836102" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811956767577" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811956767577" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -283,6 +283,10 @@ unaligned BAM files (recommended).</p>
     <span>required</span>
 </span> FASTQ pair or SAM/BAM file</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code v-pre>--threads</code> <code v-pre>-t</code></td>
+<td style="text-align: left;">Number of threads to use (default: 10)</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -295,8 +299,10 @@ unaligned BAM files (recommended).</p>
 <p>If you didn&#x27;t already know, the BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
 BAM (or SAM) files can also have unaligned records in them, meaning you can quite easily convert a paired-end set of FASTQ
 files into a single unaligned BAM file without any data loss (and also free up disk space). The conversion is a simple
-<code v-pre>samtools</code> command in each direction (<code v-pre>samtools import</code> and <code v-pre>samtools fastq</code>), but as a convenience, Djinn provides a <code v-pre>to-ncbi</code>
-wrapper to accomplish this.</p>
+<code v-pre>samtools</code> command in each direction (<code v-pre>samtools import</code> and <code v-pre>samtools fastq</code>), but as a convenience, Djinn provides a
+<span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-full">
+    <span>ncbi</span>
+</span> wrapper to accomplish this.</p>
 <div class="flex mb-6">
     <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-primary"></div>
     <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
@@ -362,11 +368,11 @@ samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz in
                             
                                 <nav id="retype-nextprev" class="print:hidden flex mt-14">
                                     <div class="w-1/2">
-                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../downsample/">
+                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../downsample-copy/">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                                             <span>
                                                 <span class="block text-xs font-normal text-base-text-muted">Previous</span>
-                                                <span class="block mt-1">Downsample</span>
+                                                <span class="block mt-1">Extract</span>
                                             </span>
                                         </a>
                                     </div>

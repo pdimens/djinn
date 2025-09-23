@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811954836102">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.811956767577">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -32,12 +32,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.811954836102" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.811956767577" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811954836102" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.811956767577" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811954836102" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811954836102" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.811956767577" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.811956767577" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -249,7 +249,13 @@
 </div>
 
 <p>Sometimes you want/need linked-read data to be sorted by barcode.
-In order to accomplish this with Djinn, the barcode <strong>must</strong> be in a SAM tag (e.g. <code v-pre>BX</code>, <code v-pre>BC</code>) FASTQ or SAM/BAM format. If your barcodes aren&#x27;t in a SAM tag, consider using <code v-pre>djinn fastq</code> or <code v-pre>djinn standardize</code> to convert it into a compliant format.</p>
+In order to accomplish this with Djinn, the barcode <strong>must</strong> be in a SAM tag (e.g. <code v-pre>BX</code>, <code v-pre>BC</code>) FASTQ or SAM/BAM format. If your
+barcodes aren&#x27;t in a SAM tag, consider using <a href="../convert_fastq/" class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border hover:text-badge-primary-text-hover hover:bg-badge-primary-hover hover:border-badge-primary-border-hover transition-colors duration-200 ease-out h-6 px-2 text-xs rounded-full">
+    <span>fastq</span>
+</a> or
+<a href="../standardize/" class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border hover:text-badge-primary-text-hover hover:bg-badge-primary-hover hover:border-badge-primary-border-hover transition-colors duration-200 ease-out h-6 px-2 text-xs rounded-full">
+    <span>standardize</span>
+</a> to convert it into a compliant format.</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sort SAMTAG PREFIX INPUTS...</code></pre>
@@ -290,6 +296,10 @@ In order to accomplish this with Djinn, the barcode <strong>must</strong> be in 
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> FASTQ pair or SAM/BAM file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>--threads</code> <code v-pre>-t</code></td>
+<td style="text-align: left;">Number of threads to use (default: 10)</td>
 </tr>
 </tbody>
 </table>
