@@ -34,7 +34,7 @@ def sort(samtag,prefix,inputs,threads):
         )
 
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ {threads - 2} -O SAM -t {samtag}".split(),
+            f"samtools sort -@ {threads - 5} -O SAM -t {samtag}".split(),
             stdout = subprocess.PIPE,
             stdin = sam_import.stdout
         )

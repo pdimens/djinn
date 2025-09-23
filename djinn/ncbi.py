@@ -19,7 +19,7 @@ def ncbi(prefix, inputs, threads):
     ## checks and validations ##
     if len(inputs) == 1:
         fq = subprocess.run(
-            f'samtools fastq -@ {threads} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
+            f'samtools fastq -@ {threads-1} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
             stderr = subprocess.PIPE
         )
         if fq.returncode == 1:
@@ -27,7 +27,7 @@ def ncbi(prefix, inputs, threads):
 
     else:
         fq = subprocess.run(
-            f'samtools import -@ {threads} -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
+            f'samtools import -@ {threads-1} -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
             stderr = subprocess.PIPE      
         )
         if fq.returncode == 1:

@@ -77,7 +77,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
         bc_out.write("\n".join(barcodes))
 
     try:
-        pysam.view("-O", "BAM", "-@", f"{threads}", "-o", f"{prefix}.bam", "-h", "-D", f"BX:{prefix}.bc", bam, catch_stdout=False)
+        pysam.view("-O", "BAM", "-@", f"{threads-1}", "-o", f"{prefix}.bam", "-h", "-D", f"BX:{prefix}.bc", bam, catch_stdout=False)
     except pysam.SamtoolsError as e:
         print_error("samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
 
