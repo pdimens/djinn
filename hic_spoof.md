@@ -38,8 +38,10 @@ djinn hic-spoof a_felis_hic a_felis.R1.fq a_felis.R2.fq
 Reads with the same barcode will have their forward/reverse reads combinatorally
 rearranged to mimic the long-range data captured with HI-C. The resulting
 fastq files will be in TELLseq-ish format (original barcode appended
-to sequence ID).
+to sequence ID). The headers of the resulting FASTQ records will also have the last
+three numbers in the sequence ID randomized to avoid identical read headers.
 
-For example, if a barcode has two read pairs [1,1'] and [2,2'], the resulting "HI-C" data will be:
+Below is an example of the process. If a barcode has two read pairs associated with it pair 1 = [1,1'] and pair 2 = [2,2'], the resulting "HI-C" data will be:
 [1,1'], [1,2'], [2,1'], [2,2'].
+![Conceptual diagram of spoofing](static/hic_spoof.svg)
 
