@@ -20,7 +20,8 @@ The nature of HI-C data is such that paired-end reads in a FASTQ file are expect
 If you're familiar with what linked-reads are, you might think "oh hey, characteristic #2 sounds kind of similar
 to what we do". Well, we think so too-- reads with the same barcodes _should_ have originated from the same original
 strand of DNA. So, given how prevalent HI-C data is in genome assemblers (scaffolders specifically), couldn't we
-modify linked-read data to also conform to characteristic #1? We're sure interested in figuring that out.
+modify linked-read data to also conform to characteristic #1? We're sure interested in figuring that out. Use
+[!badge corners="pill" text="sort"](/sort.md) to sort input FASTQ files by barcode.
 
 ```bash usage
 djinn hic-spoof a_felis_hic a_felis.R1.fq a_felis.R2.fq

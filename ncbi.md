@@ -25,13 +25,15 @@ djinn ncbi PREFIX INPUTS...
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ pair or SAM/BAM file            |
+| `--threads` `-t`  | Number of threads to use (default: 10)                                        |
+
 
 ## Convert to unaligned BAM
 If you didn't already know, the BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
 BAM (or SAM) files can also have unaligned records in them, meaning you can quite easily convert a paired-end set of FASTQ
 files into a single unaligned BAM file without any data loss (and also free up disk space). The conversion is a simple
-`samtools` command in each direction (`samtools import` and `samtools fastq`), but as a convenience, Djinn provides a `to-ncbi`
-wrapper to accomplish this.
+`samtools` command in each direction (`samtools import` and `samtools fastq`), but as a convenience, Djinn provides a
+[!badge corners="pill" text="ncbi"] wrapper to accomplish this.
 
 !!! Barcode Placement
 **For this to work as intended** the barcodes should be stored in the `BX:Z` tag (or some other SAM-compliant tag e.g. `BC:Z`).

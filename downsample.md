@@ -18,7 +18,7 @@ djinn downsample -d <value> [-i] PREFIX INPUTS
 ```
 
 ```bash example | downsample bam file by 50% of the barcodes, ignoring invalid barcodes 
-djinn downsample -d 0.5 -b BC sample1.perc50 sample1.bam
+djinn downsample -t 8 -d 0.5 -b BC sample1.perc50 sample1.bam
 ```
 
 ```bash example | downsample fastq pair, including invalid barcodes
@@ -34,4 +34,5 @@ djinn downsample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
 | `--invalid` `-i`     | Include invalid barcodes in downsampling                                                 |
 | `--prefix` `-p`      | Prefix for output files                                                                              |
 | `--random-seed`      | Random seed for sampling [!badge variant="secondary" text="optional"]                                |
+| `--threads` `-t`     | Number of threads to use (BAM only, default: 10)                                                                              |
 
