@@ -7,6 +7,8 @@ icon: git-compare
 order: 10
 ---
 
+# :icon-git-compare: Convert between FASTQ formats
+
 In the event you need your linked-read data converted into a different linked-read format, we got you covered.
 We might disagree on the fragmented format landscape, but that doesn't mean you
 shouldn't be able to use your data how and where you want to. This command converts a paired-end read set of FASTQ
@@ -35,7 +37,7 @@ ATGTTTGCCGTAGTTT
 ```
 ===
 
-### :icon-move-to-end: Conversion targets
+## :icon-move-to-end: Conversion targets
 
 {.compact}
 | `TARGET`       | barcode format                                     | example                     |
@@ -46,7 +48,7 @@ ATGTTTGCCGTAGTTT
 | `tellseq`      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |
 
 
-### :icon-terminal: Running Options
+## :icon-terminal: Running Options
 {.compact}
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|

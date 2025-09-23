@@ -5,6 +5,8 @@ icon: desktop-download
 order: 99
 ---
 
+# :icon-desktop-download: Installing Djinn
+
 ## conda
 !!!warning
 **NOT YET AVAILABLE**
