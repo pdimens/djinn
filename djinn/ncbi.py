@@ -3,9 +3,10 @@ import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam
 
 @click.command(panel = "Conversion Commands", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def ncbi(prefix, inputs):
+def ncbi(prefix, inputs, threads):
     """
     FASTQ ⇆ BAM conversion for/from NCBI
 
@@ -18,7 +19,7 @@ def ncbi(prefix, inputs):
     ## checks and validations ##
     if len(inputs) == 1:
         fq = subprocess.run(
-            f'samtools fastq -@ 1 -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
+            f'samtools fastq -@ {threads} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
             stderr = subprocess.PIPE
         )
         if fq.returncode == 1:
@@ -26,7 +27,7 @@ def ncbi(prefix, inputs):
 
     else:
         fq = subprocess.run(
-            f'samtools import -@ 1 -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
+            f'samtools import -@ {threads} -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
             stderr = subprocess.PIPE      
         )
         if fq.returncode == 1:

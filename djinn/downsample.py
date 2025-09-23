@@ -51,7 +51,7 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
 
     compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
 
-def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float) -> None:
+def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, threads: float) -> None:
     if randseed:
         random.seed(randseed)
 
@@ -77,7 +77,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
         bc_out.write("\n".join(barcodes))
 
     try:
-        pysam.view("-O", "BAM", "-o", f"{prefix}.bam", "-h", "-D", f"BX:{prefix}.bc", bam, catch_stdout=False)
+        pysam.view("-O", "BAM", "-@", f"{threads}", "-o", f"{prefix}.bam", "-h", "-D", f"BX:{prefix}.bc", bam, catch_stdout=False)
     except pysam.SamtoolsError as e:
         print_error("samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
 
@@ -85,10 +85,11 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
 @click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
 #@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
+@click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use (BAM only)")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = click.Path(exists = False))
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def downsample(prefix, inputs, invalid, downsample, random_seed):
+def downsample(prefix, inputs, invalid, downsample, random_seed, threads):
     """
     Downsample data by barcode
     
@@ -112,6 +113,6 @@ def downsample(prefix, inputs, invalid, downsample, random_seed):
     | 0<`i`<1| keeps `i` proprotion of invalids in the sampling pool |
     """
     if len(inputs) == 1:
-        downsample_sam(inputs[0], prefix, downsample, invalid, random_seed)
+        downsample_sam(inputs[0], prefix, downsample, invalid, random_seed, threads)
     else:
         downsample_fastq(inputs[0], inputs[1], prefix, downsample, invalid, random_seed)

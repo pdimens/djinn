@@ -3,10 +3,11 @@ import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam
 
 @click.command(panel = "Other Tools", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/sort/")
+@click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('samtag', metavar="SAM_tag", type = str, required = True, nargs=1)
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
 @click.argument('inputs', type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, nargs=-1, callback = validate_fq_sam)
-def sort(samtag,prefix,inputs):
+def sort(samtag,prefix,inputs,threads):
     """
     Sort FASTQ/BAM by barcode
 
@@ -19,7 +20,7 @@ def sort(samtag,prefix,inputs):
 
     if len(inputs) == 1:
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ 2 -O BAM -o {prefix}.bam -t {samtag} {inputs[0]}".split(),
+            f"samtools sort -@ {threads} -O BAM -o {prefix}.bam -t {samtag} {inputs[0]}".split(),
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE
         )
@@ -33,7 +34,7 @@ def sort(samtag,prefix,inputs):
         )
 
         sam_sort = subprocess.Popen(
-            f"samtools sort -@ 1 -O SAM -t {samtag}".split(),
+            f"samtools sort -@ {threads - 2} -O SAM -t {samtag}".split(),
             stdout = subprocess.PIPE,
             stdin = sam_import.stdout
         )
