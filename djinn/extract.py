@@ -1,5 +1,4 @@
 import pysam
-import re
 import sys
 import rich_click as click
 from djinn.utils.file_ops import validate_fq_sam, which_linkedread
@@ -60,7 +59,7 @@ def extract_barcodes_fq(barcode_type: str, fq1: str, fq2: str, separate_invalid:
         return barcodes, invalid
     return barcodes
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
+@click.command(panel = "Other Tools", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def extract(inputs):
     '''

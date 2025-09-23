@@ -3,36 +3,30 @@
 import rich_click as click
 
 from djinn.downsample import downsample
-from djinn.extract import extract
 from djinn.fastq import fastq
+from djinn.extract import extract
 from djinn.hicspoof import hic_spoof
 from djinn.ncbi import ncbi
 from djinn.sort import sort
 from djinn.standardize import standardize
 
-click.rich_click.THEME = "quartz-modern"
-click.rich_click.USE_MARKDOWN = True
-click.rich_click.SHOW_ARGUMENTS = False
-click.rich_click.SHOW_METAVARS_COLUMN = False
-click.rich_click.APPEND_METAVARS_HELP = False
-click.rich_click.MAX_WIDTH = 75
-click.rich_click.REQUIRED_SHORT_STRING = ""
-click.rich_click.ERRORS_SUGGESTION = "Try the '--help' flag for more information."
-click.rich_click.COMMAND_GROUPS = {
-    "djinn":
-        [
-            {
-                "name": "Conversion Commands",
-                "commands": ["fastq", "hic-spoof", "ncbi", "standardize"]
-            },
-            {
-                "name": "Other Tools",
-                "commands": ["downsample", "extract", "sort"]
-            }
-        ]
-}
+config = click.RichHelpConfiguration(
+    max_width=80,
+    theme = "magenta2-slim",
+    use_markdown=True,
+    show_arguments=False,
+    style_options_panel_border = "magenta",
+    style_commands_panel_border = "blue",
+    style_option_default= "dim",
+    style_deprecated="dim red",
+    options_table_column_types = ["opt_long", "opt_short", "help"],
+    options_table_help_sections = ["required", "help", "default"]
+)
 
 @click.group(options_metavar='', context_settings={"help_option_names" : []})
+@click.command_panel("Conversion Commands")
+@click.command_panel("Other Tools")
+@click.rich_config(config)
 @click.version_option("0.0.0", prog_name="djinn", hidden = True)
 def cli():
     """
@@ -42,7 +36,7 @@ def cli():
 cli.add_command(downsample)
 cli.add_command(extract)
 cli.add_command(fastq)
+cli.add_command(standardize)
 cli.add_command(hic_spoof)
 cli.add_command(ncbi)
 cli.add_command(sort)
-cli.add_command(standardize)

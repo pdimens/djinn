@@ -1,10 +1,10 @@
-import rich_click as click
 import os
 import pysam
+import rich_click as click
 from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
 from djinn.utils.fq_tools import FQRecord, FQPool
 
-@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.command(panel = "Conversion Commands", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), nargs=2)
 def hic_spoof(prefix, inputs):

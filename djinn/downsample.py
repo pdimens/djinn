@@ -1,7 +1,6 @@
 from itertools import zip_longest
 import random
 import pysam
-import re
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
 from djinn.utils.file_ops import compress_fq, print_error, validate_fq_sam, which_linkedread
@@ -82,7 +81,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
     except pysam.SamtoolsError as e:
         print_error("samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
 
-@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
+@click.command(panel = "Other Tools", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
 @click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
 #@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
