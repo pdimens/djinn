@@ -43,20 +43,20 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn fastq result stlfr test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-tellseq
         shell: micromamba-shell {0}
         run: |
           djinn fastq result tellseq test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-10x
         shell: micromamba-shell {0}
         run: |
           djinn fastq result 10x test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
 
       - name: to-ncbi
         shell: micromamba-shell {0}
@@ -67,8 +67,8 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn ncbi result test/test.bam &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
 
       - name: std-bam
         shell: micromamba-shell {0}
@@ -79,15 +79,15 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn standardize -s tellseq result test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
 
       - name: downsample-fastq
         shell: micromamba-shell {0}
         run: |
           djinn downsample -d 2 result test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
       - name: downsample-bam
         shell: micromamba-shell {0}
         run: |
@@ -105,8 +105,8 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn sort BX result test/test.bam &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
       - name: sort-bam
         shell: micromamba-shell {0}
         run: |
@@ -117,5 +117,5 @@ jobs:
         shell: micromamba-shell {0}
         run: |
           djinn hic-spoof result test/*.gz &&\
-          zcat result.R1.fq.gz &&\
-          zcat result.R2.fq.gz
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz

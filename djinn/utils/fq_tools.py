@@ -113,7 +113,8 @@ class FQPool():
         '''
         Create all possible unique combinations of forward and reverse reads and write to open file
         connections r1_filecon and r2_filecon. Randomizes the last three numbers in the sequence ID
-        in the process to make sure reads don't have identical read headers.
+        in the process to make sure reads don't have identical read headers. Resets the self.forward,
+        self.reverse and self.barcode when done.
         '''
         n = range(len(self.forward))
         for i in product(n, n):
@@ -130,3 +131,4 @@ class FQPool():
             # write to file
             r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
             r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
+        self.__init__()
