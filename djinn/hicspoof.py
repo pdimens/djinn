@@ -1,3 +1,4 @@
+import subprocess
 import os
 import pysam
 import rich_click as click
@@ -32,8 +33,10 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs):
     with (
         pysam.FastxFile(inputs[0], persist=True) as R1,
         pysam.FastxFile(inputs[1], persist=True) as R2,
-        open(f"{prefix}.R1.fq", "w") as R1_out,
-        open(f"{prefix}.R2.fq", "w") as R2_out
+        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
+        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
+        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
     ):
         _fqpool = FQPool()
         for r1,r2 in zip(R1,R2):
@@ -42,17 +45,17 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs):
             # if invalid barcode, do not add to pool, just convert and write
             if (not _r1.valid or not _r2.valid):
                 if invalid:
-                    R1_out.write(str(_r1.convert("tellseq", _r1.barcode)))
-                    R2_out.write(str(_r2.convert("tellseq", _r1.barcode)))
+                    gz_r1.stdin.write(str(_r1.convert("tellseq", _r1.barcode)).encode("utf-8"))
+                    gz_r2.stdin.write(str(_r2.convert("tellseq", _r1.barcode)).encode("utf-8"))
             elif not _fqpool.barcode or _r1.barcode == _fqpool.barcode:
                 # barcode pool is empty/new, so add new read pair and barcode
                 _fqpool.barcode = _r1.barcode
                 _fqpool.add(_r1, _r2)
             elif _fqpool.barcode and _r1.barcode != _fqpool.barcode:
                 # it's a new barcode, do the spoofing, writing to the out files and resetting the pool
-                _fqpool.spoof_hic(R1_out, R2_out, singletons, max_pairs)
+                _fqpool.spoof_hic(gz_r1, gz_r2, singletons, max_pairs)
                 _fqpool.add(_r1, _r2)
         # convert last record pool manually, since it would be missed by the loop
-        _fqpool.spoof_hic(R1_out, R2_out, singletons, max_pairs)
+        _fqpool.spoof_hic(gz_r1, gz_r2, singletons, max_pairs)
 
-    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
+#    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")

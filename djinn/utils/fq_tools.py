@@ -96,8 +96,10 @@ class FQPool():
     def __init__(self):
         """Initialize a FASTQ record pool for a specific barcode bc"""
         self.barcode: str = ""
-        self.forward = []
-        self.reverse = []
+        self.forward: list[FQRecord] = []
+        self.reverse: list[FQRecord] = []
+        self.r1_cache: list[bytes] = []
+        self.r2_cache: list[bytes] = []
 
     def add(self, fq1, fq2) -> None:
         '''add a read pair to the pool'''
@@ -123,8 +125,8 @@ class FQPool():
         n_reads = len(self.forward)
         n_choice = min(n, n_reads)
         if n_reads == 1 and singletons:
-            r1_filecon.write(str(self.forward[0].convert("tellseq", self.forward[0].barcode)))
-            r2_filecon.write(str(self.reverse[0].convert("tellseq", self.forward[0].barcode)))
+            r1_filecon.stdin.write(str(self.forward[0].convert("tellseq", self.forward[0].barcode)).encode("utf-8"))
+            r2_filecon.stdin.write(str(self.reverse[0].convert("tellseq", self.forward[0].barcode)).encode("utf-8"))
         elif n_choice == 1:
             # only 1 pair requested, make sure it doesn't pair with itself
             all_idx = set(range(n_reads))
@@ -132,12 +134,17 @@ class FQPool():
                 options = list(all_idx.difference([idx]))
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
                 self.randomize_id(idx)
-                r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
-                r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
+                self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
+                self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
+            r1_filecon.stdin.write(b"".join(self.r1_cache))
+            r2_filecon.stdin.write(b"".join(self.r2_cache))
         else:
             for idx,r1 in enumerate(self.forward):
                 for r2 in random.sample(self.reverse, k = n_choice):
                     self.randomize_id(idx)
-                    r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
-                    r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
+                    self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
+                    self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
+            r1_filecon.stdin.write(b"".join(self.r1_cache))
+            r2_filecon.stdin.write(b"".join(self.r2_cache))
+
         self.__init__()
