@@ -40,7 +40,6 @@ def hic_spoof(prefix, inputs):
             _r1 = FQRecord(r1, True, from_, 0)
             _r2 = FQRecord(r2, False, from_, 0)
             # if invalid barcode, do not add to pool, just convert and write
-            print(_r1.barcode, _r1.valid)
             if not _r1.valid or not _r2.valid:
                 R1_out.write(str(_r1.convert("tellseq", _r1.barcode)))
                 R2_out.write(str(_r2.convert("tellseq", _r1.barcode)))
