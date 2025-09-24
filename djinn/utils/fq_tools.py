@@ -1,4 +1,3 @@
-from itertools import product
 import random
 from djinn.utils.barcodes import STLFR_INVALID_RX
 
@@ -96,7 +95,7 @@ class FQRecord():
 class FQPool():
     def __init__(self):
         """Initialize a FASTQ record pool for a specific barcode bc"""
-        self.barcode = None
+        self.barcode: str = ""
         self.forward = []
         self.reverse = []
 
@@ -116,19 +115,16 @@ class FQPool():
         in the process to make sure reads don't have identical read headers. Resets the self.forward,
         self.reverse and self.barcode when done.
         '''
-        n = range(len(self.forward))
-        for i in product(n, n):
-            r1 = self.forward[i[0]]
-            seq_id = r1.id.split(":")[:4]
-            for j in range(3):
-                seq_id.append(self.randomize_id())
-            # combine all the random additions
-            seq_id = ":".join(seq_id)
-            r1.id = seq_id
-            
-            r2 = self.reverse[i[1]]
-            r2.id = seq_id
-            # write to file
-            r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
-            r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
+        for r1 in self.forward:
+            for r2 in self.reverse:
+                seq_id = r1.id.split(":")[:4]
+                for _ in range(3):
+                    seq_id.append(self.randomize_id())
+                # combine all the random additions
+                seq_id = ":".join(seq_id)
+                r1.id = seq_id
+                r2.id = seq_id
+                # write to file
+                r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
+                r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
         self.__init__()

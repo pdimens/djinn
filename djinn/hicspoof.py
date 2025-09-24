@@ -44,7 +44,8 @@ def hic_spoof(prefix, inputs):
                 R1_out.write(str(_r1.convert("tellseq", _r1.barcode)))
                 R2_out.write(str(_r2.convert("tellseq", _r1.barcode)))
             elif not _fqpool.barcode or _r1.barcode == _fqpool.barcode:
-                # empty barcode pool, add new read pair
+                # barcode pool is empty/new, so add new read pair and barcode
+                _fqpool.barcode = _r1.barcode
                 _fqpool.add(_r1, _r2)
             elif _fqpool.barcode and _r1.barcode != _fqpool.barcode:
                 # it's a new barcode, do the spoofing, writing to the out files and resetting the pool
