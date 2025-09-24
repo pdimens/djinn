@@ -1,5 +1,9 @@
 ![djinn logo](https://raw.githubusercontent.com/pdimens/djinn/refs/heads/docs/static/djinn.png)
 
+[![GitHub Release](https://img.shields.io/github/v/release/pdimens/djinn?style=for-the-badge&logo=anaconda&logoColor=ffffff)](https://github.com/pdimens/djinn/releases)
+[![documentation badge](https://img.shields.io/badge/read%20the-docs-fbab3a?style=for-the-badge&logo=quicklook&logoColor=ffffff)](https://pdimens.github.io/djinn)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/pdimens/djinn/tests.yaml?style=for-the-badge&logo=cachet&logoColor=ffffff)](https://www.youtube.com/watch?v=F1qdBPlK9M4)
+
 Modify and convert linked-read FASTQ and BAM files
 
 ## Extract barcodes
