@@ -104,27 +104,40 @@ class FQPool():
         self.forward.append(fq1)
         self.reverse.append(fq2)
 
-    def randomize_id(self) -> str:
-        '''return a random stringified integer between 1000 and 99999'''
-        return str(random.randint(1000, 99999))
+    def randomize_id(self, idx: int) -> None:
+        '''replace sequence ID from self.forward[idx] with 3 random integers between 1000 and 99999 replacing the ones in the last 3 positions'''
+        seq_id = self.forward[idx].id.split(":")[:4]
+        for _ in range(3):
+            seq_id.append(str(random.randint(1000, 99999)))
+        seq_id = ":".join(seq_id)
+        self.forward[idx].id = seq_id
+        self.reverse[idx].id = seq_id
 
-    def spoof_hic(self, r1_filecon, r2_filecon):
+    def spoof_hic(self, r1_filecon, r2_filecon, singletons:bool, n: int) -> None:
         '''
         Create all possible unique combinations of forward and reverse reads and write to open file
         connections r1_filecon and r2_filecon. Randomizes the last three numbers in the sequence ID
         in the process to make sure reads don't have identical read headers. Resets the self.forward,
         self.reverse and self.barcode when done.
         '''
-        for r1 in self.forward:
-            for r2 in self.reverse:
-                seq_id = r1.id.split(":")[:4]
-                for _ in range(3):
-                    seq_id.append(self.randomize_id())
-                # combine all the random additions
-                seq_id = ":".join(seq_id)
-                r1.id = seq_id
-                r2.id = seq_id
-                # write to file
+        n_reads = len(self.forward)
+        n_choice = min(n, n_reads)
+        if n_reads == 1 and singletons:
+            r1_filecon.write(str(self.forward[0].convert("tellseq", self.forward[0].barcode)))
+            r2_filecon.write(str(self.reverse[0].convert("tellseq", self.forward[0].barcode)))
+        elif n_choice == 1:
+            # only 1 pair requested, make sure it doesn't pair with itself
+            all_idx = set(range(n_reads))
+            for idx,r1 in enumerate(self.forward):
+                options = list(all_idx.difference([idx]))
+                r2 = self.reverse[random.sample(options, k = 1)[0]]
+                self.randomize_id(idx)
                 r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
                 r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
+        else:
+            for idx,r1 in enumerate(self.forward):
+                for r2 in random.sample(self.reverse, k = n_choice):
+                    self.randomize_id(idx)
+                    r1_filecon.write(str(r1.convert("tellseq", r1.barcode)))
+                    r2_filecon.write(str(r2.convert("tellseq", r1.barcode)))
         self.__init__()
