@@ -47,7 +47,10 @@ def fastq(target,fq1,fq2,prefix, barcodes):
     if from_ == "none":
         from_ = "10x"
         barcodelist = validate_barcodefile(barcodes)
-        BX.length = len(barcodelist[0])
+        BX.length = 0
+        for e in barcodelist:
+            BX.length += len(e)
+            break
 
     # create the output directory in case it doesn't exist
     if os.path.dirname(prefix):
