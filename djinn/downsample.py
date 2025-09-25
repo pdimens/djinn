@@ -30,7 +30,7 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
         downsample = int(downsample)
         if n_bc < downsample:
             print_error("not enough barcodes", f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
-    barcodes = barcodes[:downsample-1]
+    barcodes = barcodes[:downsample]
     with open(f"{prefix}.bc", "w") as bc_out:
         bc_out.write("\n".join(barcodes))
 
@@ -80,7 +80,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
         downsample = int(downsample)
         if n_bc < downsample:
             print_error("not enough barcodes", f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
-    barcodes = barcodes[:downsample-1]
+    barcodes = barcodes[:downsample]
     with open(f"{prefix}.bc", "w") as bc_out:
         bc_out.write("\n".join(barcodes))
 
