@@ -47,8 +47,8 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
     with (
         pysam.FastxFile(r1_fastq, persist=False) as R1,
         pysam.FastxFile(r2_fastq, persist=False) as R2,
-        open(f"{prefix}.R1.fq", "w") as R1_out,
-        open(f"{prefix}.R2.fq", "w") as R2_out,
+        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
+        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
         subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
         subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
 
@@ -70,7 +70,7 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                         bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                     # overwrite the record's barcode
                     _r1.barcode = BX.inventory[_r1.barcode]
-                writer.add(_r1.convert("standard", _r1.barcode), None)
+                writer.add(_r1.convert2("standard", _r1.barcode), None)
                 #R1_out.write(str(_r1.convert("standard", _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, BC_TYPE, 0)
@@ -87,7 +87,7 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                         bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                     # overwrite the record's barcode
                     _r2.barcode = BX.inventory[_r2.barcode]
-                writer.add(None, _r1.convert("standard", _r1.barcode))
+                writer.add(None, _r1.convert2("standard", _r1.barcode))
                 #R2_out.write(str(_r2.convert("standard", _r2.barcode)))
         writer.write()
     if style:

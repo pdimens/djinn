@@ -30,15 +30,15 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
         downsample = int(downsample)
         if n_bc < downsample:
             print_error("not enough barcodes", f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
-    barcodes = barcodes[:downsample]
+    barcodes = barcodes[:downsample-1]
     with open(f"{prefix}.bc", "w") as bc_out:
         bc_out.write("\n".join(barcodes))
 
     with (
         pysam.FastxFile(fq1, persist=False) as R1,
         pysam.FastxFile(fq2, persist=False) as R2,
-        open(f"{prefix}.R1.fq", "w") as R1_out,
-        open(f"{prefix}.R2.fq", "w") as R2_out,
+        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
+        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
         subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
         subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2
     ):
@@ -80,7 +80,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
         downsample = int(downsample)
         if n_bc < downsample:
             print_error("not enough barcodes", f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
-    barcodes = barcodes[:downsample]
+    barcodes = barcodes[:downsample-1]
     with open(f"{prefix}.bc", "w") as bc_out:
         bc_out.write("\n".join(barcodes))
 
