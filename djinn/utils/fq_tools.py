@@ -1,4 +1,5 @@
 import random
+import subprocess
 from djinn.utils.barcodes import STLFR_INVALID_RX
 
 class FQRecord():
@@ -92,16 +93,44 @@ class FQRecord():
         return self
 
 
+class CachedWriter():
+    def __init__(self, gz_R1: subprocess.Popen, gz_R2: subprocess.Popen, cachemax: int = 5000):
+        """
+        A cache for R1 and R2 reads that writes to open gzip subprocesses when the cache exceeds 5000 entries
+        """
+        self.r1_cache: list[bytes] = []
+        self.r2_cache: list[bytes] = []
+        self.max: int = cachemax
+        self.writer_r1 = gz_R1.stdin
+        self.writer_r2 = gz_R2.stdin
+
+    def add(self, r1: FQRecord, r2: FQRecord):
+        """add r1 and r2 reads as bytestrings to the cache, write and empty cache when cache exceeds seld.max reads"""
+        self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
+        self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
+        if len(self.r1_cache) >= self.max or len(self.r2_cache) >= self.max:
+            self.write()
+
+    def write(self):
+        """writes r1 and r2 cache to self.writer_r* and empties caches"""
+        self.writer_r1.write(b"".join(self.r1_cache))
+        self.writer_r2.write(b"".join(self.r2_cache))
+        self.r1_cache = []
+        self.r2_cache = []
+
+
 class FQPool():
-    def __init__(self):
-        """Initialize a FASTQ record pool for a specific barcode bc"""
+    def __init__(self, gz1, gz2, cachemax: int = 5000):
+        """
+        Initialize a FASTQ record pool for a given barcode. The pools track barcode and the reads therein.
+        Passes things off to a CachedWriter() when spoofing all the reads of a barcode
+        """
         self.barcode: str = ""
         self.forward: list[FQRecord] = []
         self.reverse: list[FQRecord] = []
-        self.r1_cache: list[bytes] = []
-        self.r2_cache: list[bytes] = []
+        self.writer = CachedWriter(gz1, gz2, cachemax)
 
-    def add(self, fq1, fq2) -> None:
+    def add(self, fq1: FQRecord, fq2: FQRecord) -> None:
         '''add a read pair to the pool'''
         self.forward.append(fq1)
         self.reverse.append(fq2)
@@ -113,9 +142,8 @@ class FQPool():
             seq_id.append(str(random.randint(1000, 99999)))
         seq_id = ":".join(seq_id)
         self.forward[idx].id = seq_id
-        self.reverse[idx].id = seq_id
 
-    def spoof_hic(self, r1_filecon, r2_filecon, singletons:bool, n: int) -> None:
+    def spoof_hic(self, singletons:bool, n: int) -> None:
         '''
         Create all possible unique combinations of forward and reverse reads and write to open file
         connections r1_filecon and r2_filecon. Randomizes the last three numbers in the sequence ID
@@ -125,26 +153,23 @@ class FQPool():
         n_reads = len(self.forward)
         n_choice = min(n, n_reads)
         if n_reads == 1 and singletons:
-            r1_filecon.stdin.write(str(self.forward[0].convert("tellseq", self.forward[0].barcode)).encode("utf-8"))
-            r2_filecon.stdin.write(str(self.reverse[0].convert("tellseq", self.forward[0].barcode)).encode("utf-8"))
+            self.writer.add(self.forward[0], self.reverse[0])
         elif n_choice == 1:
             # only 1 pair requested, make sure it doesn't pair with itself
             all_idx = set(range(n_reads))
-            for idx,r1 in enumerate(self.forward):
+            for idx in range(len(self.forward)):
                 options = list(all_idx.difference([idx]))
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
                 self.randomize_id(idx)
-                self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
-                self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
-            r1_filecon.stdin.write(b"".join(self.r1_cache))
-            r2_filecon.stdin.write(b"".join(self.r2_cache))
+                self.writer.add(self.forward[idx], r2)
         else:
-            for idx,r1 in enumerate(self.forward):
+            for idx in range(len(self.forward)):
                 for r2 in random.sample(self.reverse, k = n_choice):
                     self.randomize_id(idx)
-                    self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
-                    self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
-            r1_filecon.stdin.write(b"".join(self.r1_cache))
-            r2_filecon.stdin.write(b"".join(self.r2_cache))
+                    self.writer.add(self.forward[idx], r2)
 
-        self.__init__()
+        # reset the pool, keeping the writer open
+        self.barcode = ""
+        self.forward = []
+        self.reverse = []
+

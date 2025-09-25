@@ -60,7 +60,7 @@ def safe_read(file_path: str):
     except gzip.BadGzipFile:
         return open(file_path, 'r')
 
-def validate_barcodefile(infile: str, limit: int = 60) -> set:
+def validate_barcodefile(infile: str, limit: int = 60) -> set[str]:
     """
     Does validations to make sure it's one length, within a length limit, one per line, and nucleotides. Returns
     a list of the barcodes.

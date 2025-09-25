@@ -6,12 +6,13 @@ from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
 from djinn.utils.fq_tools import FQRecord, FQPool
 
 @click.command(panel = "Conversion Commands", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Include invalid barcodes in the output")
 @click.option("-s", "--singletons", is_flag=True, default=False, help = "Include singleton barcodes in the output")
 @click.option("-m", "--max-pairs", type=click.IntRange(min=1, max_open=True), default=1, show_default=True, help = "Maximum number of R2 reads per R1 per barcode")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), nargs=2)
-def hic_spoof(prefix, inputs, invalid, singletons, max_pairs):
+def hic_spoof(prefix, inputs, invalid, singletons, max_pairs, cache_size):
     """
     Convert linked-read fastq into fake HI-C data
 
@@ -38,24 +39,22 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs):
         subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
         subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
     ):
-        _fqpool = FQPool()
+        _fqpool = FQPool(gz_r1, gz_r2, cachemax=cache_size)
         for r1,r2 in zip(R1,R2):
             _r1 = FQRecord(r1, True, from_, 0)
             _r2 = FQRecord(r2, False, from_, 0)
             # if invalid barcode, do not add to pool, just convert and write
             if (not _r1.valid or not _r2.valid):
                 if invalid:
-                    gz_r1.stdin.write(str(_r1.convert("tellseq", _r1.barcode)).encode("utf-8"))
-                    gz_r2.stdin.write(str(_r2.convert("tellseq", _r1.barcode)).encode("utf-8"))
+                    _fqpool.writer.add(_r1, _r2)
             elif not _fqpool.barcode or _r1.barcode == _fqpool.barcode:
                 # barcode pool is empty/new, so add new read pair and barcode
                 _fqpool.barcode = _r1.barcode
                 _fqpool.add(_r1, _r2)
             elif _fqpool.barcode and _r1.barcode != _fqpool.barcode:
                 # it's a new barcode, do the spoofing, writing to the out files and resetting the pool
-                _fqpool.spoof_hic(gz_r1, gz_r2, singletons, max_pairs)
+                _fqpool.spoof_hic(singletons, max_pairs)
                 _fqpool.add(_r1, _r2)
         # convert last record pool manually, since it would be missed by the loop
-        _fqpool.spoof_hic(gz_r1, gz_r2, singletons, max_pairs)
-
-#    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
+        _fqpool.spoof_hic(singletons, max_pairs)
+        _fqpool.writer.write()
