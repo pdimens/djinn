@@ -23,9 +23,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.4158951"
-     inkscape:cx="228.47738"
-     inkscape:cy="53.323159"
+     inkscape:zoom="2.8317902"
+     inkscape:cx="31.782016"
+     inkscape:cy="136.4861"
      inkscape:window-width="1600"
      inkscape:window-height="840"
      inkscape:window-x="0"
@@ -217,13 +217,13 @@
          y="362.73508">2'</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.9436px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#eaeaea;fill-opacity:1;stroke:none;stroke-width:0.612794;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.9436px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#d4d4d4;fill-opacity:1;stroke:none;stroke-width:0.612794;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
        x="-13.982435"
        y="355.1059"
        id="text21"><tspan
          sodipodi:role="line"
          id="tspan21"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.9436px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;fill:#eaeaea;fill-opacity:1;stroke:none;stroke-width:0.612788"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.9436px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;fill:#d4d4d4;fill-opacity:1;stroke:none;stroke-width:0.612788"
          x="-13.982435"
          y="355.1059">read pair</tspan></text>
     <g
@@ -553,12 +553,12 @@
        id="path39"
        sodipodi:nodetypes="cc" />
     <path
-       style="fill:none;fill-opacity:1;stroke:#eaeaea;stroke-width:0.211;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;fill-opacity:1;stroke:#d4d4d4;stroke-width:0.211;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
        d="m -19.073953,354.57339 h 4.668804"
        id="path40"
        sodipodi:nodetypes="cc" />
     <path
-       style="fill:none;fill-opacity:1;stroke:#eaeaea;stroke-width:0.211;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;fill-opacity:1;stroke:#d4d4d4;stroke-width:0.211;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
        d="m -5.018369,354.57339 h 4.66880399"
        id="path41"
        sodipodi:nodetypes="cc" />
