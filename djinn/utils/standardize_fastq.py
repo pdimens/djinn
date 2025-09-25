@@ -2,11 +2,12 @@
 from itertools import zip_longest
 import os
 import pysam
-from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
+import subprocess
+from djinn.utils.file_ops import print_error, which_linkedread
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
-from djinn.utils.fq_tools import FQRecord
+from djinn.utils.fq_tools import FQRecord, CachedWriter
 
-def std_fastq(prefix, r1_fastq, r2_fastq, style):
+def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size: int):
     """
     Move barcodes to `BX`/`VX` sequence header tags
 
@@ -48,7 +49,11 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
         pysam.FastxFile(r2_fastq, persist=False) as R2,
         open(f"{prefix}.R1.fq", "w") as R1_out,
         open(f"{prefix}.R2.fq", "w") as R2_out,
+        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+
     ):
+        writer = CachedWriter(gz_r1, gz_r2, cache_size)
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, BC_TYPE, 0)
@@ -65,7 +70,8 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                         bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                     # overwrite the record's barcode
                     _r1.barcode = BX.inventory[_r1.barcode]
-                R1_out.write(str(_r1.convert("standard", _r1.barcode)))
+                writer.add(_r1.convert("standard", _r1.barcode), None)
+                #R1_out.write(str(_r1.convert("standard", _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, BC_TYPE, 0)
                 if style:
@@ -81,8 +87,8 @@ def std_fastq(prefix, r1_fastq, r2_fastq, style):
                         bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                     # overwrite the record's barcode
                     _r2.barcode = BX.inventory[_r2.barcode]
-                R2_out.write(str(_r2.convert("standard", _r2.barcode)))
+                writer.add(None, _r1.convert("standard", _r1.barcode))
+                #R2_out.write(str(_r2.convert("standard", _r2.barcode)))
+        writer.write()
     if style:
         bc_out.close()
-    # bgzip compress the output, one file per thread
-    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")

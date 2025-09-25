@@ -1,18 +1,20 @@
 from itertools import zip_longest
 import os
 import pysam
+import subprocess
 import rich_click as click
-from djinn.utils.file_ops import compress_fq, print_error, validate_barcodefile, which_linkedread
-from djinn.utils.fq_tools import FQRecord
+from djinn.utils.file_ops import print_error, validate_barcodefile, which_linkedread
+from djinn.utils.fq_tools import FQRecord, CachedWriter
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(panel = "Conversion Commands", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert_fastq/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('fq2', metavar="R2_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
-def fastq(target,fq1,fq2,prefix, barcodes):
+def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
     """
     Convert between linked-read FASTQ formats
     
@@ -59,10 +61,13 @@ def fastq(target,fq1,fq2,prefix, barcodes):
     with (
         pysam.FastxFile(fq1, persist=False) as R1,
         pysam.FastxFile(fq2, persist=False) as R2,
-        open(f"{prefix}.R1.fq", "w") as R1_out,
-        open(f"{prefix}.R2.fq", "w") as R2_out,
+        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
+        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
+        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
         open(f"{prefix}.bc", "w") as bc_out
     ):
+        writer = CachedWriter(gz_r1, gz_r2, cache_size)
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, from_, BX.length)
@@ -78,7 +83,8 @@ def fastq(target,fq1,fq2,prefix, barcodes):
                         BX.inventory[_r1.barcode] = BX.invalid
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                 converted_bc = BX.inventory[_r1.barcode]
-                R1_out.write(str(_r1.convert(to_, converted_bc)))
+                writer.add(_r1.convert(to_, converted_bc), None)
+                #R1_out.write(str(_r1.convert(to_, converted_bc)))
             if r2:
                 if r1 and from_ == "10x":
                     _bc = _r1.barcode
@@ -100,6 +106,6 @@ def fastq(target,fq1,fq2,prefix, barcodes):
                         BX.inventory[_r2.barcode] = BX.invalid
                     bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                 converted_bc = BX.inventory[_r2.barcode]
-                R2_out.write(str(_r2.convert(to_, converted_bc)))
-    
-    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
+                writer.add(None, _r2.convert(to_, converted_bc))
+                #R2_out.write(str(_r2.convert(to_, converted_bc)))
+        writer.write()

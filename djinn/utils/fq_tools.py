@@ -1,3 +1,4 @@
+import copy
 import random
 import subprocess
 from djinn.utils.barcodes import STLFR_INVALID_RX
@@ -68,12 +69,15 @@ class FQRecord():
                 bc = _id.pop(-1)
                 self.id = "#".join(_id)
             self.id = self.id.rstrip(":")
-    
+    def copy(self):
+        return copy.deepcopy(self)
+
     def __str__(self):
         """Default string method returns a formatted FASTQ record."""
         return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n"
 
     def convert(self, _type: str, BC: str):
+        """In-place mutating conversion"""
         if _type == "10x":
             if self.forward:
                 self.seq = BC + self.seq
@@ -92,23 +96,47 @@ class FQRecord():
                 self.comment = "\t".join(_comments)
         return self
 
+    def convert2(self, _type: str, BC: str):
+        """Non-mutating conversion that just returns a new, converted record"""
+        new_rec = self.copy()
+        if _type == "10x":
+            if new_rec.forward:
+                new_rec.seq = BC + new_rec.seq
+                new_rec.qual = "F"*len(BC) + new_rec.qual
+            new_rec.id += f" {new_rec.illumina_new}"
+        elif _type == "tellseq":
+            new_rec.id += f":{BC} {new_rec.illumina_new}"
+        elif _type == "stlfr":
+            new_rec.id += f"#{BC} {new_rec.illumina_new}"
+        elif _type in ["haplotagging", "standard"]:
+            new_rec.id += new_rec.illumina_old
+            if not new_rec.comment:
+                new_rec.comment = f"VX:i:{int(new_rec.valid)}\tBX:Z:{BC}"
+            else:
+                _comments = [i for i in new_rec.comment.split() if not i.startswith("BX") and not i.startswith("VX")] + [f"VX:i:{int(new_rec.valid)}", f"BX:Z:{BC}"]
+                new_rec.comment = "\t".join(_comments)
+        return new_rec
+
 
 class CachedWriter():
     def __init__(self, gz_R1: subprocess.Popen, gz_R2: subprocess.Popen, cachemax: int = 5000):
         """
-        A cache for R1 and R2 reads that writes to open gzip subprocesses when the cache exceeds 5000 entries
+        A cache for R1 and R2 reads that writes to the stdin of an open gzip subprocesses when the cache exceeds cachemax entries
         """
         self.r1_cache: list[bytes] = []
         self.r2_cache: list[bytes] = []
-        self.max: int = cachemax
         self.writer_r1 = gz_R1.stdin
         self.writer_r2 = gz_R2.stdin
+        self.cachemax: int = cachemax
 
-    def add(self, r1: FQRecord, r2: FQRecord):
+    def add(self, r1: FQRecord|None, r2: FQRecord|None):
         """add r1 and r2 reads as bytestrings to the cache, write and empty cache when cache exceeds seld.max reads"""
-        self.r1_cache.append(str(r1.convert("tellseq", r1.barcode)).encode("utf-8"))
-        self.r2_cache.append(str(r2.convert("tellseq", r1.barcode)).encode("utf-8"))
-        if len(self.r1_cache) >= self.max or len(self.r2_cache) >= self.max:
+        if r1:
+            self.r1_cache.append(str(r1).encode("utf-8"))
+        if r2:
+            self.r2_cache.append(str(r2).encode("utf-8"))
+
+        if len(self.r1_cache) >= self.cachemax or len(self.r2_cache) >= self.cachemax:
             self.write()
 
     def write(self):
@@ -153,7 +181,10 @@ class FQPool():
         n_reads = len(self.forward)
         n_choice = min(n, n_reads)
         if n_reads == 1 and singletons:
-            self.writer.add(self.forward[0], self.reverse[0])
+            self.writer.add(
+                self.forward[0].convert2("tellseq", self.forward[0].barcode),
+                self.reverse[0].convert2("tellseq", self.reverse[0].barcode)
+            )
         elif n_choice == 1:
             # only 1 pair requested, make sure it doesn't pair with itself
             all_idx = set(range(n_reads))
@@ -161,13 +192,19 @@ class FQPool():
                 options = list(all_idx.difference([idx]))
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
                 self.randomize_id(idx)
-                self.writer.add(self.forward[idx], r2)
+                self.writer.add(
+                    self.forward[idx].convert2("tellseq", self.forward[idx].barcode),
+                    r2.convert2("tellseq", r2.barcode)
+                )
         else:
             for idx in range(len(self.forward)):
                 for r2 in random.sample(self.reverse, k = n_choice):
                     self.randomize_id(idx)
-                    self.writer.add(self.forward[idx], r2)
-
+                    r2.id = self.forward[idx].id
+                    self.writer.add(
+                        self.forward[idx].convert2("tellseq", self.forward[idx].barcode),
+                        r2.convert2("tellseq", r2.barcode)
+                    )
         # reset the pool, keeping the writer open
         self.barcode = ""
         self.forward = []

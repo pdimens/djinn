@@ -1,12 +1,13 @@
 from itertools import zip_longest
 import random
 import pysam
+import subprocess
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
 from djinn.utils.file_ops import compress_fq, print_error, validate_fq_sam, which_linkedread
-from djinn.utils.fq_tools import FQRecord
+from djinn.utils.fq_tools import FQRecord, CachedWriter
 
-def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float) -> None:
+def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, cache_size: int) -> None:
     from_ = which_linkedread(fq1)
 
     if randseed:
@@ -38,18 +39,25 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
         pysam.FastxFile(fq2, persist=False) as R2,
         open(f"{prefix}.R1.fq", "w") as R1_out,
         open(f"{prefix}.R2.fq", "w") as R2_out,
+        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2
     ):
+        writer = CachedWriter(gz_r1, gz_r2, cache_size)
+
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, from_, 0)
                 if _r1.barcode in barcodes:
-                    R1_out.write(str(_r1.convert(from_, _r1.barcode)))
+                    writer.add(_r1.convert(from_, _r1.barcode), None)
+                    #R1_out.write(str(_r1.convert(from_, _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, from_, 0)
                 if _r2.barcode in barcodes:
-                    R2_out.write(str(_r2.convert(from_, _r2.barcode)))
-
-    compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
+                    writer.add(None, _r2.convert(from_, _r2.barcode))
+                    #R2_out.write(str(_r2.convert(from_, _r2.barcode)))
+        # flush the cache
+        writer.write()
+    #compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
 
 def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, threads: float) -> None:
     if randseed:
@@ -82,6 +90,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
         print_error("samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")
 
 @click.command(panel = "Other Tools", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
 @click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
 #@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
@@ -89,7 +98,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = click.Path(exists = False))
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def downsample(prefix, inputs, invalid, downsample, random_seed, threads):
+def downsample(prefix, inputs, invalid, downsample, random_seed, threads, cache_size):
     """
     Downsample data by barcode
     
@@ -115,4 +124,4 @@ def downsample(prefix, inputs, invalid, downsample, random_seed, threads):
     if len(inputs) == 1:
         downsample_sam(inputs[0], prefix, downsample, invalid, random_seed, threads)
     else:
-        downsample_fastq(inputs[0], inputs[1], prefix, downsample, invalid, random_seed)
+        downsample_fastq(inputs[0], inputs[1], prefix, downsample, invalid, random_seed, cache_size)

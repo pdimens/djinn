@@ -4,10 +4,11 @@ from djinn.utils.standardize_fastq import std_fastq
 from djinn.utils.file_ops import validate_fq_sam
 
 @click.command(panel = "Conversion Commands", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
 @click.argument('inputs', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_fq_sam, nargs=-1)
-def standardize(prefix, inputs, style):
+def standardize(prefix, inputs, style, cache_size):
     """
     Move barcodes to `BX`/`VX` sequence header tags
 
@@ -27,5 +28,5 @@ def standardize(prefix, inputs, style):
     if len(inputs) == 1:
         std_bam(prefix, inputs[0], style)
     else:
-        std_fastq(prefix, inputs[0], inputs[0], style)
+        std_fastq(prefix, inputs[0], inputs[0], style, cache_size)
 

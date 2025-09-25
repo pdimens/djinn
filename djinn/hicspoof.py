@@ -46,7 +46,10 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs, cache_size):
             # if invalid barcode, do not add to pool, just convert and write
             if (not _r1.valid or not _r2.valid):
                 if invalid:
-                    _fqpool.writer.add(_r1, _r2)
+                    _fqpool.writer.add(
+                        _r1.convert2("tellseq", _r1.barcode),
+                        _r2.convert2("tellseq", _r2.barcode)
+                    )
             elif not _fqpool.barcode or _r1.barcode == _fqpool.barcode:
                 # barcode pool is empty/new, so add new read pair and barcode
                 _fqpool.barcode = _r1.barcode
