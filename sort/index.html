@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.812137584341">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.812138578932">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -32,12 +32,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.812137584341" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.812138578932" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.812137584341" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.812138578932" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.812137584341" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.812137584341" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.812138578932" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.812138578932" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -250,7 +250,7 @@
 
 <p>Sometimes you want/need linked-read data to be sorted by barcode.
 In order to accomplish this with Djinn, the barcode <strong>must</strong> be in a SAM tag (e.g. <code v-pre>BX</code>, <code v-pre>BC</code>) FASTQ or SAM/BAM format. If your
-barcodes aren&#x27;t in a SAM tag, consider using <a href="../convert_fastq/" class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border hover:text-badge-primary-text-hover hover:bg-badge-primary-hover hover:border-badge-primary-border-hover transition-colors duration-200 ease-out h-6 px-2 text-xs rounded-full">
+barcodes aren&#x27;t in a SAM tag, consider using <a href="/convert_fastq.md" class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border hover:text-badge-primary-text-hover hover:bg-badge-primary-hover hover:border-badge-primary-border-hover transition-colors duration-200 ease-out h-6 px-2 text-xs rounded-full">
     <span>fastq</span>
 </a> or
 <a href="../standardize/" class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border hover:text-badge-primary-text-hover hover:bg-badge-primary-hover hover:border-badge-primary-border-hover transition-colors duration-200 ease-out h-6 px-2 text-xs rounded-full">
@@ -280,16 +280,16 @@ barcodes aren&#x27;t in a SAM tag, consider using <a href="../convert_fastq/" cl
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code v-pre>PREFIX</code></td>
-<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
-    <span>required</span>
-</span> output filename prefix</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code v-pre>SAMTAG</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> 2-letter name of the SAM tag storing the barcode (e.g. <code v-pre>BC</code> or <code v-pre>BX</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>PREFIX</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> output filename prefix</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code v-pre>INPUTS</code></td>
@@ -298,7 +298,7 @@ barcodes aren&#x27;t in a SAM tag, consider using <a href="../convert_fastq/" cl
 </span> FASTQ pair or SAM/BAM file</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code v-pre>--threads</code> <code v-pre>-t</code></td>
+<td style="text-align: left;"><code v-pre>-t</code> <code v-pre>--threads</code></td>
 <td style="text-align: left;">Number of threads to use (default: 10)</td>
 </tr>
 </tbody>
