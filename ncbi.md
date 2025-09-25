@@ -25,7 +25,7 @@ djinn ncbi PREFIX INPUTS...
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ pair or SAM/BAM file            |
-| `--threads` `-t`  | Number of threads to use (default: 10)                                        |
+| `-t` `--threads`  | Number of threads to use (default: 10)                                        |
 
 
 ## Convert to unaligned BAM

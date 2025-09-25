@@ -30,7 +30,8 @@ The styles are given as:
 |:---------------|:-------------------------------------------------------------------------------------|
 | `PREFIX`       | [!badge variant="info" text="required"] prefix for output filenames                  |
 | `INPUTS`       | [!badge variant="info" text="required"] input FASTQ file pair or SAM/BAM file        |
-| `-s`/`--style` | change barcode style in the output FASTQ: [`10x`,`haplotagging`, `stlfr`, `tellseq`] |
+| `-s` `--style` | change barcode style in the output FASTQ: [`10x`,`haplotagging`, `stlfr`, `tellseq`] |
+| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="info" text="FASTQ"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 
 
 
@@ -68,9 +69,3 @@ djinn standardize [--style] PREFIX R1.fq R2.fq
 ```bash example | standardize a fastq pair and change the barcodes to stLFR style
 djinn standardize --style stflr myotis_stlfr myotis.R1.fq.gz myotis.R2.fq.gz
 ```
-
-----
-
-:::info Useless trivia
-The original version of this command was written while I was waiting at a mechanic shop for car repairs. During development, it was called `lr-switcheroo`.
-:::

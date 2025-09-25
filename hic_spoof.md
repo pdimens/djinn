@@ -33,6 +33,9 @@ djinn hic-spoof a_felis_hic a_felis.R1.fq a_felis.R2.fq
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ file pair **must be sorted by barcode**  |
+| `-i` `--invalid`    | [!badge variant="warning" text="unreleased"] include invalids in the output, but don't spoof  |
+| `-s` `--singletons` | [!badge variant="warning" text="unreleased"] include singletons in the output  |
+| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 
 
 ## What it does
@@ -41,8 +44,6 @@ rearranged to mimic the long-range data captured with HI-C. The resulting
 fastq files will be in TELLseq-ish format (original barcode appended
 to sequence ID). The headers of the resulting FASTQ records will also have the last
 three numbers in the sequence ID randomized to avoid identical read headers.
-
-Below is an example of the process. If a barcode has two read pairs associated with it pair 1 = [1,1'] and pair 2 = [2,2'], the resulting "HI-C" data will be:
-[1,1'], [1,2'], [2,1'], [2,2'].
+Below is an example of the process. 
 ![Conceptual diagram of spoofing](static/hic_spoof.svg)
 

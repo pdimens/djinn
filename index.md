@@ -25,3 +25,6 @@ FASTQ data into an unaligned BAM file, with the linked-read barcode stored in th
 Djinn provides a convenience function to convert to (or from) this format, although it's really just
 a basic `samtools` command.
 
+:::info Useless trivia
+The original version of these general functions was written while waiting for repairs at a mechanic shop and it was called `lr-switcheroo`.
+:::

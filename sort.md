@@ -26,8 +26,8 @@ djinn sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
 {.compact}
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
-| `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `SAMTAG`          | [!badge variant="info" text="required"] 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
+| `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ pair or SAM/BAM file           |
-| `--threads` `-t`     | Number of threads to use (default: 10)                                                  |
+| `-t` `--threads`  | Number of threads to use (default: 10)                                                  |
 
