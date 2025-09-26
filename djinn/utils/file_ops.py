@@ -99,7 +99,7 @@ def which_linkedread(fastq: str, n: int = 100) -> str:
         for i,record in enumerate(fq, 1):
             if i > n:
                 break
-            if record.comment and HAPLOTAGGING_RX_.search(record.comment):
+            if record.comment and HAPLOTAGGING_RX.search(record.comment):
                 return "haplotagging"
             if STLFR_RX.search(record.name):
                 return "stlfr"

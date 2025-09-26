@@ -39,8 +39,8 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
         pysam.FastxFile(fq2, persist=False) as R2,
         open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
         open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2
+        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2
     ):
         writer = CachedWriter(gz_r1, gz_r2, cache_size)
 

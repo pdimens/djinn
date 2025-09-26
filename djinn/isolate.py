@@ -1,31 +1,85 @@
 #! /usr/bin/env python
 
+from itertools import zip_longest
 import os
-import subprocess
-import sys
 import rich_click as click
+import pysam
 import subprocess
-from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread_sam
+from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread, which_linkedread_sam
+from djinn.utils.fq_tools import FQRecord, CachedWriter
 
 @click.command(panel = "Other Tools", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/isolate/")
-@click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
+@click.option("-i", "--invalid", is_flag=True, default=False, help = "Separately output records with invalid barcodes")
+@click.option("-t", "--threads", type = click.IntRange(min = 2, max_open=True), default=4, show_default=True, help = "Number of threads to use")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def ncbi(prefix, inputs, threads):
+def isolate(prefix, inputs, cache_size, invalid, threads):
     '''
-    Split a BAM file or FASTQ file pair to isolate valid barcodes from invalid barcodes.
+    Isolate valid-barcoded reads from invalid ones.
     '''
+    lr_type = which_linkedread_sam(inputs[0]) if len(inputs) == 1 else which_linkedread(inputs[0])
+
     if len(inputs) == 1:
-        lr_type = which_linkedread_sam(inputs[0])
         if lr_type == "none":
             print_error("unrecognized barcode format", f"The values associated with BX tags in {inputs[0]} do not conform to haplotagging, stlfr, or tellseq/10X formats.")
+        invalid_rx = "[BX]!~"
         if lr_type == "haplotagging":
-            invalid = "[BX]!~\"[ABCD]0{2,4}\""
+            invalid_rx += '"[ABCD]0{2,4}"'
         elif lr_type == "stlfr":
-            invalid = "[BX]!~\"^0_|_0_|_0$\""
+            invalid_rx += '"^0_|_0_|_0$"'
         elif lr_type == "tellseq":
-            invalid = "[BX]!~\"[N]\""
+            invalid_rx += '"[N]"'
 
+        _inv = f"--unoutput {prefix}.invalid.bam" if invalid else ""
         subprocess.run(
-            (f"samtools view -@ {threads-1} -O BAM -e '{invalid}' --unoutput " + f"{prefix}.invalid.bam {inputs[0]}").split()            
+            (f"samtools view -@ {threads-1} -O BAM -e '{invalid_rx}' {_inv} {inputs[0]}").split()            
         )
+    else:
+        with (
+            pysam.FastxFile(inputs[0], persist=False) as R1,
+            pysam.FastxFile(inputs[1], persist=False) as R2,
+            open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
+            open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
+            subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+            subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+            open(f"{prefix}.invalid.R1.fq.gz", "wb") as R1_inv,
+            open(f"{prefix}.invalid.R2.fq.gz", "wb") as R2_inv,
+            subprocess.Popen("gzip", stdout= R1_inv, stdin=subprocess.PIPE) as gz_r1_inv,
+            subprocess.Popen("gzip", stdout= R2_inv, stdin=subprocess.PIPE) as gz_r2_inv,
+        ):
+            writer = CachedWriter(gz_r1, gz_r2, cache_size)
+            writer_inv = CachedWriter(gz_r1_inv, gz_r2_inv, cache_size)
+            for r1,r2 in zip_longest(R1,R2):
+                if r1:
+                    _r1 = FQRecord(r1, True, lr_type, 0)
+                    _r1.convert(lr_type, _r1.barcode)
+                    if not _r1.valid:
+                        if invalid:
+                            writer_inv.add(_r1, None)
+                        # spoof the record as None so it doesn't get written to valid
+                        _r1 = None
+                else:
+                    _r1 = None
+                
+                if r2:
+                    _r2 = FQRecord(r2, False, lr_type, 0)
+                    _r2.convert(lr_type, _r2.barcode)
+                    if not _r2.valid:
+                        if invalid:
+                            writer_inv.add(None, _r2)
+                        _r2 = None
+                else:
+                    _r2 = None
+
+                writer.add(_r1, _r2)
+
+            # dump remaining
+            writer.write()
+            if invalid:
+                writer_inv.write()
+        
+        if not invalid:
+            # remove the empty invalid files if those weren't requested
+            os.unlink(f"{prefix}.invalid.R1.fq.gz")
+            os.unlink(f"{prefix}.invalid.R2.fq.gz")

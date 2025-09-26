@@ -49,9 +49,8 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
         pysam.FastxFile(r2_fastq, persist=False) as R2,
         open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
         open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
-
+        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
     ):
         writer = CachedWriter(gz_r1, gz_r2, cache_size)
         for r1,r2 in zip_longest(R1,R2):

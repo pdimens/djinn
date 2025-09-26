@@ -36,8 +36,8 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs, cache_size):
         pysam.FastxFile(inputs[1], persist=True) as R2,
         open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
         open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
     ):
         _fqpool = FQPool(gz_r1, gz_r2, cachemax=cache_size)
         for r1,r2 in zip(R1,R2):

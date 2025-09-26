@@ -63,8 +63,8 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
         pysam.FastxFile(fq2, persist=False) as R2,
         open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
         open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip -c".split(), stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip -c".split(), stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
+        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
         open(f"{prefix}.bc", "w") as bc_out
     ):
         writer = CachedWriter(gz_r1, gz_r2, cache_size)
