@@ -10,8 +10,8 @@ order: 10
 # :icon-fold-down: Downsample data by barcode
 
 While downsampling (subsampling) FASTQ and BAM files is relatively simple with tools such as `awk`, `samtools`, `seqtk`, `seqkit`, etc.,
-[!badge corners="pill" text="downsample"] allows you to downsample a BAM file (or paired-end FASTQ) _by barcodes_. That means you can
-keep all the reads associated with `d` number of barcodes or `-d` fraction of barcodes (e.g. `-d 0.5` will downsample to 50% of all barcodes).
+[!badge corners="pill" text="downsample"] allows you to downsample a BAM file (or paired-end FASTQ) **by barcodes**. That means you can
+keep all the reads associated with `-d` number of barcodes or fraction of barcodes (e.g. `-d 0.5` will downsample to 50% of all barcodes).
 
 ```bash usage
 djinn downsample -d <value> [-i] PREFIX INPUTS
