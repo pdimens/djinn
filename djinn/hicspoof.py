@@ -5,7 +5,7 @@ import rich_click as click
 from djinn.utils.file_ops import compress_fq, print_error, which_linkedread
 from djinn.utils.fq_tools import FQRecord, FQPool
 
-@click.command(panel = "Conversion Commands", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.command(panel = "File Conversions", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Include invalid barcodes in the output")
 @click.option("-s", "--singletons", is_flag=True, default=False, help = "Include singleton barcodes in the output")

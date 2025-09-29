@@ -25,7 +25,7 @@ config = click.RichHelpConfiguration(
 )
 
 @click.group(options_metavar='', context_settings={"help_option_names" : []})
-@click.command_panel("Conversion Commands")
+@click.command_panel("File Conversions")
 @click.command_panel("Other Tools")
 @click.rich_config(config)
 @click.version_option("0.0.0", prog_name="djinn", hidden = True)

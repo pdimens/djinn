@@ -7,7 +7,7 @@ from djinn.utils.file_ops import print_error, validate_barcodefile, which_linked
 from djinn.utils.fq_tools import FQRecord, CachedWriter
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
-@click.command(panel = "Conversion Commands", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/fastq/")
+@click.command(panel = "File Conversions", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/fastq/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)

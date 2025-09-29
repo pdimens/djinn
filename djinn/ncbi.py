@@ -2,7 +2,7 @@ import rich_click as click
 import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam
 
-@click.command(panel = "Conversion Commands", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.command(panel = "File Conversions", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
