@@ -192,6 +192,7 @@ class FQPool():
                 options = list(all_idx.difference([idx]))
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
                 self.randomize_id(idx)
+                r2.id = self.forward[idx].id
                 self.writer.add(
                     self.forward[idx].convert2("tellseq", self.forward[idx].barcode),
                     r2.convert2("tellseq", r2.barcode)
