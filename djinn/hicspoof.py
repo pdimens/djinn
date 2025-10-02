@@ -32,14 +32,14 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs, cache_size):
         os.makedirs(os.path.dirname(prefix), exist_ok=True)
 
     with (
-        pysam.FastxFile(inputs[0], persist=True) as R1,
-        pysam.FastxFile(inputs[1], persist=True) as R2,
+        pysam.FastxFile(inputs[0], persist=False) as R1,
+        pysam.FastxFile(inputs[1], persist=False) as R2,
         open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
         open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
         subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
         subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
     ):
-        _fqpool = FQPool(gz_r1, gz_r2, cachemax=cache_size)
+        _fqpool = FQPool(gz_r1, gz_r2,singletons, max_pairs, cachemax=cache_size)
         for r1,r2 in zip(R1,R2):
             _r1 = FQRecord(r1, True, from_, 0)
             _r2 = FQRecord(r2, False, from_, 0)
@@ -50,14 +50,16 @@ def hic_spoof(prefix, inputs, invalid, singletons, max_pairs, cache_size):
                         _r1.convert2("tellseq", _r1.barcode),
                         _r2.convert2("tellseq", _r2.barcode)
                     )
-            elif not _fqpool.barcode or _r1.barcode == _fqpool.barcode:
-                # barcode pool is empty/new, so add new read pair and barcode
+            elif not _fqpool.barcode or (_r1.barcode == _fqpool.barcode):
+                # barcode pool is new or the barcode is same as existing, so add new read pair and barcode
                 _fqpool.barcode = _r1.barcode
                 _fqpool.add(_r1, _r2)
             elif _fqpool.barcode and _r1.barcode != _fqpool.barcode:
                 # it's a new barcode, do the spoofing, writing to the out files and resetting the pool
-                _fqpool.spoof_hic(singletons, max_pairs)
+                _fqpool.spoof_hic()
+                # assosicate the new barcode and add the reads to the pool
+                _fqpool.barcode = _r1.barcode
                 _fqpool.add(_r1, _r2)
         # convert last record pool manually, since it would be missed by the loop
-        _fqpool.spoof_hic(singletons, max_pairs)
+        _fqpool.spoof_hic()
         _fqpool.writer.write()

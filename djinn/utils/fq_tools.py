@@ -148,7 +148,7 @@ class CachedWriter():
 
 
 class FQPool():
-    def __init__(self, gz1, gz2, cachemax: int = 5000):
+    def __init__(self, gz1, gz2, singletons: bool, max_pairs: int, cachemax: int = 5000):
         """
         Initialize a FASTQ record pool for a given barcode. The pools track barcode and the reads therein.
         Passes things off to a CachedWriter() when spoofing all the reads of a barcode
@@ -157,54 +157,61 @@ class FQPool():
         self.forward: list[FQRecord] = []
         self.reverse: list[FQRecord] = []
         self.writer = CachedWriter(gz1, gz2, cachemax)
+        self.singletons = singletons
+        self.max_pairs = max_pairs
 
     def add(self, fq1: FQRecord, fq2: FQRecord) -> None:
         '''add a read pair to the pool'''
         self.forward.append(fq1)
         self.reverse.append(fq2)
 
-    def randomize_id(self, idx: int) -> None:
-        '''replace sequence ID from self.forward[idx] with 3 random integers between 1000 and 99999 replacing the ones in the last 3 positions'''
-        seq_id = self.forward[idx].id.split(":")[:4]
+    def randomize_id(self, rec: FQRecord) -> FQRecord:
+        '''
+        Replace sequence ID from rec with 3 random integers between 1000 and 99999 replacing the ones in the last 3 positions
+        Returns a new FQRecord
+        '''
+        seq_id = rec.id.split(":")[:4]
         for _ in range(3):
             seq_id.append(str(random.randint(1000, 99999)))
         seq_id = ":".join(seq_id)
-        self.forward[idx].id = seq_id
+        rec.id = seq_id
+        return rec
 
-    def spoof_hic(self, singletons:bool, n: int) -> None:
+    def spoof_hic(self) -> None:
         '''
-        Create all possible unique combinations of forward and reverse reads and write to open file
+        Create all self.max_pairs unique combinations of forward and reverse reads and write to open file
         connections r1_filecon and r2_filecon. Randomizes the last three numbers in the sequence ID
         in the process to make sure reads don't have identical read headers. Resets the self.forward,
         self.reverse and self.barcode when done.
         '''
         n_reads = len(self.forward)
-        n_choice = min(n, n_reads)
-        if n_reads == 1 and singletons:
-            self.writer.add(
-                self.forward[0].convert2("tellseq", self.forward[0].barcode),
-                self.reverse[0].convert2("tellseq", self.reverse[0].barcode)
-            )
+        n_choice = min(self.max_pairs, n_reads)
+        if n_reads == 1:
+            if self.singletons:
+                self.writer.add(
+                    self.forward[0].convert2("tellseq", self.barcode),
+                    self.reverse[0].convert2("tellseq", self.barcode)
+                )
         elif n_choice == 1:
             # only 1 pair requested, make sure it doesn't pair with itself
             all_idx = set(range(n_reads))
             for idx in range(len(self.forward)):
                 options = list(all_idx.difference([idx]))
+                r1 = self.randomize_id(self.forward[idx])
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
-                self.randomize_id(idx)
-                r2.id = self.forward[idx].id
+                r2.id = r1.id
                 self.writer.add(
-                    self.forward[idx].convert2("tellseq", self.forward[idx].barcode),
-                    r2.convert2("tellseq", r2.barcode)
+                    r1.convert2("tellseq", self.barcode),
+                    r2.convert2("tellseq", self.barcode)
                 )
         else:
-            for idx in range(len(self.forward)):
+            for _r1 in self.forward:
                 for r2 in random.sample(self.reverse, k = n_choice):
-                    self.randomize_id(idx)
-                    r2.id = self.forward[idx].id
+                    r1 = self.randomize_id(_r1)
+                    r2.id = _r1.id
                     self.writer.add(
-                        self.forward[idx].convert2("tellseq", self.forward[idx].barcode),
-                        r2.convert2("tellseq", r2.barcode)
+                        r1.convert2("tellseq", self.barcode),
+                        r2.convert2("tellseq", self.barcode)
                     )
         # reset the pool, keeping the writer open
         self.barcode = ""
