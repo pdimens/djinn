@@ -4,7 +4,7 @@ import pysam
 import subprocess
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
-from djinn.utils.file_ops import compress_fq, print_error, validate_fq_sam, which_linkedread
+from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread
 from djinn.utils.fq_tools import FQRecord, CachedWriter
 
 def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, cache_size: int) -> None:
@@ -48,16 +48,15 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
             if r1:
                 _r1 = FQRecord(r1, True, from_, 0)
                 if _r1.barcode in barcodes:
-                    writer.add(_r1.convert(from_, _r1.barcode), None)
+                    writer.queue(_r1.convert(from_, _r1.barcode), None)
                     #R1_out.write(str(_r1.convert(from_, _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, from_, 0)
                 if _r2.barcode in barcodes:
-                    writer.add(None, _r2.convert(from_, _r2.barcode))
+                    writer.queue(None, _r2.convert(from_, _r2.barcode))
                     #R2_out.write(str(_r2.convert(from_, _r2.barcode)))
         # flush the cache
         writer.write()
-    #compress_fq(f"{prefix}.R1.fq", f"{prefix}.R2.fq")
 
 def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, threads: float) -> None:
     if randseed:

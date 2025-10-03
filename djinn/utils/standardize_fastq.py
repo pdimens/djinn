@@ -69,7 +69,7 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                         bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                     # overwrite the record's barcode
                     _r1.barcode = BX.inventory[_r1.barcode]
-                writer.add(_r1.convert2("standard", _r1.barcode), None)
+                writer.queue(_r1.convert2("standard", _r1.barcode), None)
                 #R1_out.write(str(_r1.convert("standard", _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, BC_TYPE, 0)
@@ -86,7 +86,7 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                         bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                     # overwrite the record's barcode
                     _r2.barcode = BX.inventory[_r2.barcode]
-                writer.add(None, _r1.convert2("standard", _r1.barcode))
+                writer.queue(None, _r1.convert2("standard", _r1.barcode))
                 #R2_out.write(str(_r2.convert("standard", _r2.barcode)))
         writer.write()
     if style:

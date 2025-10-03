@@ -83,7 +83,7 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
                         BX.inventory[_r1.barcode] = BX.invalid
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                 converted_bc = BX.inventory[_r1.barcode]
-                writer.add(_r1.convert2(to_, converted_bc), None)
+                writer.queue(_r1.convert2(to_, converted_bc), None)
                 #R1_out.write(str(_r1.convert(to_, converted_bc)))
             if r2:
                 if r1 and from_ == "10x":
@@ -106,6 +106,6 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
                         BX.inventory[_r2.barcode] = BX.invalid
                     bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                 converted_bc = BX.inventory[_r2.barcode]
-                writer.add(None, _r2.convert2(to_, converted_bc))
+                writer.queue(None, _r2.convert2(to_, converted_bc))
                 #R2_out.write(str(_r2.convert(to_, converted_bc)))
         writer.write()

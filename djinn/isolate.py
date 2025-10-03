@@ -56,7 +56,7 @@ def isolate(prefix, inputs, cache_size, invalid, threads):
                     _r1.convert(lr_type, _r1.barcode)
                     if not _r1.valid:
                         if invalid:
-                            writer_inv.add(_r1, None)
+                            writer_inv.queue(_r1, None)
                         # spoof the record as None so it doesn't get written to valid
                         _r1 = None
                 else:
@@ -67,12 +67,12 @@ def isolate(prefix, inputs, cache_size, invalid, threads):
                     _r2.convert(lr_type, _r2.barcode)
                     if not _r2.valid:
                         if invalid:
-                            writer_inv.add(None, _r2)
+                            writer_inv.queue(None, _r2)
                         _r2 = None
                 else:
                     _r2 = None
 
-                writer.add(_r1, _r2)
+                writer.queue(_r1, _r2)
 
             # dump remaining
             writer.write()
