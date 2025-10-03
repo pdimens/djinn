@@ -5,7 +5,7 @@ import rich_click as click
 from djinn.downsample import downsample
 from djinn.fastq import fastq
 from djinn.extract import extract
-from djinn.hicspoof import hic_spoof
+from djinn.spoof_hic import spoof_hic
 from djinn.isolate import isolate
 from djinn.ncbi import ncbi
 from djinn.sort import sort
@@ -38,7 +38,7 @@ cli.add_command(downsample)
 cli.add_command(extract)
 cli.add_command(fastq)
 cli.add_command(standardize)
-cli.add_command(hic_spoof)
+cli.add_command(spoof_hic)
 cli.add_command(isolate)
 cli.add_command(ncbi)
 cli.add_command(sort)

@@ -129,8 +129,8 @@ class CachedWriter():
         self.writer_r2 = gz_R2.stdin
         self.cachemax: int = cachemax
 
-    def add(self, r1: FQRecord|None, r2: FQRecord|None):
-        """add r1 and r2 reads as bytestrings to the cache, write and empty cache when cache exceeds seld.max reads"""
+    def queue(self, r1: FQRecord|None, r2: FQRecord|None):
+        """add r1 and r2 reads as bytestrings to the cache, write and empty cache when cache exceeds self.max reads"""
         if r1:
             self.r1_cache.append(str(r1).encode("utf-8"))
         if r2:
@@ -147,7 +147,7 @@ class CachedWriter():
         self.r2_cache = []
 
 
-class FQPool():
+class FQBarcodePool():
     def __init__(self, gz1, gz2, singletons: bool, max_pairs: int, cachemax: int = 5000):
         """
         Initialize a FASTQ record pool for a given barcode. The pools track barcode and the reads therein.
@@ -160,8 +160,19 @@ class FQPool():
         self.singletons = singletons
         self.max_pairs = max_pairs
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.spoof_hic()
+        self.writer.write()
+
     def add(self, fq1: FQRecord, fq2: FQRecord) -> None:
-        '''add a read pair to the pool'''
+        '''add a read pair to the pool, if the barcode is different than the existing one, will trigger spoofing and reset the pool'''
+        if self.barcode and fq1.barcode != self.barcode:
+            self.spoof_hic()
+
+        self.barcode = fq1.barcode
         self.forward.append(fq1)
         self.reverse.append(fq2)
 
@@ -188,7 +199,7 @@ class FQPool():
         n_choice = min(self.max_pairs, n_reads)
         if n_reads == 1:
             if self.singletons:
-                self.writer.add(
+                self.writer.queue(
                     self.forward[0].convert2("tellseq", self.barcode),
                     self.reverse[0].convert2("tellseq", self.barcode)
                 )
@@ -200,7 +211,7 @@ class FQPool():
                 r1 = self.randomize_id(self.forward[idx])
                 r2 = self.reverse[random.sample(options, k = 1)[0]]
                 r2.id = r1.id
-                self.writer.add(
+                self.writer.queue(
                     r1.convert2("tellseq", self.barcode),
                     r2.convert2("tellseq", self.barcode)
                 )
@@ -209,7 +220,7 @@ class FQPool():
                 for r2 in random.sample(self.reverse, k = n_choice):
                     r1 = self.randomize_id(_r1)
                     r2.id = _r1.id
-                    self.writer.add(
+                    self.writer.queue(
                         r1.convert2("tellseq", self.barcode),
                         r2.convert2("tellseq", self.barcode)
                     )
