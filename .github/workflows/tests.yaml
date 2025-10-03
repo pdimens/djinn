@@ -113,9 +113,9 @@ jobs:
           djinn sort BX result test/test.bam &&\
           samtools view result.bam
 
-      - name: hic-spoof
+      - name: spoof-hic
         shell: micromamba-shell {0}
         run: |
-          djinn hic-spoof result test/*.gz &&\
+          djinn spoof-hic result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
