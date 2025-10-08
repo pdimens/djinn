@@ -83,3 +83,4 @@ def isolate(prefix, inputs, cache_size, invalid, threads):
             # remove the empty invalid files if those weren't requested
             os.unlink(f"{prefix}.invalid.R1.fq.gz")
             os.unlink(f"{prefix}.invalid.R2.fq.gz")
+
