@@ -1,3 +1,4 @@
+import os
 import rich_click as click
 from djinn.utils.standardize_bam import std_bam
 from djinn.utils.standardize_fastq import std_fastq
@@ -25,6 +26,10 @@ def standardize(prefix, inputs, style, cache_size):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
+    # create the output directory in case it doesn't exist
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
+
     if len(inputs) == 1:
         std_bam(prefix, inputs[0], style)
     else:

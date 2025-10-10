@@ -1,3 +1,4 @@
+import os
 import rich_click as click
 import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam
@@ -14,6 +15,10 @@ def sort(samtag,prefix,inputs,threads):
     The barcode **must** be in a SAM tag (e.g. `BX`, `BC`) whether in
     FASTQ or SAM/BAM format.
     """
+    # create the output directory in case it doesn't exist
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
+
     ## checks and validations ##
     if len(samtag) != 2:
         print_error('incorrect SAM tag', 'The SAM TAG is expected to be exactly 2 letters (e.g. BX).')

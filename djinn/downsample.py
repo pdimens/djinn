@@ -1,11 +1,11 @@
 from itertools import zip_longest
+import os
 import random
 import pysam
-import subprocess
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
 from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread
-from djinn.utils.fq_tools import FQRecord, CachedWriter
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, cache_size: int) -> None:
     from_ = which_linkedread(fq1)
@@ -37,26 +37,17 @@ def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, kee
     with (
         pysam.FastxFile(fq1, persist=False) as R1,
         pysam.FastxFile(fq2, persist=False) as R2,
-        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
-        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2
+        CachedFQWriter(prefix, cache_size) as writer,
     ):
-        writer = CachedWriter(gz_r1, gz_r2, cache_size)
-
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, from_, 0)
                 if _r1.barcode in barcodes:
                     writer.queue(_r1.convert(from_, _r1.barcode), None)
-                    #R1_out.write(str(_r1.convert(from_, _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, from_, 0)
                 if _r2.barcode in barcodes:
                     writer.queue(None, _r2.convert(from_, _r2.barcode))
-                    #R2_out.write(str(_r2.convert(from_, _r2.barcode)))
-        # flush the cache
-        writer.write()
 
 def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, threads: float) -> None:
     if randseed:
@@ -120,6 +111,10 @@ def downsample(prefix, inputs, invalid, downsample, random_seed, threads, cache_
     | `1` | adds all invalid barcodes to the sampling pool |
     | 0<`i`<1| keeps `i` proprotion of invalids in the sampling pool |
     """
+    # create the output directory in case it doesn't exist
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
+
     if len(inputs) == 1:
         downsample_sam(inputs[0], prefix, downsample, invalid, random_seed, threads)
     else:

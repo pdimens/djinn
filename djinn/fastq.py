@@ -4,7 +4,7 @@ import pysam
 import subprocess
 import rich_click as click
 from djinn.utils.file_ops import print_error, validate_barcodefile, which_linkedread
-from djinn.utils.fq_tools import FQRecord, CachedWriter
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(panel = "File Conversions", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/fastq/")
@@ -61,13 +61,9 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
     with (
         pysam.FastxFile(fq1, persist=False) as R1,
         pysam.FastxFile(fq2, persist=False) as R2,
-        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
-        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+        CachedFQWriter(prefix, cache_size) as writer,
         open(f"{prefix}.bc", "w") as bc_out
     ):
-        writer = CachedWriter(gz_r1, gz_r2, cache_size)
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, from_, BX.length)
@@ -84,7 +80,6 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                 converted_bc = BX.inventory[_r1.barcode]
                 writer.queue(_r1.convert2(to_, converted_bc), None)
-                #R1_out.write(str(_r1.convert(to_, converted_bc)))
             if r2:
                 if r1 and from_ == "10x":
                     _bc = _r1.barcode
@@ -107,5 +102,3 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
                     bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                 converted_bc = BX.inventory[_r2.barcode]
                 writer.queue(None, _r2.convert2(to_, converted_bc))
-                #R2_out.write(str(_r2.convert(to_, converted_bc)))
-        writer.write()

@@ -1,3 +1,4 @@
+import os
 import rich_click as click
 import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam
@@ -15,7 +16,12 @@ def ncbi(prefix, inputs, threads):
     If the barcodes are in default tellseq/stlfr format, use `djinn standardize` to move the barcode into
     the BX tag. If given a single input SAM/BAM file, will instead convert it back to
     two FASTQ files.
+
     """
+    # create the output directory in case it doesn't exist
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
+
     ## checks and validations ##
     if len(inputs) == 1:
         fq = subprocess.run(

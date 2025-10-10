@@ -101,15 +101,15 @@ def which_linkedread(fastq: str, n: int = 100) -> str:
                 break
             if record.comment and HAPLOTAGGING_RX.search(record.comment):
                 return "haplotagging"
-            if STLFR_RX.search(record.name):
+            if STLFR_RX.search(str(record.name)):
                 return "stlfr"
-            if TELLSEQ_RX.search(record.name):
+            if TELLSEQ_RX.search(str(record.name)):
                 return "tellseq"
     return "none"
 
 def which_linkedread_sam(sam: str, n: int = 100) -> str:
     """
-    Scans the first 100 records of a SaM/BAM file and tries to determine the barcode technology
+    Scans the first 100 records of a SAM/BAM file and tries to determine the barcode technology
     Returns one of: "haplotagging", "stlfr", "tellseq", or "none"
     """
     with pysam.AlignmentFile(sam, check_sq=False) as _sam:
@@ -117,7 +117,7 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
             if i > n:
                 break
             if record.has_tag("BX"):
-                bc = record.get_tag("BX")
+                bc = str(record.get_tag("BX"))
                 if HAPLOTAGGING_SIMPLE.search(bc):
                     return "haplotagging"
                 if STLFR_SIMPLE.search(bc):

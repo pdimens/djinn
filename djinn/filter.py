@@ -6,7 +6,7 @@ import rich_click as click
 import pysam
 import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread, which_linkedread_sam
-from djinn.utils.fq_tools import FQRecord, CachedWriter
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 @click.command(panel = "Other Tools", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
@@ -21,6 +21,9 @@ def filter_valid(prefix, inputs, cache_size, invalid, threads):
     Use `--invalid` to separately output reads with invalid barcodes.
     '''
     lr_type = which_linkedread_sam(inputs[0]) if len(inputs) == 1 else which_linkedread(inputs[0])
+    # create the output directory in case it doesn't exist
+    if os.path.dirname(prefix):
+        os.makedirs(os.path.dirname(prefix), exist_ok=True)
 
     if len(inputs) == 1:
         if lr_type == "none":
@@ -41,17 +44,9 @@ def filter_valid(prefix, inputs, cache_size, invalid, threads):
         with (
             pysam.FastxFile(inputs[0], persist=False) as R1,
             pysam.FastxFile(inputs[1], persist=False) as R2,
-            open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
-            open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-            subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-            subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
-            open(f"{prefix}.invalid.R1.fq.gz", "wb") as R1_inv,
-            open(f"{prefix}.invalid.R2.fq.gz", "wb") as R2_inv,
-            subprocess.Popen("gzip", stdout= R1_inv, stdin=subprocess.PIPE) as gz_r1_inv,
-            subprocess.Popen("gzip", stdout= R2_inv, stdin=subprocess.PIPE) as gz_r2_inv,
+            CachedFQWriter(prefix, cache_size) as writer,
+            CachedFQWriter(f"{prefix}.invalid", cache_size) as writer_inv,
         ):
-            writer = CachedWriter(gz_r1, gz_r2, cache_size)
-            writer_inv = CachedWriter(gz_r1_inv, gz_r2_inv, cache_size)
             for r1,r2 in zip_longest(R1,R2):
                 if r1:
                     _r1 = FQRecord(r1, True, lr_type, 0)

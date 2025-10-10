@@ -5,7 +5,7 @@ import pysam
 import subprocess
 from djinn.utils.file_ops import print_error, which_linkedread
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
-from djinn.utils.fq_tools import FQRecord, CachedWriter
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size: int):
     """
@@ -28,10 +28,6 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
     if not BC_TYPE:
         print_error("undertermined file type", f"Unable to determine the linked-read barcode type after scanning the first 100 records of {os.path.basename(r1_fastq)}. Please make sure the format is one of haplotagging, stlfr, or tellseq. 10X-style with the barcode as the first 16 nucleotides of read 1 is not supported here.")
     
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
-
     if style:
         bc_out = open(f"{prefix}.bc", "w")
         style = style.lower()
@@ -47,12 +43,8 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
     with (
         pysam.FastxFile(r1_fastq, persist=False) as R1,
         pysam.FastxFile(r2_fastq, persist=False) as R2,
-        open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
-        open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-        subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-        subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
+        CachedFQWriter(prefix, cache_size) as writer,
     ):
-        writer = CachedWriter(gz_r1, gz_r2, cache_size)
         for r1,r2 in zip_longest(R1,R2):
             if r1:
                 _r1 = FQRecord(r1, True, BC_TYPE, 0)
@@ -70,7 +62,6 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                     # overwrite the record's barcode
                     _r1.barcode = BX.inventory[_r1.barcode]
                 writer.queue(_r1.convert2("standard", _r1.barcode), None)
-                #R1_out.write(str(_r1.convert("standard", _r1.barcode)))
             if r2:
                 _r2 = FQRecord(r2, False, BC_TYPE, 0)
                 if style:
@@ -86,8 +77,6 @@ def std_fastq(prefix: str, r1_fastq: str, r2_fastq: str, style: str, cache_size:
                         bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                     # overwrite the record's barcode
                     _r2.barcode = BX.inventory[_r2.barcode]
-                writer.queue(None, _r1.convert2("standard", _r1.barcode))
-                #R2_out.write(str(_r2.convert("standard", _r2.barcode)))
-        writer.write()
+                writer.queue(None, _r2.convert2("standard", _r2.barcode))
     if style:
         bc_out.close()

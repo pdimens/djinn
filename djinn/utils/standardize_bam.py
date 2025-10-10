@@ -37,13 +37,11 @@ def std_bam(prefix, sam, style):
         pysam.AlignmentFile(sam, require_index=False, check_sq=False) as samfile, 
         pysam.AlignmentFile(f"{prefix}.bam", "wb", template=samfile) as outfile,
     ):
-        for record in samfile.fetch(until_eof=True):
+        for record in samfile:
             if record.has_tag("BX"):
                 bx_sanitized = str(record.get_tag("BX"))
                 if record.has_tag("VX"):
                     print_error("BX/VX tags present", f"The BX:Z and VX:i tags are already present in {os.path.basename(sam)} and does not need to be standardized.")
-            if record.has_tag("BX"):
-                bx_sanitized = str(record.get_tag("BX"))
                 # try to split by "_" (stlfr) and if any of the ints are zero, it's invalid
                 # otherwise look for the tellseq N or haplotag 00
                 if "0" in bx_sanitized.split("_") or TELLSEQ_HAPLOTAGGING_INVALID_RX.search(bx_sanitized):
@@ -54,7 +52,7 @@ def std_bam(prefix, sam, style):
                     vx = 1
             else:
                 # matches either tellseq or stlfr   
-                bx = TELLSEQ_STLFR_RX.search(record.query_name)
+                bx = TELLSEQ_STLFR_RX.search(str(record.query_name))
                 if bx:
                     # the 1:0 ignores the first character, which will either be : or #
                     bx_sanitized = bx[0][1:]

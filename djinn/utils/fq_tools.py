@@ -118,15 +118,18 @@ class FQRecord():
         return new_rec
 
 
-class CachedWriter():
-    def __init__(self, gz_R1: subprocess.Popen, gz_R2: subprocess.Popen, cachemax: int = 5000):
+class CachedFQWriter():
+    def __init__(self, prefix: str, cachemax: int = 5000):
         """
         A cache for R1 and R2 reads that writes to the stdin of an open gzip subprocesses when the cache exceeds cachemax entries
         """
+        self.R1_out = open(f"{prefix}.R1.fq.gz", "wb")
+        self.R2_out = open(f"{prefix}.R2.fq.gz", "wb")
+        self.gz_R1 = subprocess.Popen("gzip", stdout= self.R1_out, stdin=subprocess.PIPE)
+        self.gz_R2 = subprocess.Popen("gzip", stdout= self.R2_out, stdin=subprocess.PIPE)
+
         self.r1_cache: list[bytes] = []
         self.r2_cache: list[bytes] = []
-        self.writer_r1 = gz_R1.stdin
-        self.writer_r2 = gz_R2.stdin
         self.cachemax: int = cachemax
 
     def queue(self, r1: FQRecord|None, r2: FQRecord|None):
@@ -141,22 +144,34 @@ class CachedWriter():
 
     def write(self):
         """writes r1 and r2 cache to self.writer_r* and empties caches"""
-        self.writer_r1.write(b"".join(self.r1_cache))
-        self.writer_r2.write(b"".join(self.r2_cache))
+        self.gz_R1.stdin.write(b"".join(self.r1_cache))
+        self.gz_R2.stdin.write(b"".join(self.r2_cache))
         self.r1_cache = []
         self.r2_cache = []
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        # flush remaining cache and clean everything up
+        self.write()
+        self.gz_R1.terminate()
+        self.gz_R2.terminate()
+        self.gz_R1.wait()
+        self.gz_R2.wait()
+        self.R1_out.close()
+        self.R2_out.close()
 
 class FQBarcodePool():
-    def __init__(self, gz1, gz2, singletons: bool, max_pairs: int, cachemax: int = 5000):
+    def __init__(self, prefix, singletons: bool, max_pairs: int, cachemax: int = 5000):
         """
         Initialize a FASTQ record pool for a given barcode. The pools track barcode and the reads therein.
-        Passes things off to a CachedWriter() when spoofing all the reads of a barcode
+        Passes things off to a CachedFQWriter() when spoofing all the reads of a barcode
         """
         self.barcode: str = ""
         self.forward: list[FQRecord] = []
         self.reverse: list[FQRecord] = []
-        self.writer = CachedWriter(gz1, gz2, cachemax)
+        self.writer = CachedFQWriter(prefix, cachemax)
         self.singletons = singletons
         self.max_pairs = max_pairs
 

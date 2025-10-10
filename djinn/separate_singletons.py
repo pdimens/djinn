@@ -2,14 +2,13 @@
 
 from collections import Counter
 import os
-import re
 import subprocess
-import sys
 import pysam
 import rich_click as click
-from djinn.utils.barcodes import ANY_INVALID, TELLSEQ_STLFR_RX
-from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread, which_linkedread_sam
-from djinn.utils.fq_tools import FQRecord, CachedWriter
+from djinn.utils.barcodes import is_invalid
+from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+from djinn.utils.xam_tools import bam_barcode
 
 def count_barcodes_sam(bamfile: str, invalid: bool = False) -> Counter:
     '''
@@ -19,17 +18,10 @@ def count_barcodes_sam(bamfile: str, invalid: bool = False) -> Counter:
     barcodes = Counter()
     with pysam.AlignmentFile(bamfile, check_sq=False) as infile:
         for record in infile:
-            _bc = None
-            if record.has_tag("BX"):
-                _bc = record.get_tag("BX")
-            else:
-                _check =  TELLSEQ_STLFR_RX.search(record.name)
-                if _check:
-                    _bc = _check.group(0)[1:]
-
+            _bc = bam_barcode(record)
             if _bc:
                 if invalid:
-                    if ANY_INVALID.search(_bc):
+                    if is_invalid(_bc):
                         barcodes[_bc] += 1
                 else:
                     barcodes[_bc] += 1
@@ -58,7 +50,6 @@ def count_barcodes_fq(barcode_type: str, fq1: str, fq2: str, invalid: bool = Fal
                 if not _r2.valid:
                     barcodes[_r2.barcode] += 1
             barcodes[_r2.barcode] += 1
-    
     return barcodes
 
 @click.command(panel = "Other Tools", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
@@ -78,14 +69,28 @@ def filter_singletons(prefix, inputs, cache_size, singletons, threads):
         linked = filter(lambda x: bc_counts[x] > 2, bc_counts.keys())
         if singletons:
             _singles = list(filter(lambda x: bc_counts[x] <= 2, bc_counts.keys()))
-        
-        with pysam.AlignmentFile(inputs[0]) as xam, pysam.AlignmentFile(f"{prefix}.bam", "wb", template = xam) as xam_out:
+        else:
+            _singles = []
+
+        with (
+            pysam.AlignmentFile(inputs[0]) as xam,
+            pysam.AlignmentFile(f"{prefix}.bam", "wb", template = xam) as xam_out,
+            pysam.AlignmentFile(f"{prefix}.singletons.bam", "wb", template = xam) as singleton_out,
+        ):
             for record in xam:
                 #SEARCH FOR BARCODE
-
+                bc = bam_barcode(record)
+                if not bc:
+                    continue
                 # IF BARCODE IN GOOD LIST, OUTPUT RECORD
-
+                if bc in linked:
+                    xam_out.write(record)
                 # IF SINGLETONS AND BC IN SINGLETON LIST, OUTPUT TO OTHER FILE
+                if singletons:
+                    if bc in _singles:
+                        singleton_out.write(record)
+        if not singletons:
+            os.unlink(f"{prefix}.singletons.bam")
 
 
     else:
@@ -98,15 +103,7 @@ def filter_singletons(prefix, inputs, cache_size, singletons, threads):
         with (
             pysam.FastxFile(inputs[0], persist=False) as R1,
             pysam.FastxFile(inputs[1], persist=False) as R2,
-            open(f"{prefix}.R1.fq.gz", "wb") as R1_out,
-            open(f"{prefix}.R2.fq.gz", "wb") as R2_out,
-            subprocess.Popen("gzip", stdout= R1_out, stdin=subprocess.PIPE) as gz_r1,
-            subprocess.Popen("gzip", stdout= R2_out, stdin=subprocess.PIPE) as gz_r2,
-            open(f"{prefix}.singleton.R1.fq.gz", "wb") as R1_single,
-            open(f"{prefix}.singleton.R2.fq.gz", "wb") as R2_single,
-            subprocess.Popen("gzip", stdout= R1_single, stdin=subprocess.PIPE) as gz_r1_single,
-            subprocess.Popen("gzip", stdout= R2_single, stdin=subprocess.PIPE) as gz_r2_single,
+            CachedFQWriter(prefix, cache_size) as writer,
+            CachedFQWriter(f"{prefix}.singletons", cache_size) as writer_inv,
         ):
-            writer = CachedWriter(gz_r1, gz_r2, cache_size)
-            writer_inv = CachedWriter(gz_r1_single, gz_r2_single, cache_size)
 
