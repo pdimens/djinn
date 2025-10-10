@@ -2,7 +2,7 @@
 
 from collections import Counter
 import os
-import subprocess
+from itertools import zip_longest
 import pysam
 import rich_click as click
 from djinn.utils.barcodes import is_invalid
@@ -67,10 +67,6 @@ def filter_singletons(prefix, inputs, cache_size, singletons, threads):
     if len(inputs) == 1:
         bc_counts = count_barcodes_sam(inputs[0])
         linked = filter(lambda x: bc_counts[x] > 2, bc_counts.keys())
-        if singletons:
-            _singles = list(filter(lambda x: bc_counts[x] <= 2, bc_counts.keys()))
-        else:
-            _singles = []
 
         with (
             pysam.AlignmentFile(inputs[0]) as xam,
@@ -83,27 +79,42 @@ def filter_singletons(prefix, inputs, cache_size, singletons, threads):
                 if not bc:
                     continue
                 # IF BARCODE IN GOOD LIST, OUTPUT RECORD
-                if bc in linked:
-                    xam_out.write(record)
+                if not is_invalid(bc):
+                    if bc in linked:
+                        xam_out.write(record)
                 # IF SINGLETONS AND BC IN SINGLETON LIST, OUTPUT TO OTHER FILE
-                if singletons:
-                    if bc in _singles:
+                    elif singletons:
                         singleton_out.write(record)
         if not singletons:
             os.unlink(f"{prefix}.singletons.bam")
-
 
     else:
         from_ = which_linkedread(inputs[0])
         bc_counts = count_barcodes_fq(from_, inputs[0], inputs[1])
         linked = list(filter(lambda x: bc_counts[x] > 2, bc_counts.keys()))
-        if singletons:
-            _singles = list(filter(lambda x: bc_counts[x] <= 2, bc_counts.keys()))
 
         with (
             pysam.FastxFile(inputs[0], persist=False) as R1,
             pysam.FastxFile(inputs[1], persist=False) as R2,
             CachedFQWriter(prefix, cache_size) as writer,
-            CachedFQWriter(f"{prefix}.singletons", cache_size) as writer_inv,
+            CachedFQWriter(f"{prefix}.singletons", cache_size) as writer_single,
         ):
+            for r1,r2 in zip_longest(R1,R2):
+                if r1:
+                    _r1 = FQRecord(r1, True, from_, 0)
+                    if _r1.valid:
+                        if _r1.barcode in linked:
+                            writer.queue(_r1.convert2(from_, _r1.barcode), None)
+                        elif singletons:
+                            writer_single.queue(_r1.convert2(from_, _r1.barcode), None)
 
+                if r2:
+                    _r2 = FQRecord(r2, False, from_, 0)
+                    if _r2.valid:
+                        if _r2.barcode in linked:
+                            writer.queue(_r2.convert2(from_, _r2.barcode), None)
+                        elif singletons:
+                            writer_single.queue(_r2.convert2(from_, _r2.barcode), None)
+        if not singletons:
+            os.unlink(f"{prefix}.singletons.R1.fq.gz")
+            os.unlink(f"{prefix}.singletons.R2.fq.gz")
