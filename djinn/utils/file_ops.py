@@ -113,7 +113,7 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
     Returns one of: "haplotagging", "stlfr", "tellseq", or "none"
     """
     with pysam.AlignmentFile(sam, check_sq=False) as _sam:
-        for i,record in enumerate(_sam, 1):
+        for i,record in enumerate(_sam.fetch(until_eof=True), 1):
             if i > n:
                 break
             if record.has_tag("BX"):
