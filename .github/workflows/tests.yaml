@@ -119,3 +119,29 @@ jobs:
           djinn spoof-hic result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
+
+      - name: filter-invalid-bam
+        shell: micromamba-shell {0}
+        run: |
+          djinn filter-invalid result test/test.bam &&\
+          samtools view result.bam
+
+      - name: filter-invalid-fastq
+        shell: micromamba-shell {0}
+        run: |
+          djinn filter-invalid result test/*.gz &&\
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
+
+      - name: filter-singletons-bam
+        shell: micromamba-shell {0}
+        run: |
+          djinn filter-singletons result test/test.bam &&\
+          samtools view result.bam
+
+      - name: filter-singletons-fastq
+        shell: micromamba-shell {0}
+        run: |
+          djinn filter-singletons result test/*.gz &&\
+          echo "==R1==" && zcat result.R1.fq.gz &&\
+          echo "==R2==" && zcat result.R2.fq.gz
