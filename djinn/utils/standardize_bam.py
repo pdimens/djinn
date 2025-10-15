@@ -37,7 +37,7 @@ def std_bam(prefix, sam, style):
         pysam.AlignmentFile(sam, require_index=False, check_sq=False) as samfile, 
         pysam.AlignmentFile(f"{prefix}.bam", "wb", template=samfile) as outfile,
     ):
-        for record in samfile:
+        for record in samfile.fetch(until_eof=True):
             if record.has_tag("BX"):
                 bx_sanitized = str(record.get_tag("BX"))
                 if record.has_tag("VX"):
