@@ -13,7 +13,7 @@ def extract_barcodes_sam(bamfile: str, separate_invalid: bool = False):
     barcodes = set()
     invalid = set()
     with pysam.AlignmentFile(bamfile, check_sq=False) as infile:
-        for record in infile:
+        for record in infile.fetch(until_eof=True):
             _bc = None
             if record.has_tag("BX"):
                 _bc = record.get_tag("BX")
