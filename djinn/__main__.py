@@ -6,7 +6,8 @@ from djinn.downsample import downsample
 from djinn.fastq import fastq
 from djinn.extract import extract
 from djinn.spoof_hic import spoof_hic
-from djinn.isolate import isolate
+from djinn.filter_invalid import filter_invalid
+from djinn.filter_singletons import filter_singletons
 from djinn.ncbi import ncbi
 from djinn.sort import sort
 from djinn.standardize import standardize
@@ -39,6 +40,7 @@ cli.add_command(extract)
 cli.add_command(fastq)
 cli.add_command(standardize)
 cli.add_command(spoof_hic)
-cli.add_command(isolate)
+cli.add_command(filter_invalid)
+cli.add_command(filter_singletons)
 cli.add_command(ncbi)
 cli.add_command(sort)

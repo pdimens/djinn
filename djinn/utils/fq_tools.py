@@ -155,12 +155,13 @@ class CachedFQWriter():
     def __exit__(self, exception_type, exception_value, exception_traceback):
         # flush remaining cache and clean everything up
         self.write()
-        self.gz_R1.terminate()
-        self.gz_R2.terminate()
+        self.gz_R1.stdin.close()
+        self.gz_R2.stdin.close()
         self.gz_R1.wait()
         self.gz_R2.wait()
         self.R1_out.close()
         self.R2_out.close()
+
 
 class FQBarcodePool():
     def __init__(self, prefix, singletons: bool, max_pairs: int, cachemax: int = 5000):

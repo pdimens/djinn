@@ -14,9 +14,9 @@ from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 @click.option("-t", "--threads", type = click.IntRange(min = 2, max_open=True), default=4, show_default=True, help = "Number of threads to use")
 @click.argument('prefix', required=True, type = str)
 @click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def filter_valid(prefix, inputs, cache_size, invalid, threads):
+def filter_invalid(prefix, inputs, cache_size, invalid, threads):
     '''
-    Isolate valid-barcoded reads from invalid ones
+    Retain only valid-barcoded reads
 
     Use `--invalid` to separately output reads with invalid barcodes.
     '''
