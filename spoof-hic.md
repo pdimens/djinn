@@ -33,9 +33,9 @@ djinn spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ file pair (can be gzipped) **must be sorted by barcode**  |
-| `-i` `--invalid`    | [!badge variant="warning" text="unreleased"] include invalids in the output, but don't spoof  |
-| `-s` `--singletons` | [!badge variant="warning" text="unreleased"] include singletons in the output  |
-| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-i` `--invalid`    | include invalids in the output, but don't spoof them |
+| `-s` `--singletons` | include singletons in the output  |
+| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 
 
 ## What it does

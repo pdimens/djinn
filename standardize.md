@@ -31,7 +31,7 @@ The styles are given as:
 | `PREFIX`       | [!badge variant="info" text="required"] prefix for output filenames                  |
 | `INPUTS`       | [!badge variant="info" text="required"] input FASTQ file pair or SAM/BAM file        |
 | `-s` `--style` | change barcode style in the output FASTQ: [`10x`,`haplotagging`, `stlfr`, `tellseq`] |
-| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="info" text="FASTQ"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 
 
 

@@ -31,9 +31,9 @@ djinn downsample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
 |:---------------------|:-----------------------------------------------------------------------------------------------------|
 | `prefix`      | Prefix for output files                                                                              |
 | `INPUTS`             | [!badge variant="info" text="required"] One BAM file or both read files from a paired-end FASTQ pair |
-| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="info" text="FASTQ"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 | `-d` `--downsample`  | [!badge variant="info" text="required"] Number/fraction of barcodes to downsample to                          |
 | `-i` `--invalid`    | Include invalid barcodes in downsampling                                                 |
 | `-r` `--random-seed`      | Random seed for sampling [!badge variant="secondary" text="optional"]                                |
-| `-t` `--threads`    | Number of threads to use (BAM only, default: 10)                                                                              |
+| `-t` `--threads`    | [!badge text="SAM/BAM only"] Number of threads to use (default: 10)                                                                              |
 

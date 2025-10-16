@@ -57,5 +57,5 @@ ATGTTTGCCGTAGTTT
 | `FQ1`             | [!badge variant="info" text="required"] forward reads of FASTQ pair           |
 | `FQ2`             | [!badge variant="info" text="required"] reverse reads of FASTQ pair           |
 | `-b` `--barcodes` | [!badge variant="info" text="conditional"] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data  |
-| `-c` `--cache-size` | [!badge variant="warning" text="unreleased"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
 
