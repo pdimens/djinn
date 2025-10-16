@@ -1,11 +1,11 @@
 import os
 import rich_click as click
 import subprocess
-from djinn.utils.file_ops import print_error, validate_fq_sam
+from djinn.utils.file_ops import make_dir, print_error, validate_fq_sam
 
 @click.command(panel = "File Conversions", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
-@click.argument('prefix', required=True, type = str)
+@click.argument('prefix', required=True, type = str, callback=make_dir)
 @click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def ncbi(prefix, inputs, threads):
     """
@@ -18,10 +18,6 @@ def ncbi(prefix, inputs, threads):
     two FASTQ files.
 
     """
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
-
     ## checks and validations ##
     if len(inputs) == 1:
         fq = subprocess.run(

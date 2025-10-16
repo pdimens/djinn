@@ -4,7 +4,7 @@ import random
 import pysam
 import rich_click as click
 from djinn.extract import extract_barcodes_sam, extract_barcodes_fq
-from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread
+from djinn.utils.file_ops import make_dir, print_error, validate_fq_sam, which_linkedread
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 def downsample_fastq(fq1: str, fq2: str, prefix: str, downsample: int|float, keep_invalid: bool, randseed: None|int|float, cache_size: int) -> None:
@@ -86,7 +86,7 @@ def downsample_sam(bam: str, prefix: str, downsample: int|float, keep_invalid: b
 #@click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
 @click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use (BAM only)")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
-@click.argument('prefix', type = click.Path(exists = False))
+@click.argument('prefix', type = str, callback=make_dir)
 @click.argument('inputs', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
 def downsample(prefix, inputs, invalid, downsample, random_seed, threads, cache_size):
     """
@@ -101,7 +101,7 @@ def downsample(prefix, inputs, invalid, downsample, random_seed, threads, cache_
     - expects two files, R1 and R2 (can be gzipped)
     - fastq can be in haplotagging, stlfr, or tellseq formats
 
-    ** BAM Input**
+    **SAM/BAM Input**
     - expects one sam/bam file
     - barcode must be in `BX:Z` SAM tag
 
@@ -111,10 +111,6 @@ def downsample(prefix, inputs, invalid, downsample, random_seed, threads, cache_
     | `1` | adds all invalid barcodes to the sampling pool |
     | 0<`i`<1| keeps `i` proprotion of invalids in the sampling pool |
     """
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
-
     if len(inputs) == 1:
         downsample_sam(inputs[0], prefix, downsample, invalid, random_seed, threads)
     else:

@@ -12,6 +12,10 @@ Get all the barcodes from the input file(s)
 ## Sort by barcode
 Sort records by barcode rather than name or position
 
+## Filtering
+- separate linked reads from singletons
+- omit invalid barcodes
+
 ## Convert files
 Djinn converts between linked-read data formats. You can convert between formats in terms of FASTQ type or barcode style. It supports:
 - 10X

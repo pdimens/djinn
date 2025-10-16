@@ -1,13 +1,13 @@
 import os
 import rich_click as click
+from djinn.utils.file_ops import make_dir, validate_fq_sam
 from djinn.utils.standardize_bam import std_bam
 from djinn.utils.standardize_fastq import std_fastq
-from djinn.utils.file_ops import validate_fq_sam
 
 @click.command(panel = "File Conversions", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
-@click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1)
+@click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1, callback=make_dir)
 @click.argument('inputs', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_fq_sam, nargs=-1)
 def standardize(prefix, inputs, style, cache_size):
     """
@@ -26,10 +26,6 @@ def standardize(prefix, inputs, style, cache_size):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
-
     if len(inputs) == 1:
         std_bam(prefix, inputs[0], style)
     else:

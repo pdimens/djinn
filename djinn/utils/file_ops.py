@@ -151,3 +151,12 @@ def validate_fq_sam(ctx, param, value):
             if not re_ext.search(i):
                 print_error('unrecognized format', 'Inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.')
     return value
+
+def make_dir(ctx, param, value):
+    """
+    CLI callback method create the output directory preceding the prefix in case it doesn't exist.
+    e.g. `prefix = this/that` will create `this` folder, whereas `prefix = that` won't create anything.
+    """
+    if os.path.dirname(value):
+        os.makedirs(os.path.dirname(value), exist_ok=True)
+    return value

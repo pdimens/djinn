@@ -1,16 +1,14 @@
 from itertools import zip_longest
-import os
 import pysam
-import subprocess
 import rich_click as click
-from djinn.utils.file_ops import print_error, validate_barcodefile, which_linkedread
+from djinn.utils.file_ops import make_dir, print_error, validate_barcodefile, which_linkedread
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(panel = "File Conversions", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/fastq/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
-@click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1)
+@click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1, callback=make_dir)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('fq1', metavar="R1_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, nargs=1)
 @click.argument('fq2', metavar="R2_FASTQ", type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required=True, nargs= 1)
@@ -53,10 +51,6 @@ def fastq(target,fq1,fq2,prefix, barcodes, cache_size):
         for e in barcodelist:
             BX.length += len(e)
             break
-
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
 
     with (
         pysam.FastxFile(fq1, persist=False) as R1,

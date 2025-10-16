@@ -1,8 +1,6 @@
-import subprocess
-import os
 import pysam
 import rich_click as click
-from djinn.utils.file_ops import print_error, which_linkedread
+from djinn.utils.file_ops import make_dir, print_error, which_linkedread
 from djinn.utils.fq_tools import FQRecord, FQBarcodePool
 
 @click.command(panel = "File Conversions", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
@@ -10,7 +8,7 @@ from djinn.utils.fq_tools import FQRecord, FQBarcodePool
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Include invalid barcodes in the output")
 @click.option("-s", "--singletons", is_flag=True, default=False, help = "Include singleton barcodes in the output")
 @click.option("-m", "--max-pairs", type=click.IntRange(min=1, max_open=True), default=1, show_default=True, help = "Maximum number of R2 reads per R1 per barcode")
-@click.argument('prefix', required=True, type = str)
+@click.argument('prefix', required=True, type = str, callback=make_dir)
 @click.argument('inputs', required=True, type=click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), nargs=2)
 def spoof_hic(prefix, inputs, invalid, singletons, max_pairs, cache_size):
     """
@@ -26,10 +24,6 @@ def spoof_hic(prefix, inputs, invalid, singletons, max_pairs, cache_size):
     from_ = which_linkedread(inputs[0])
     if from_ == "none":
         print_error("unknown input format", "The input FASTQ files were not recognized as either haplotagging, stlfr, or tellseq formats. Please check that they conform to format standards for those chemistries.")
-
-    # create the output directory in case it doesn't exist
-    if os.path.dirname(prefix):
-        os.makedirs(os.path.dirname(prefix), exist_ok=True)
 
     with (
         pysam.FastxFile(inputs[0], persist=False) as R1,
