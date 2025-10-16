@@ -45,10 +45,13 @@ class generic_parser():
         else:
             self.valid = 0
 
-def print_error(title:str,text: str):
+def print_error(title:str, text: str):
     """Print the error text and exit with code 1"""
     print(f"\033[33mError: {title}\033[0m")
-    print(text)
+    try:
+        print(text.encode('ascii', 'ignore').decode('unicode_escape'))
+    except:
+        print(text)
     sys.exit(1)
 
 def safe_read(file_path: str):
@@ -113,7 +116,8 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
     Returns one of: "haplotagging", "stlfr", "tellseq", or "none"
     """
     with pysam.AlignmentFile(sam, check_sq=False) as _sam:
-        for i,record in enumerate(_sam.fetch(until_eof=True), 1):
+        i = 1
+        for record in _sam.fetch(until_eof=True):
             if i > n:
                 break
             if record.has_tag("BX"):
@@ -124,6 +128,7 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
                     return "stlfr"
                 if TELLSEQ_SIMPLE.search(bc):
                     return "tellseq"
+            i += 1
     return "none"
 
 def validate_fq_sam(ctx, param, value):

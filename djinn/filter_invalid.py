@@ -4,7 +4,6 @@ from itertools import zip_longest
 import os
 import rich_click as click
 import pysam
-import subprocess
 from djinn.utils.file_ops import print_error, validate_fq_sam, which_linkedread, which_linkedread_sam
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
@@ -18,7 +17,7 @@ def filter_invalid(prefix, inputs, cache_size, invalid, threads):
     '''
     Retain only valid-barcoded reads
 
-    Use `--invalid` to separately output reads with invalid barcodes.
+    Barcodes in alignment records are expected to be in the `BX` tag. Use `--invalid` to separately output reads with invalid barcodes.
     '''
     lr_type = which_linkedread_sam(inputs[0]) if len(inputs) == 1 else which_linkedread(inputs[0])
     # create the output directory in case it doesn't exist
@@ -28,18 +27,19 @@ def filter_invalid(prefix, inputs, cache_size, invalid, threads):
     if len(inputs) == 1:
         if lr_type == "none":
             print_error("unrecognized barcode format", f"The values associated with BX tags in {inputs[0]} do not conform to haplotagging, stlfr, or tellseq/10X formats.")
-        invalid_rx = "[BX]!~"
         if lr_type == "haplotagging":
-            invalid_rx += '"[ABCD]0{2,4}"'
+            invalid_rx = '[BX]!~"[ABCD]0{2,4}"'
         elif lr_type == "stlfr":
-            invalid_rx += '"^0_|_0_|_0$"'
-        elif lr_type == "tellseq":
-            invalid_rx += '"[N]"'
+            invalid_rx = '[BX]!~"^0_|_0_|_0$"'
+        else:
+            invalid_rx = '[BX]!~"[N]"'
 
         _inv = f"--unoutput {prefix}.invalid.bam" if invalid else ""
-        subprocess.run(
-            (f"samtools view -@ {threads-1} -O BAM -e '{invalid_rx}' {_inv} {inputs[0]}").split()            
-        )
+        try:
+            pysam.view("-O", "BAM", "-@", f"{threads-1}", *_inv.split(), "-o", f"{prefix}.bam", "-h", "-e", invalid_rx, inputs[0], catch_stdout=False)
+        except pysam.utils.SamtoolsError as e:
+            print_error("Samtools error", str(e))
+
     else:
         with (
             pysam.FastxFile(inputs[0], persist=False) as R1,
