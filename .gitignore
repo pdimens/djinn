@@ -6,3 +6,6 @@ build/
 
 # Editor/IDE
 .vscode/
+# pixi environments
+.pixi/*
+!.pixi/config.toml

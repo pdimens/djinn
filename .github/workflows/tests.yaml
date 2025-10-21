@@ -24,123 +24,96 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Setup Mamba
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          init-shell: bash
-          generate-run-shell: true
-          environment-file: resources/djinn.yaml
-          cache-environment: true
-          post-cleanup: 'all'
       - name: Install Djinn
-        id: djinnbuild
-        shell: micromamba-shell {0}
-        run: |
-          python3 -m pip install --upgrade build && python3 -m build && \
-          pip install --no-deps dist/*.whl
-
+        uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: v0.56.0
+          cache: false
+          activate-environment: true
       - name: fastq-stlfr
-        shell: micromamba-shell {0}
         run: |
           djinn fastq result stlfr test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-tellseq
-        shell: micromamba-shell {0}
         run: |
           djinn fastq result tellseq test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-10x
-        shell: micromamba-shell {0}
         run: |
           djinn fastq result 10x test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: to-ncbi
-        shell: micromamba-shell {0}
         run: |
           djinn ncbi result test/*.gz &&
           samtools view result.bam
       - name: from-ncbi
-        shell: micromamba-shell {0}
         run: |
           djinn ncbi result test/test.bam &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: std-bam
-        shell: micromamba-shell {0}
         run: |
           djinn standardize -s stlfr result test/test.bam &&\
           samtools view result.bam
       - name: std-fastq
-        shell: micromamba-shell {0}
         run: |
           djinn standardize -s tellseq result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: downsample-fastq
-        shell: micromamba-shell {0}
         run: |
           djinn downsample -d 2 result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: downsample-bam
-        shell: micromamba-shell {0}
         run: |
           djinn downsample -d 2 result test/test.bam &&\
           samtools view result.bam
 
       - name: extract-fastq
-        shell: micromamba-shell {0}
         run: djinn extract test/*.gz
       - name: extract-bam
-        shell: micromamba-shell {0}
         run: djinn extract test/test.bam
 
       - name: sort-fastq
-        shell: micromamba-shell {0}
         run: |
           djinn sort BX result test/test.bam &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: sort-bam
-        shell: micromamba-shell {0}
         run: |
           djinn sort BX result test/test.bam &&\
           samtools view result.bam
 
       - name: spoof-hic
-        shell: micromamba-shell {0}
         run: |
           djinn spoof-hic result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-invalid-bam
-        shell: micromamba-shell {0}
         run: |
           djinn filter-invalid result test/test.bam &&\
           samtools view result.bam
 
       - name: filter-invalid-fastq
-        shell: micromamba-shell {0}
         run: |
           djinn filter-invalid result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-singletons-bam
-        shell: micromamba-shell {0}
         run: |
           djinn filter-singletons result test/test.bam &&\
           samtools view result.bam
 
       - name: filter-singletons-fastq
-        shell: micromamba-shell {0}
         run: |
           djinn filter-singletons result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
