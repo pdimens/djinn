@@ -10,11 +10,6 @@ description = "Convert your linked-read data between formats, almost like magic.
 requires-python = ">=3.11"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = "GPL-3.0-or-later"
-dependencies = [
-    'click>8.1',
-    'rich-click>=1.9.3',
-    'pysam>=0.23'
-]
 
 [project.scripts]
 djinn = "djinn.__main__:cli"
@@ -28,7 +23,7 @@ exclude = ["test/*", ".deprecated/*", "resources/*", ".github/*"]
 
 
 [tool.pixi.workspace]
-channels = ["conda-forge"]
+channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
@@ -37,4 +32,6 @@ djinn = { path = ".", editable = true }
 [tool.pixi.tasks]
 
 [tool.pixi.dependencies]
-liblzma = ">=5.8.1,<6"
+pysam = ">=0.23.3,<0.24"
+click = ">=8.3.0,<9"
+rich-click = ">=1.9.3,<2"
