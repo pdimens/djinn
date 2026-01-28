@@ -7,6 +7,7 @@ from djinn.utils.file_ops import print_error, validate_sam
 @click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('samtag', metavar="SAM_tag", type = str, required = True, nargs=1)
 @click.argument('input', nargs = 1, type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, callback = validate_sam)
+@click.help_option('--help', hidden = True)
 def sort(samtag,input,threads):
     """
     Sort by barcode

@@ -21,9 +21,6 @@ def filter_invalid(prefix, input, cache_size, invalid):
     Use `--invalid` to separately output reads with invalid barcodes.
     Barcodes can be in haplotagging, stlfr, or tellseq formats.
     '''
-    if len(input) > 2:
-        print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')
-
     lr_type = which_linkedread(input[0])
 
     if len(input) == 1:

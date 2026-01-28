@@ -10,6 +10,7 @@ import rich_click as click
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1, callback=make_dir)
 @click.argument('input', nargs = -1, type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_fq)
+@click.help_option('--help', hidden = True)
 def standardize(prefix, input, style, cache_size):
     """
     Move barcodes to `BX`/`VX` sequence header tags

@@ -11,6 +11,7 @@ import rich_click as click
 @click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('input', nargs = 1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
+@click.help_option('--help', hidden = True)
 def sample(input, invalid, downsample, random_seed, threads):
     """
     Downsample data by barcode

@@ -41,9 +41,6 @@ def filter_singletons(prefix, input, cache_size, singletons):
     filters out invalid barcodes, since they are not considered linked. Expects barcode to be in haplotagging,
     stlfr, or tellseq formats.
     '''
-    if len(input) > 2:
-        print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')
-
     from_ = which_linkedread(input[0])
     bc_counts = count_barcodes_fq(from_, input)
     linked = list(filter(lambda x: bc_counts[x] > 2, bc_counts.keys()))

@@ -37,9 +37,6 @@ def extract(input):
     expect barcodes to follow the standard haplotagging (BX tag), stlfr (@seq_id#barcode), or tellseq
     (@seq_id:barcode) formats. Writes to stdout.
     '''
-    if len(input) > 2:
-        print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')
-
     from_ = which_linkedread(input[0])
     bc = extract_barcodes_fq(from_, input)
     sys.stdout.write("\n".join(bc))

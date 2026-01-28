@@ -28,6 +28,7 @@ def count_barcodes(bamfile: str, invalid: bool = False) -> Counter:
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-s", "--singletons", type = str, help = "Print valid singleton records to this file")
 @click.argument('input', nargs=1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
+@click.help_option('--help', hidden = True)
 def filter_singletons(input, singletons):
     '''
     Retain only non-singleton reads

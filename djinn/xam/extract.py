@@ -33,6 +33,7 @@ def extract_barcodes(bamfile: str, separate_invalid: bool = False):
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
 @click.argument('input', nargs=1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
+@click.help_option('--help', hidden = True)
 def extract(input):
     '''
     Extract all barcodes

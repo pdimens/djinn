@@ -8,6 +8,7 @@ from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 @click.option("-i", "--invalid", type = str, default=False, help = "Output records with invalid barcodes to this file")
 @click.option("-t", "--threads", type = click.IntRange(min = 2, max_open=True), default=4, show_default=True, help = "Number of threads to use")
 @click.argument('input', nargs=1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
+@click.help_option('--help', hidden = True)
 def filter_invalid(input, invalid, threads):
     '''
     Retain only valid-barcoded reads

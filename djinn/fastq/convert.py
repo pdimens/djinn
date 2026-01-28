@@ -27,9 +27,6 @@ def convert(target, input, prefix, barcodes, cache_size):
     | stlfr        | `#1_2_3` format appended to the sequence ID        | `@SEQID#1_2_3`              |
     | tellseq      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |
     """
-    if len(input) > 2:
-        print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')
-
     from_ = which_linkedread(input[0])
     if from_ == "none" and not barcodes:
         print_error(

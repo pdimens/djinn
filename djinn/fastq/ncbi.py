@@ -1,38 +1,27 @@
 import rich_click as click
 import subprocess
-from djinn.utils.file_ops import make_dir, print_error, validate_fq_sam
+import sys
+from djinn.utils.file_ops import print_error, validate_fq
 
-@click.command(panel = "File Conversions", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
-@click.argument('prefix', required=True, type = str, callback=make_dir)
-@click.argument('inputs', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
-def ncbi(prefix, inputs, threads):
+@click.argument('input', nargs=-1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
+@click.help_option('--help', hidden = True)
+def ncbi(input, threads):
     """
-    FASTQ ⇆ BAM conversion for/from NCBI
+    FASTQ → BAM conversion for NCBI
 
-    The input FASTQ files must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
+    The input FASTQ file(s) must have their barcode in an auxilary tag (e.g. `BX:Z:`), otherwise
     you run the risk of NCBI removing any barcode information stored in the sequence header.
-    If the barcodes are in default tellseq/stlfr format, use `djinn standardize` to move the barcode into
-    the BX tag. If given a single input SAM/BAM file, will instead convert it back to
-    two FASTQ files.
-
+    If the barcodes are in default tellseq/stlfr format, use `djinn fastq standardize` to move the barcode into
+    the BX tag. Writes to stdout.
     """
-    ## checks and validations ##
-    if len(inputs) == 1:
-        fq = subprocess.run(
-            f'samtools fastq -@ {threads-1} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz {inputs[0]}'.split(),
-            stderr = subprocess.PIPE
-        )
-        if fq.returncode == 1:
-            print_error("samtools failure", f"Samtools was unable to process your input file. See the error log from samtools fastq:\n\033[31m{fq.stderr.decode()}\033[0m")
-
-    else:
-        fq = subprocess.run(
-            f'samtools import -@ {threads-1} -O BAM -o {prefix}.bam -T * -1 {inputs[0]} -2 {inputs[1]}'.split(),
-            stderr = subprocess.PIPE      
-        )
-        if fq.returncode == 1:
-            print_error("samtools failure", f"Samtools was unable to process your input files. See the error log from samtools import:\n\033[31m{fq.stderr.decode()}\033[0m")
+    cmd = f'samtools import -@ {threads-1} -O BAM -T * -1 {input[0]}'
+    if len(input) == 2:
+        cmd += f' -2 {input[1]}'
+    fq = subprocess.run(cmd.split(), stdout = sys.stdout, stderr = subprocess.PIPE)
+    if fq.returncode == 1:
+        print_error("samtools failure", f"Samtools was unable to process your input files. See the error log from samtools import:\n\033[31m{fq.stderr.decode()}\033[0m")
 
 
 #BC_QUAL = "I"*20
