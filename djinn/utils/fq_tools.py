@@ -1,5 +1,7 @@
+from bz2 import compress
 import copy
 import random
+import shutil
 import subprocess
 from djinn.utils.barcodes import STLFR_INVALID_RX
 
@@ -119,14 +121,20 @@ class FQRecord():
 
 
 class CachedFQWriter():
-    def __init__(self, prefix: str, cachemax: int = 5000):
+    def __init__(self, prefix: str, cachemax: int = 10000, n_out:int = 2):
         """
         A cache for R1 and R2 reads that writes to the stdin of an open gzip subprocesses when the cache exceeds cachemax entries
         """
+        #compressor = ['pigz', '-c', '-p', f'{max(threads-1, 1)}'] if shutil.which("pigz") else ['gzip']
+        compressor = ['gzip']
         self.R1_out = open(f"{prefix}.R1.fq.gz", "wb")
-        self.R2_out = open(f"{prefix}.R2.fq.gz", "wb")
-        self.gz_R1 = subprocess.Popen("gzip", stdout= self.R1_out, stdin=subprocess.PIPE)
-        self.gz_R2 = subprocess.Popen("gzip", stdout= self.R2_out, stdin=subprocess.PIPE)
+        self.gz_R1 = subprocess.Popen(compressor, stdout= self.R1_out, stdin=subprocess.PIPE)
+        if n_out == 2:
+            self.R2_out = open(f"{prefix}.R2.fq.gz", "wb") 
+            self.gz_R2 = subprocess.Popen(compressor, stdout= self.R2_out, stdin=subprocess.PIPE)
+        else:
+            self.R2_out = None
+            self.gz_R2 = None
 
         self.r1_cache: list[bytes] = []
         self.r2_cache: list[bytes] = []
@@ -145,9 +153,10 @@ class CachedFQWriter():
     def write(self):
         """writes r1 and r2 cache to self.writer_r* and empties caches"""
         self.gz_R1.stdin.write(b"".join(self.r1_cache))
-        self.gz_R2.stdin.write(b"".join(self.r2_cache))
         self.r1_cache = []
-        self.r2_cache = []
+        if self.gz_R2:
+            self.gz_R2.stdin.write(b"".join(self.r2_cache))
+            self.r2_cache = []
 
     def __enter__(self):
         return self
@@ -155,16 +164,18 @@ class CachedFQWriter():
     def __exit__(self, exception_type, exception_value, exception_traceback):
         # flush remaining cache and clean everything up
         self.write()
+
         self.gz_R1.stdin.close()
-        self.gz_R2.stdin.close()
         self.gz_R1.wait()
-        self.gz_R2.wait()
         self.R1_out.close()
-        self.R2_out.close()
+        if self.gz_R2:
+            self.gz_R2.stdin.close()
+            self.gz_R2.wait()
+            self.R2_out.close()
 
 
 class FQBarcodePool():
-    def __init__(self, prefix, singletons: bool, max_pairs: int, cachemax: int = 5000):
+    def __init__(self, prefix, singletons: bool, max_pairs: int, cachemax: int = 10000):
         """
         Initialize a FASTQ record pool for a given barcode. The pools track barcode and the reads therein.
         Passes things off to a CachedFQWriter() when spoofing all the reads of a barcode

@@ -1,4 +1,3 @@
-import os
 import rich_click as click
 import subprocess
 from djinn.utils.file_ops import make_dir, print_error, validate_fq_sam

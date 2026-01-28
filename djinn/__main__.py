@@ -3,7 +3,7 @@
 import rich_click as click
 
 from djinn.downsample import downsample
-from djinn.fastq import fastq
+from djinn.fastq import convert
 from djinn.extract import extract
 from djinn.spoof_hic import spoof_hic
 from djinn.filter_invalid import filter_invalid
@@ -37,7 +37,7 @@ def cli():
 
 cli.add_command(downsample)
 cli.add_command(extract)
-cli.add_command(fastq)
+cli.add_command(convert)
 cli.add_command(standardize)
 cli.add_command(spoof_hic)
 cli.add_command(filter_invalid)
