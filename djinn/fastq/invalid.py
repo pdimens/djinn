@@ -4,15 +4,15 @@ from itertools import zip_longest
 import os
 import rich_click as click
 import pysam
-from djinn.utils.file_ops import make_dir, print_error, validate_fq_sam, which_linkedread
+from djinn.utils.file_ops import make_dir, print_error, validate_fq, which_linkedread
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
-@click.command(panel = "FASTQ", no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
+@click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Separately output records with invalid barcodes")
 #@click.option("-t", "--threads", type = click.IntRange(min = 2, max_open=True), default=4, show_default=True, help = "Number of threads to use (BAM only)")
 @click.argument('prefix', required=True, type = str, callback=make_dir)
-@click.argument('input', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq_sam, nargs=-1)
+@click.argument('input', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq, nargs=-1)
 @click.help_option('--help', hidden = True)
 def filter_invalid(prefix, input, cache_size, invalid):
     '''

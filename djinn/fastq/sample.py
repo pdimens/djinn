@@ -1,11 +1,11 @@
 import random
 import pysam
-from rich_click import click
+import rich_click as click
 from djinn.fastq.extract import extract_barcodes_fq
-from djinn.utils.file_ops import print_error, which_linkedread, validate_fq_sam
+from djinn.utils.file_ops import make_dir, print_error, which_linkedread, validate_fq
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
-@click.command(panel = "FASTQ", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
 @click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
@@ -13,9 +13,9 @@ from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 @click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use (BAM only)")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = str, callback=make_dir)
-@click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
+@click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq, nargs=-1)
 @click.help_option('--help', hidden = True)
-def downsample(prefix, input, invalid, downsample, random_seed, threads, cache_size):
+def sample(prefix, input, invalid, downsample, random_seed, threads, cache_size):
     """
     Downsample data by barcode
     

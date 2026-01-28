@@ -1,8 +1,8 @@
 import pysam
 import sys
 from djinn.utils.fq_tools import FQRecord
-from djinn.utils.file_ops import print_error, which_linkedread, validate_fq_sam
-from rich_click import click
+from djinn.utils.file_ops import print_error, which_linkedread, validate_fq
+import rich_click as click
 
 def extract_barcodes_fq(barcode_type: str, fq: list[str], separate_invalid: bool = False):
     '''
@@ -26,16 +26,16 @@ def extract_barcodes_fq(barcode_type: str, fq: list[str], separate_invalid: bool
     return barcodes
 
 
-@click.command(panel = "Other Tools", no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
-@click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq_sam, nargs=-1)
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
+@click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq, nargs=-1)
 @click.help_option('--help', hidden = True)
 def extract(input):
     '''
-    Extract all barcodes in BAM/FASTQ file(s)
+    Extract all barcodes
 
-    Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM
-    inputs expect barcodes to follow the standard haplotagging (BX tag), stlfr (@seq_id#barcode), or tellseq
-    (@seq_id:barcode) formats.  Writes to stdout.
+    Inputs must be one or two FASTQ files (R1 and optional R2, can be gzipped). Input
+    expect barcodes to follow the standard haplotagging (BX tag), stlfr (@seq_id#barcode), or tellseq
+    (@seq_id:barcode) formats. Writes to stdout.
     '''
     if len(input) > 2:
         print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')

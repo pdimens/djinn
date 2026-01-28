@@ -1,7 +1,10 @@
 import pysam
+import sys
 from djinn.utils.barcodes import ANY_INVALID, TELLSEQ_STLFR_RX
+from djinn.utils.file_ops import validate_sam
+import rich_click as click
 
-def extract_barcodes_sam(bamfile: str, separate_invalid: bool = False):
+def extract_barcodes(bamfile: str, separate_invalid: bool = False):
     '''
     Return a set of the unique barcodes in bamfile. If return_invalid is True,
     returns a tuple of set(valid),set(invalid) barcodes.
@@ -26,3 +29,17 @@ def extract_barcodes_sam(bamfile: str, separate_invalid: bool = False):
     if separate_invalid:
         return barcodes, invalid
     return barcodes
+
+
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
+@click.argument('input', nargs=1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
+def extract(input):
+    '''
+    Extract all barcodes
+
+    Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM
+    inputs expect barcodes to follow the standard haplotagging (BX tag), stlfr (@seq_id#barcode), or tellseq
+    (@seq_id:barcode) formats.  Writes to stdout.
+    '''
+    bc = extract_barcodes(input)
+    sys.stdout.write("\n".join(bc))

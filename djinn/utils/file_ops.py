@@ -46,12 +46,12 @@ class generic_parser():
             self.valid = 0
 
 def print_error(title:str, text: str):
-    """Print the error text and exit with code 1"""
-    print(f"\033[33mError: {title}\033[0m")
+    """Print the error text to stderr and exit with code 1"""
+    print(f"\033[33mError: {title}\033[0m", file = sys.stderr)
     try:
-        print(text.encode('ascii', 'ignore').decode('unicode_escape'))
+        print(text.encode('ascii', 'ignore').decode('unicode_escape'), file = sys.stderr)
     except:
-        print(text)
+        print(text, file = sys.stderr)
     sys.exit(1)
 
 def safe_read(file_path: str):
@@ -131,25 +131,30 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
             i += 1
     return "none"
 
-def validate_fq_sam(ctx, param, value):
+def validate_fq(ctx, param, value):
     """
     Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
     """
     if len(value) > 2:
-        print_error("incorrect number of input files","Inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.")
+        print_error("incorrect number of input files","Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
         sys.exit(1)
 
-    if len(value) == 1:
-        if not value[0].lower().endswith(".bam") or value[0].lower().endswith(".sam"):
-            print_error('unrecognized format','Inputs must be 1 SAM (.sam|.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.')
+    if len(value) == 2 and value[0] == value[1]:
+        print_error('identical fastq files', 'The two input fastq files cannot be the same file')
+    
+    re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
+    for i in value:
+        if not re_ext.search(i):
+            print_error('unrecognized format', "Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
+    return value
 
-    else:
-        if value[0] == value[1]:
-            print_error('identical fastq files', 'The two input fastq files cannot be the same file')
-        re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
-        for i in value:
-            if not re_ext.search(i):
-                print_error('unrecognized format', 'Inputs must be 1 BAM (.bam) file or 2 FASTQ (.fastq|.fq) files. The FASTQ files can be gzipped.')
+def validate_sam(ctx, param, value):
+    """
+    Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
+    """
+    if not value[0].lower().endswith(".bam") or value[0].lower().endswith(".sam"):
+        print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+
     return value
 
 def make_dir(ctx, param, value):

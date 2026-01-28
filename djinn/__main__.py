@@ -1,16 +1,10 @@
 #! /usr/bin/env python3
 
 import rich_click as click
-
-from djinn.downsample import downsample
-from djinn.fastq import convert
-from djinn.extract import extract
-from djinn.spoof_hic import spoof_hic
-from djinn.filter_invalid import filter_invalid
-from djinn.filter_singletons import filter_singletons
-from djinn.ncbi import ncbi
-from djinn.sort import sort
-from djinn.standardize import standardize
+from djinn.fastq import fastq
+from djinn.xam import sam
+#from djinn.ncbi import ncbi
+#from djinn.spoof_hic import spoof_hic
 
 config = click.RichHelpConfiguration(
     max_width=80,
@@ -25,22 +19,18 @@ config = click.RichHelpConfiguration(
     options_table_help_sections = ["required", "help", "default"]
 )
 
-@click.group(options_metavar='', context_settings={"help_option_names" : []})
-@click.command_panel("File Conversions")
-@click.command_panel("Other Tools")
+@click.group(options_metavar='')
+@click.command_panel("File Types", commands = ["fastq", "sam"])
 @click.rich_config(config)
+@click.help_option('--help', hidden = True)
 @click.version_option("0.0.0", prog_name="djinn", hidden = True)
 def cli():
     """
     Convert between linked-read formats and barcode styles
+
+    Use the subcommands (e.g. `djinn sam ...`) to explore the options
+    for FASTQ and SAM files.
     """
 
-cli.add_command(downsample)
-cli.add_command(extract)
-cli.add_command(convert)
-cli.add_command(standardize)
-cli.add_command(spoof_hic)
-cli.add_command(filter_invalid)
-cli.add_command(filter_singletons)
-cli.add_command(ncbi)
-cli.add_command(sort)
+cli.add_command(fastq)
+cli.add_command(sam)
