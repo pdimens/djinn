@@ -9,17 +9,17 @@ order: 10
 
 # :icon-git-compare: Convert between FASTQ formats
 
-In the event you need your linked-read data converted into a different linked-read format, we got you covered.
+In the event you need your linked-read data converted into a different linked-read format, djinn has you covered.
 We might disagree on the fragmented format landscape, but that doesn't mean you
 shouldn't be able to use your data how and where you want to. This command converts a paired-end read set of FASTQ
 files between the common linked-read FASTQ types.
 
 ```bash usage
-djinn fastq PREFIX TARGET FQ1 FQ2
+djinn fastq convert PREFIX TARGET FQ1 FQ2
 ```
 
 ```bash example | tellseq → stlfr
-djinn data/orcs_stlfr stlfr data/orcs.R1.fq.gz data/orcs.R2.fq.gz
+djinn fastq convert data/orcs_stlfr stlfr data/orcs.R1.fq.gz data/orcs.R2.fq.gz
 ```
 
 Auto-detects the input format as one of 10X, haplotagging, TELLseq, or stLFR,
@@ -57,5 +57,6 @@ ATGTTTGCCGTAGTTT
 | `FQ1`             | [!badge variant="info" text="required"] forward reads of FASTQ pair           |
 | `FQ2`             | [!badge variant="info" text="required"] reverse reads of FASTQ pair           |
 | `-b` `--barcodes` | [!badge variant="info" text="conditional"] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data  |
-| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-c` `--cache-size` |[!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
+| `-t` `--threads`    | Number of threads to use for writing compressed output fastq files (default: 2)                                                                              |
 

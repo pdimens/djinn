@@ -11,23 +11,42 @@ order: 10
 
 Sometimes you want/need linked-read data to be sorted by barcode.
 In order to accomplish this with Djinn, the barcode **must** be in a SAM tag (e.g. `BX`, `BC`) FASTQ or SAM/BAM format. If your 
-barcodes aren't in a SAM tag, consider using [!badge corners="pill" text="fastq"](/convert_fastq.md) or
+barcodes aren't in a SAM tag, consider using [!badge corners="pill" text="fastq convert"](/convert.md) or
 [!badge corners="pill" text="standardize"](/standardize.md) to convert it into a compliant format.
 
+## FASTQ
+
 ```bash usage
-djinn sort SAMTAG PREFIX INPUTS...
+djinn fastq sort SAMTAG PREFIX INPUT...
 ```
 
 ```bash example | sort fastq with barcodes in BC tag
-djinn sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
+djinn fastq sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
 ```
 
-## :icon-terminal: Running Options
+### :icon-terminal: Running Options
 {.compact}
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `SAMTAG`          | [!badge variant="info" text="required"] 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
-| `INPUTS`          | [!badge variant="info" text="required"] FASTQ pair or SAM/BAM file           |
-| `-t` `--threads`  | Number of threads to use (default: 10)                                                  |
+| `INPUT`          | [!badge variant="info" text="required"] FASTQ file or file pair         |
+| `-t` `--threads`  | Number of threads to use (default: 4)                                                  |
 
+## SAM
+
+```bash usage
+djinn sam sort SAMTAG INPUT
+```
+
+```bash example | sort fastq with barcodes in BC tag
+djinn sam sort BC data/pebbles.bam
+```
+
+### :icon-terminal: Running Options
+{.compact}
+| argument          | description                                                                   |
+|:------------------|:------------------------------------------------------------------------------|
+| `SAMTAG`          | [!badge variant="info" text="required"] 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
+| `INPUT`          | [!badge variant="info" text="required"] SAM/BAM file         |
+| `-t` `--threads`  | Number of threads to use (default: 4)                                                  |

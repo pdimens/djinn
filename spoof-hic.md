@@ -24,7 +24,7 @@ modify linked-read data to also conform to characteristic #1? We're sure interes
 [!badge corners="pill" text="sort"](/sort.md) first to sort input FASTQ files by barcode before attempting spoofing.
 
 ```bash usage
-djinn spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq
+djinn fastq spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq
 ```
 
 ## :icon-terminal: Running Options
@@ -32,10 +32,10 @@ djinn spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq
 | argument          | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
-| `INPUTS`          | [!badge variant="info" text="required"] FASTQ file pair (can be gzipped) **must be sorted by barcode**  |
+| `INPUT`          | [!badge variant="info" text="required"] FASTQ file pair (can be gzipped) **must be sorted by barcode**  |
 | `-i` `--invalid`    | include invalids in the output, but don't spoof them |
 | `-s` `--singletons` | include singletons in the output  |
-| `-c` `--cache-size` | [!badge text="FASTQ only"] [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `5000`) |
+| `-c` `--cache-size` | [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
 
 
 ## What it does
