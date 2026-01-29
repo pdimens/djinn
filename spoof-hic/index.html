@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.813952572610">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.823040514250">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -34,12 +34,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.813952572610" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.823040514250" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.813952572610" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.823040514250" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -59,7 +59,7 @@
                                 <img class="max-h-10 dark:hidden md:inline-block" src="../static/djinn.png">
                                 <img class="max-h-10 hidden dark:inline-block" src="../static/djinn.png">
                             </span>
-                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v1.1</span>
+                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v2.0</span>
                     </div>
         
                     <span class="hidden h-8 border-r md:inline-block border-base-border"></span>
@@ -279,7 +279,7 @@ modify linked-read data to also conform to characteristic #1? We&#x27;re sure in
 </a> first to sort input FASTQ files by barcode before attempting spoofing.</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq</code></pre>
 </doc-codeblock></div>
 <doc-anchor-target id="running-options">
     <h2>
@@ -303,7 +303,7 @@ modify linked-read data to also conform to characteristic #1? We&#x27;re sure in
 </span> output filename prefix</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code v-pre>INPUTS</code></td>
+<td style="text-align: left;"><code v-pre>INPUT</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> FASTQ file pair (can be gzipped) <strong>must be sorted by barcode</strong></td>
@@ -318,11 +318,9 @@ modify linked-read data to also conform to characteristic #1? We&#x27;re sure in
 </tr>
 <tr>
 <td style="text-align: left;"><code v-pre>-c</code> <code v-pre>--cache-size</code></td>
-<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
-    <span>FASTQ only</span>
-</span> <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
     <span>hidden</span>
-</span> number of reads to store before writing (bigger is faster, default: <code v-pre>5000</code>)</td>
+</span> number of reads to store before writing (bigger is faster, default: <code v-pre>10000</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -397,7 +395,7 @@ Below is an example of the process.
                                     <ul class="flex flex-wrap items-center text-sm">
                                     </ul>
                                 </div>
-                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2025. All rights reserved.</p></div>
+                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2026. All rights reserved.</p></div>
                             </footer>
                         </div>
                     </div>

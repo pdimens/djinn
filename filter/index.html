@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.813952572610">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.823040514250">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -32,12 +32,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.813952572610" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.823040514250" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.813952572610" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.823040514250" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -57,7 +57,7 @@
                                 <img class="max-h-10 dark:hidden md:inline-block" src="../static/djinn.png">
                                 <img class="max-h-10 hidden dark:inline-block" src="../static/djinn.png">
                             </span>
-                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v1.1</span>
+                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v2.0</span>
                     </div>
         
                     <span class="hidden h-8 border-r md:inline-block border-base-border"></span>
@@ -255,25 +255,31 @@ that are not singletons (i.e. there are more than 2 reads with the same barcode)
     <span>filter-singletons</span>
 </span> will remove singletons.
 Each of these commands can optionally retain the removed reads in separate files.</p>
-<doc-anchor-target id="filter-invalid">
+<doc-anchor-target id="fastq">
     <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#fastq">#</doc-anchor-trigger>
+        <span>FASTQ</span>
+    </h2>
+</doc-anchor-target>
+<doc-anchor-target id="filter-invalid">
+    <h3>
         <doc-anchor-trigger class="header-anchor-trigger" to="#filter-invalid">#</doc-anchor-trigger>
         <span>filter-invalid</span>
-    </h2>
+    </h3>
 </doc-anchor-target>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn filter-invalid [--invalid] PREFIX INPUTS...</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq filter-invalid [--invalid] PREFIX INPUTS...</code></pre>
 </doc-codeblock></div>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">example | remove invalid barcodes and retain them in separate files</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn filter-invalid --invalid echidna_valid echidna.R1.fq.gz echidna.R2.fq.gz</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq filter-invalid --invalid echidna_valid echidna.R1.fq.gz echidna.R2.fq.gz</code></pre>
 </doc-codeblock></div>
 <doc-anchor-target id="running-options">
-    <h3>
+    <h4>
         <doc-anchor-trigger class="header-anchor-trigger" to="#running-options">#</doc-anchor-trigger>
         <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
-    </h3>
+    </h4>
 </doc-anchor-target>
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="compact">
@@ -294,15 +300,13 @@ Each of these commands can optionally retain the removed reads in separate files
 <td style="text-align: left;"><code v-pre>INPUTS</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
-</span> FASTQ pair or SAM/BAM file</td>
+</span> FASTQ or file pair</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code v-pre>-c</code> <code v-pre>--cache-size</code></td>
-<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
-    <span>FASTQ only</span>
-</span> <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
+<td style="text-align: left;"><code v-pre>-c</code> <code v-pre>--cache-size</code> <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
     <span>hidden</span>
-</span> number of reads to store before writing (bigger is faster, default: <code v-pre>5000</code>)</td>
+</span> number of reads to store before writing (bigger is faster, default: <code v-pre>10000</code>)</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code v-pre>-i</code> <code v-pre>--invalid</code></td>
@@ -312,24 +316,24 @@ Each of these commands can optionally retain the removed reads in separate files
 </table>
 </div>
 <doc-anchor-target id="filter-singletons">
-    <h2>
+    <h3>
         <doc-anchor-trigger class="header-anchor-trigger" to="#filter-singletons">#</doc-anchor-trigger>
         <span>filter-singletons</span>
-    </h2>
+    </h3>
 </doc-anchor-target>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn filter-singletons [--singletons] PREFIX INPUTS...</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq filter-singletons [--singletons] PREFIX INPUT...</code></pre>
 </doc-codeblock></div>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">example | remove singleton barcodes and retain them in separate files</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn filter-singletons --singletons hyena_filt hyena.R1.fq.gz hyena.R2.fq.gz</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq filter-singletons --singletons hyena_filt hyena.R1.fq.gz hyena.R2.fq.gz</code></pre>
 </doc-codeblock></div>
 <doc-anchor-target id="running-options-1">
-    <h3>
+    <h4>
         <doc-anchor-trigger class="header-anchor-trigger" to="#running-options-1">#</doc-anchor-trigger>
         <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
-    </h3>
+    </h4>
 </doc-anchor-target>
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="compact">
@@ -347,22 +351,110 @@ Each of these commands can optionally retain the removed reads in separate files
 </span> output filename prefix</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code v-pre>INPUTS</code></td>
+<td style="text-align: left;"><code v-pre>INPUT</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
-</span> FASTQ pair or SAM/BAM file</td>
+</span> FASTQ file or file pair</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code v-pre>-c</code> <code v-pre>--cache-size</code></td>
-<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
-    <span>FASTQ only</span>
-</span> <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">
     <span>hidden</span>
-</span> number of reads to store before writing (bigger is faster, default: <code v-pre>5000</code>)</td>
+</span> number of reads to store before writing (bigger is faster, default: <code v-pre>10000</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code v-pre>-s</code> <code v-pre>--singletons</code></td>
-<td style="text-align: left;">write reads with singleton barcodes to <code v-pre>prefix.singletons.bam</code> or <code v-pre>prefix.singletons.R[12].fq.gz</code></td>
+<td style="text-align: left;">write reads with singleton barcodes to <code v-pre>prefix.singletons.R[12].fq.gz</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<doc-anchor-target id="sam">
+    <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#sam">#</doc-anchor-trigger>
+        <span>SAM</span>
+    </h2>
+</doc-anchor-target>
+<doc-anchor-target id="filter-invalid-1">
+    <h3>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#filter-invalid-1">#</doc-anchor-trigger>
+        <span>filter-invalid</span>
+    </h3>
+</doc-anchor-target>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sam filter-invalid [--invalid] INPUT &gt; output.bam</code></pre>
+</doc-codeblock></div>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">example | remove invalid barcodes and retain them in a separate file</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sam filter-invalid --invalid echidnda.invalid.bam echidna.bam &gt; echidna.filtered.bam</code></pre>
+</doc-codeblock></div>
+<doc-anchor-target id="running-options-2">
+    <h4>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#running-options-2">#</doc-anchor-trigger>
+        <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
+    </h4>
+</doc-anchor-target>
+<div class="table-wrapper scrollbar overflow-hidden">
+<table class="compact">
+<thead>
+<tr>
+<th style="text-align: left;">argument</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code v-pre>INPUT</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> SAM/BAM file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>-i</code> <code v-pre>--invalid</code></td>
+<td style="text-align: left;">output records with invalid barcodes to this file</td>
+</tr>
+</tbody>
+</table>
+</div>
+<doc-anchor-target id="filter-singletons-1">
+    <h3>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#filter-singletons-1">#</doc-anchor-trigger>
+        <span>filter-singletons</span>
+    </h3>
+</doc-anchor-target>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sam filter-singletons [--singletons] PREFIX INPUT &gt; output.bam</code></pre>
+</doc-codeblock></div>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">example | remove singleton barcodes and retain them in a separate file</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sam filter-singletons --singletons hyena.singles.bam hyena.bam &gt; hyena.filter.bam</code></pre>
+</doc-codeblock></div>
+<doc-anchor-target id="running-options-3">
+    <h4>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#running-options-3">#</doc-anchor-trigger>
+        <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
+    </h4>
+</doc-anchor-target>
+<div class="table-wrapper scrollbar overflow-hidden">
+<table class="compact">
+<thead>
+<tr>
+<th style="text-align: left;">argument</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code v-pre>INPUTS</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> SAM/BAM file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>-s</code> <code v-pre>--singletons</code></td>
+<td style="text-align: left;">write valid singleton records to this file</td>
 </tr>
 </tbody>
 </table>
@@ -395,11 +487,11 @@ Each of these commands can optionally retain the removed reads in separate files
                             
                                 <nav id="retype-nextprev" class="print:hidden flex mt-14">
                                     <div class="w-1/2">
-                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../downsample/">
+                                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../convert/">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                                             <span>
                                                 <span class="block text-xs font-normal text-base-text-muted">Previous</span>
-                                                <span class="block mt-1">Downsample</span>
+                                                <span class="block mt-1">Convert FASTQ</span>
                                             </span>
                                         </a>
                                     </div>
@@ -423,7 +515,7 @@ Each of these commands can optionally retain the removed reads in separate files
                                     <ul class="flex flex-wrap items-center text-sm">
                                     </ul>
                                 </div>
-                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2025. All rights reserved.</p></div>
+                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2026. All rights reserved.</p></div>
                             </footer>
                         </div>
                     </div>

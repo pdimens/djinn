@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.813952572610">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="3.11.0.823040514250">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 3.11.0">
@@ -32,12 +32,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link href="../static/favicon.png" rel="icon">
-    <link href="../resources/css/retype.css?v=3.11.0.813952572610" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=3.11.0.823040514250" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=3.11.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.813952572610" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.813952572610" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=3.11.0.823040514250" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=3.11.0.823040514250" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -57,7 +57,7 @@
                                 <img class="max-h-10 dark:hidden md:inline-block" src="../static/djinn.png">
                                 <img class="max-h-10 hidden dark:inline-block" src="../static/djinn.png">
                             </span>
-                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v1.1</span>
+                        </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v2.0</span>
                     </div>
         
                     <span class="hidden h-8 border-r md:inline-block border-base-border"></span>
@@ -252,9 +252,49 @@ which means any useful information in the read headers disappears. This applies 
 formats, where the barcode is encoded in the sequence header, and thus vanishes from the public archive when uploaded to
 NCBI. Obviously this isn&#x27;t great, so we propose a simple approach to solving this problem: uploading sequence data as
 unaligned BAM files (recommended).</p>
+<doc-anchor-target id="fastq">
+    <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#fastq">#</doc-anchor-trigger>
+        <span>FASTQ</span>
+    </h2>
+</doc-anchor-target>
+<p>If you didn&#x27;t already know, the BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
+BAM (or SAM) files can also have unaligned records in them, meaning you can quite easily convert a paired-end set of FASTQ
+files into a single unaligned BAM file without any data loss (and also free up disk space). The conversion is a simple
+<code v-pre>samtools</code> command in each direction (<code v-pre>samtools import</code> and <code v-pre>samtools fastq</code>), but as a convenience, Djinn provides a
+<span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-full">
+    <span>fastq ncbi</span>
+</span> wrapper to accomplish this.</p>
+<div class="flex mb-6">
+    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-primary"></div>
+    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
+        <div class="flex items-center ml-4 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mb-px text-callout-primary" width="22" height="22" viewBox="0 0 24 24" role="presentation">
+                <g fill="currentColor"><g>
+                    <path d="M12 1C5.93 1 1 5.93 1 12s4.93 11 11 11 11-4.93 11-11S18.07 1 12 1zm0 20c-4.96 0-9-4.04-9-9s4.04-9 9-9 9 4.04 9 9-4.04 9-9 9z"></path>
+                    <path d="M12 11c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1zM12.01 7c-.56 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"></path>
+                    <path fill="none" d="M0 0h24v24H0z"></path>
+                </g></g>
+            </svg>
+        </div>
+        <div class="pr-5 ml-3 w-full">
+            <h5>Barcode Placement</h5>
+<p><strong>For this to work as intended</strong> the barcodes should be stored in the <code v-pre>BX:Z</code> tag (or some other SAM-compliant tag e.g. <code v-pre>BC:Z</code>).
+It&#x27;s possible NCBI will still strip the read name from alignment records, so if your barcode isn&#x27;t stored in a SAM tag,
+you risk losing the barcode forever!</p>
+        </div>
+    </div>
+</div>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">losslessly convert to unaligned BAM</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq ncbi file.R1.fq file.R2.fq &gt; out.bam
+
+# is equivalent to #
+samtools import -O BAM -T &quot;*&quot; -1 file.R1.fq file.R2.fq &gt; out.bam</code></pre>
+</doc-codeblock></div>
 <div class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi PREFIX INPUTS...</code></pre>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn fastq ncbi INPUT &gt; output.bam</code></pre>
 </doc-codeblock></div>
 <doc-anchor-target id="running-options">
     <h2>
@@ -272,77 +312,66 @@ unaligned BAM files (recommended).</p>
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;"><code v-pre>INPUT</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> FASTQ file or file pair</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code v-pre>-t</code> <code v-pre>--threads</code></td>
+<td style="text-align: left;">Number of threads to use (default: 4)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<doc-anchor-target id="sam">
+    <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#sam">#</doc-anchor-trigger>
+        <span>SAM</span>
+    </h2>
+</doc-anchor-target>
+<p>The reverse of this process is to convert to FASTQ from SAM/BAM.</p>
+<div class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">losslessly convert to fastq from unaligned BAM</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn sam ncbi PREFIX infile.bam
+
+# is equivalent to #
+samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam</code></pre>
+</doc-codeblock></div>
+<doc-anchor-target id="running-options-1">
+    <h2>
+        <doc-anchor-trigger class="header-anchor-trigger" to="#running-options-1">#</doc-anchor-trigger>
+        <span><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</span>
+    </h2>
+</doc-anchor-target>
+<div class="table-wrapper scrollbar overflow-hidden">
+<table class="compact">
+<thead>
+<tr>
+<th style="text-align: left;">argument</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code v-pre>INPUT</code></td>
+<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span> SAM/BAM file</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code v-pre>PREFIX</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> output filename prefix</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code v-pre>INPUTS</code></td>
-<td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
-    <span>required</span>
-</span> FASTQ pair or SAM/BAM file</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code v-pre>-t</code> <code v-pre>--threads</code></td>
-<td style="text-align: left;">Number of threads to use (default: 10)</td>
+<td style="text-align: left;">Number of threads to use (default: 4)</td>
 </tr>
 </tbody>
 </table>
 </div>
-<doc-anchor-target id="convert-to-unaligned-bam">
-    <h2>
-        <doc-anchor-trigger class="header-anchor-trigger" to="#convert-to-unaligned-bam">#</doc-anchor-trigger>
-        <span>Convert to unaligned BAM</span>
-    </h2>
-</doc-anchor-target>
-<p>If you didn&#x27;t already know, the BAM format is quite flexible and contains all the fields one would already use in FASTQ format.
-BAM (or SAM) files can also have unaligned records in them, meaning you can quite easily convert a paired-end set of FASTQ
-files into a single unaligned BAM file without any data loss (and also free up disk space). The conversion is a simple
-<code v-pre>samtools</code> command in each direction (<code v-pre>samtools import</code> and <code v-pre>samtools fastq</code>), but as a convenience, Djinn provides a
-<span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-full">
-    <span>ncbi</span>
-</span> wrapper to accomplish this.</p>
-<div class="flex mb-6">
-    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-primary"></div>
-    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
-        <div class="flex items-center ml-4 h-7">
-            <svg xmlns="http://www.w3.org/2000/svg" class="mb-px text-callout-primary" width="22" height="22" viewBox="0 0 24 24" role="presentation">
-                <g fill="currentColor"><g>
-                    <path d="M12 1C5.93 1 1 5.93 1 12s4.93 11 11 11 11-4.93 11-11S18.07 1 12 1zm0 20c-4.96 0-9-4.04-9-9s4.04-9 9-9 9 4.04 9 9-4.04 9-9 9z"></path>
-                    <path d="M12 11c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1zM12.01 7c-.56 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"></path>
-                    <path fill="none" d="M0 0h24v24H0z"></path>
-                </g></g>
-            </svg>
-        </div>
-        <div class="pr-5 ml-3 w-full">
-            <h5>Barcode Placement</h5>
-<p><strong>For this to work as intended</strong> the barcodes should be stored in the <code v-pre>BX:Z</code> tag (or some other SAM-compliant tag e.g. <code v-pre>BC:Z</code>).
-It&#x27;s possible NCBI will still strip the read name from alignment records.</p>
-        </div>
-    </div>
-</div>
-<div class="codeblock-wrapper"><doc-codeblock>
-<div class="codeblock-title">losslessly convert to unaligned BAM</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi file.R1.fq file.R2.fq &gt; out.bam
-
-# is equivalent to #
-samtools import -O BAM -T &quot;*&quot; -1 file.R1.fq file.R2.fq &gt; out.bam</code></pre>
-</doc-codeblock></div>
-<doc-anchor-target id="convert-to-fastq-from-bam">
-    <h2>
-        <doc-anchor-trigger class="header-anchor-trigger" to="#convert-to-fastq-from-bam">#</doc-anchor-trigger>
-        <span>Convert to fastq from BAM</span>
-    </h2>
-</doc-anchor-target>
-<p>The reverse of this process is conspicuously named <code v-pre>from-ncbi</code>.</p>
-<div class="codeblock-wrapper"><doc-codeblock>
-<div class="codeblock-title">losslessly convert to fastq from unaligned BAM</div>
-<pre translate="no" class="language-bash"><code v-pre class="language-bash">djinn ncbi PREFIX infile.bam
-
-# is equivalent to #
-samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam</code></pre>
-</doc-codeblock></div>
 
                                 <div id="retype-tags" class="flex items-center mt-6 mb-6 clear-both">
                                     <span>
@@ -378,10 +407,10 @@ samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz in
                                     </div>
                             
                                     <div class="w-1/2">
-                                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../sort/">
+                                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../sample/">
                                             <span>
                                                 <span class="block text-xs font-normal text-right text-base-text-muted">Next</span>
-                                                <span class="block mt-1">Sort</span>
+                                                <span class="block mt-1">Sample</span>
                                             </span>
                                             <svg xmlns="http://www.w3.org/2000/svg" class="ml-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19.92 12.38a1 1 0 00-.22-1.09l-7-7a.996.996 0 10-1.41 1.41l5.3 5.3H5c-.55 0-1 .45-1 1s.45 1 1 1h11.59l-5.29 5.29a.996.996 0 000 1.41c.19.2.44.3.7.3s.51-.1.71-.29l7-7c.09-.09.16-.21.21-.33z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                                         </a>
@@ -396,7 +425,7 @@ samtools fastq -N -c 6 -T &quot;*&quot; -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz in
                                     <ul class="flex flex-wrap items-center text-sm">
                                     </ul>
                                 </div>
-                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2025. All rights reserved.</p></div>
+                                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link-weight text-sm leading-relaxed"><p>© Copyright 2026. All rights reserved.</p></div>
                             </footer>
                         </div>
                     </div>
