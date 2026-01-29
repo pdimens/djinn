@@ -48,8 +48,7 @@ jobs:
 
       - name: to-ncbi
         run: |
-          djinn fastq ncbi result test/*.gz &&
-          samtools view result.bam
+          djinn fastq ncbi test/*.gz | samtools view
       - name: from-ncbi
         run: |
           djinn sam ncbi result test/test.bam &&\
