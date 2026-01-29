@@ -6,7 +6,7 @@ from djinn.utils.file_ops import make_dir, print_error, validate_fq
 @click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('samtag', metavar="SAM_tag", type = str, required = True, nargs=1)
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1, callback=make_dir)
-@click.argument('input', type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, nargs=-1, callback = validate_fq)
+@click.argument('input', nargs=-1, type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, callback = validate_fq)
 @click.help_option('--help', hidden = True)
 def sort(samtag,prefix,input,threads):
     """
@@ -15,8 +15,6 @@ def sort(samtag,prefix,input,threads):
     The barcode **must** be in a SAM tag (e.g. `BX`, `BC`) whether in
     FASTQ or SAM/BAM format.
     """
-    if len(input) > 2:
-        print_error('invalid input files', 'Inputs can be one single-ended or 2 paired-end FASTQ files.')
     if len(samtag) != 2:
         print_error('incorrect SAM tag', 'The SAM TAG is expected to be exactly 2 letters (e.g. BX).')
 
@@ -28,7 +26,7 @@ def sort(samtag,prefix,input,threads):
         _outfiles += " -2 {prefix}.R2.fq.gz"
 
     sam_import = subprocess.Popen(
-        f'samtools import -@ 1 -T *'.split() + input,
+        f'samtools import -@ 1 -T * {" ".join(input)}'.split(),
         stdout = subprocess.PIPE
     )
 

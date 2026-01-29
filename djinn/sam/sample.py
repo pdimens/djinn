@@ -53,7 +53,7 @@ def sample(input, invalid, downsample, random_seed, threads):
     
     barcodes = barcodes[:downsample]
     _input = os.path.basename(input)
-    with open(f'{_input}.bc', "r") as bc_file:
+    with open(f'{_input}.bc', 'w') as bc_file:
         bc_file.write("\n".join(barcodes))
 
     try:

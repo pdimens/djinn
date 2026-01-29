@@ -18,7 +18,7 @@ config = click.RichHelpConfiguration(
 )
 
 @click.group(options_metavar='')
-@click.command_panel("File Types", commands = ["fastq", "sam"])
+@click.command_panel("Subcommands", commands = ["fastq", "sam"])
 @click.rich_config(config)
 @click.help_option('--help', hidden = True)
 @click.version_option("0.0.0", prog_name="djinn", hidden = True)

@@ -10,7 +10,7 @@ from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Separately output records with invalid barcodes")
-@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use for output files")
 @click.argument('prefix', required=True, type = str, callback=make_dir)
 @click.argument('input', nargs=-1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
 @click.help_option('--help', hidden = True)
@@ -20,8 +20,6 @@ def filter_invalid(prefix, input, cache_size, invalid, threads):
 
     Use `--invalid` to separately output reads with invalid barcodes.
     Barcodes can be in haplotagging, stlfr, or tellseq formats.
-    Specify `--threads` if `pigz` is available in your PATH (the value will be divided
-    between the number of input files).
     '''
     lr_type = which_linkedread(input[0])
 
@@ -38,5 +36,6 @@ def filter_invalid(prefix, input, cache_size, invalid, threads):
                             writer_inv.queue(_read)
                     else:
                         writer.queue(_read)
-        writer_inv.close()
+        if invalid:
+            writer_inv.close()
 

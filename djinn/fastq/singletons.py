@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 from collections import Counter
-import os
 from itertools import zip_longest
 import pysam
 import rich_click as click
@@ -10,8 +9,8 @@ from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 def count_barcodes_fq(barcode_type: str, fq: list[str], invalid: bool = False) -> Counter:
     '''
-    Return a Counter of the unique barcodes in the fastq files. If invalid is True,
-    the Counter includes invalid barcodes as well.
+    Return a `Counter` of the unique barcodes in the fastq files. If invalid is `True`,
+    the `Counter` includes invalid barcodes as well.
     '''
     barcodes = Counter()
     if len(fq) == 1:
@@ -40,7 +39,7 @@ def count_barcodes_fq(barcode_type: str, fq: list[str], invalid: bool = False) -
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
 @click.option("-s", "--singletons", is_flag=True, default=False, help = "Separately output records with valid singleton barcodes")
-@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use for output files")
 @click.argument('prefix', required=True, type = str, callback=make_dir)
 @click.argument('input', nargs = -1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
 @click.help_option('--help', hidden = True)

@@ -4,7 +4,7 @@ import sys
 from djinn.utils.file_ops import print_error, validate_fq
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
-@click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")
+@click.option("--threads", "-t", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of threads to use")
 @click.argument('input', nargs=-1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
 @click.help_option('--help', hidden = True)
 def ncbi(input, threads):

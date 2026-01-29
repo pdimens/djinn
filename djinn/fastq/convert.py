@@ -8,7 +8,7 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
-@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use for output files")
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1, callback=make_dir)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('input', metavar="INPUT", required = True, nargs=-1, type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
@@ -19,8 +19,7 @@ def convert(target, input, prefix, barcodes, cache_size, threads):
     
     Auto-detects the input data format and takes the positional argument `TARGET` specifying the target data format.
     10X data as input requires a `--barcodes` file (often called a barcode whitelist) so djinn can identify the inline
-    barcodes. In all cases, a file will be created with the barcode conversion map. Specify `--threads` if `pigz` is
-    available in your PATH (the value will be divided between the number of input files).
+    barcodes. In all cases, a file will be created with the barcode conversion map.
     
     | from/to      | barcode format                                     | example                     |
     |:-------------|:---------------------------------------------------|:----------------------------|

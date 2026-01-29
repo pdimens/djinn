@@ -8,21 +8,19 @@ import rich_click as click
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
-@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use for output files")
 @click.argument('prefix', metavar="output_prefix", type = str, required = True, nargs=1, callback=make_dir)
 @click.argument('input', nargs = -1, type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_fq)
 @click.help_option('--help', hidden = True)
 def standardize(prefix, input, style, cache_size, threads):
     """
-    Move barcodes to `BX`/`VX` sequence header tags
+    Move barcodes to `BX`+`VX` sequence header tags
 
     This conversion moves the barcode to the `BX:Z` tag in fastq records, maintaining the same barcode type by default (auto-detected).
     See the documentation for a deeper look into the location and format expectations for different linked-read technologies.
-    Also writes a `VX:i` tag to describe barcode validation `0` (invalid) or `1` (valid). Use `djinn fastq`
+    Also writes a `VX:i` tag to describe barcode validation `0` (invalid) or `1` (valid). Use `djinn fastq convert`
     if your fastq data is in 10X format, as this command will not work on 10X format (i.e. barcode is the first 16 bases of read 1).
     Use `--style` to also convert the barcode to a different style (`haplotagging`, `stlfr`, `tellseq`, `10X`).
-    Specify `--threads` if `pigz` is available in your PATH (the value will be divided
-    between the number of input files).
 
     | Option         | Style                                        |
     |:---------------|:---------------------------------------------|

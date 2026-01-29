@@ -74,7 +74,7 @@ jobs:
           djinn fastq sample -d 2 result test/*.gz &&\
           echo "============= R1 =============" && zcat result.R1.fq.gz &&\
           echo "============= R2 =============" && zcat result.R2.fq.gz
-      - name: sample bam
+      - name: sam sample
         if: success() || failure()
         run: djinn sam sample -d 2 test/test.bam | samtools view
 

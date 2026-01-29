@@ -2,7 +2,7 @@ import os
 import pysam
 import sys
 import rich_click as click
-from djinn.utils.file_ops import make_dir, print_error, validate_sam
+from djinn.utils.file_ops import print_error, validate_sam
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, TELLSEQ_HAPLOTAGGING_INVALID_RX
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
@@ -10,7 +10,7 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STL
 @click.argument('input', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_sam)
 def standardize(input, style):
     """
-    Move barcodes to `BX`/`VX` sequence header tags
+    Move barcodes to `BX`+`VX` sequence header tags
 
     This conversion moves the barcode to the `BX:Z` tag in sam/bam records, maintaining the same barcode type by default (auto-detected).
     See the documentation for a deeper look into the location and format expectations for different linked-read technologies.
