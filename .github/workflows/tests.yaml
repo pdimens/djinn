@@ -56,7 +56,7 @@ jobs:
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: std-bam
-        run: djinn sam standardize -s stlfr result test/test.bam | samtools view
+        run: djinn sam standardize -s stlfr test/test.bam | samtools view
       - name: std-fastq
         run: |
           djinn fastq standardize -s tellseq result test/*.gz &&\
@@ -69,7 +69,7 @@ jobs:
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: downsample-bam
-        run: djinn sam downsample -d 2 result test/test.bam | samtools view
+        run: djinn sam downsample -d 2 test/test.bam | samtools view
 
       - name: extract-fastq
         run: djinn fastq extract test/*.gz
@@ -82,7 +82,7 @@ jobs:
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: sort-bam
-        run: djinn sam sort BX result test/test.bam | samtools view
+        run: djinn sam sort BX test/test.bam | samtools view
 
       - name: spoof-hic
         run: |
@@ -91,7 +91,7 @@ jobs:
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-invalid-bam
-        run: djinn sam filter-invalid result test/test.bam | samtools view
+        run: djinn sam filter-invalid test/test.bam | samtools view
 
       - name: filter-invalid-fastq
         run: |
@@ -100,7 +100,7 @@ jobs:
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-singletons-bam
-        run: djinn sam filter-singletons result test/test.bam | samtools view
+        run: djinn sam filter-singletons test/test.bam | samtools view
 
       - name: filter-singletons-fastq
         run: |
