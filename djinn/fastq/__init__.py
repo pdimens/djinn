@@ -18,7 +18,7 @@ def fastq():
     Use the subcommands below with the `fastq` prefix, e.g.:
     
     ```bash
-    djinn fastq downsample options... args...
+    djinn fastq sample options... args...
     ```
     """
 

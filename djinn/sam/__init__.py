@@ -15,7 +15,7 @@ def sam():
 
     Always writes to stdout. Use the subcommands below with the `sam` prefix, e.g.:
     ```bash
-    djinn sam downsample options... args...
+    djinn sam sample options... args...
     ```
     """
 
