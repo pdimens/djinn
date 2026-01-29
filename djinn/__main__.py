@@ -2,9 +2,7 @@
 
 import rich_click as click
 from djinn.fastq import fastq
-from djinn.xam import sam
-#from djinn.ncbi import ncbi
-#from djinn.spoof_hic import spoof_hic
+from djinn.sam import sam
 
 config = click.RichHelpConfiguration(
     max_width=80,

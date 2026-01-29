@@ -1,10 +1,10 @@
-from djinn.xam.sample import sample
-from djinn.xam.extract import extract
-from djinn.xam.ncbi import ncbi
-from djinn.xam.filter_singletons import filter_singletons
-from djinn.xam.invalid import filter_invalid
-from djinn.xam.standardize import standardize
-from djinn.xam.sort import sort
+from djinn.sam.sample import sample
+from djinn.sam.extract import extract
+from djinn.sam.ncbi import ncbi
+from djinn.sam.filter_singletons import filter_singletons
+from djinn.sam.invalid import filter_invalid
+from djinn.sam.standardize import standardize
+from djinn.sam.sort import sort
 import rich_click as click
 
 @click.group(options_metavar='')

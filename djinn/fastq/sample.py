@@ -6,11 +6,10 @@ from djinn.utils.file_ops import make_dir, print_error, which_linkedread, valida
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
-@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=5000, help = "Number of cached reads for write operations")
+@click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.0000001), help = 'Number/fraction of barcodes to retain')
-@click.option("-i", "--invalid", is_flag=True, default=True, help = "Include invalid barcodes in downsampling")
 @click.option('-i', '--invalid', default = 1, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
-@click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use (BAM only)")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
 @click.argument('prefix', type = str, callback=make_dir)
 @click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq, nargs=-1)
@@ -19,11 +18,12 @@ def sample(prefix, input, invalid, downsample, random_seed, threads, cache_size)
     """
     Downsample data by barcode
     
-    Downsamples a FASTQ read pair or BAM file by barcode to keep all records containing `-d` randomly sampled barcodes.
+    Downsamples a FASTQ file or file pair by barcode to keep all records containing `-d` randomly sampled barcodes.
     If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total
     number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to specify if invalid barcodes
     should be included in downsampling. Inputs can be single-end or paired-end reads and must be in haplotagging, stlfr,
-    or tellseq formats.
+    or tellseq formats. Specify `--threads` if `pigz` is available in your PATH (the value will be divided
+    between the number of input files).
 
     | `--invalid` | effect                                           |
     |:---:|:---------------------------------------------------|
@@ -50,18 +50,20 @@ def sample(prefix, input, invalid, downsample, random_seed, threads, cache_size)
     n_bc = len(barcodes)
     downsample = int(n_bc * downsample) if downsample < 1 else int(downsample)
     if n_bc < downsample:
-        print_error("not enough barcodes", f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})")
+        print_error(
+            "not enough barcodes",
+            f"The input has fewer barcodes ({n_bc}) than the requested downsampling amount ({downsample})"
+        )
 
     with open(f"{prefix}.bc", "w") as bc_out:
         random.shuffle(barcodes)
         barcodes = barcodes[:downsample]
         bc_out.write("\n".join(barcodes))
 
-    with CachedFQWriter(prefix, cache_size) as writer:
-        for i,j in enumerate(input):
-            _fw = i == 0
-            with pysam.FastxFile(j, persist=False) as FQ:
+    with CachedFQWriter(prefix, cache_size, len(input), threads = threads) as writer:
+        for i in input:
+            with pysam.FastxFile(i, persist=False) as FQ:
                 for _read in FQ:
-                    _read = FQRecord(_read, _fw, from_, 0)
+                    _read = FQRecord(_read, from_, 0)
                     if _read.barcode in barcodes:
-                        writer.queue(_read.convert(from_, _read.barcode), None)
+                        writer.queue(_read.convert(from_, _read.barcode))

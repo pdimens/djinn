@@ -8,17 +8,19 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")
+@click.option("-t", "--threads", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of compression threads to use per output file")
 @click.argument('prefix', metavar = "PREFIX", type = str,  required=True, nargs = 1, callback=make_dir)
 @click.argument('target', metavar = "TARGET", type = click.Choice(["10x", "haplotagging", "stlfr", "tellseq"], case_sensitive=False), nargs = 1)
 @click.argument('input', metavar="INPUT", required = True, nargs=-1, type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), callback = validate_fq)
 @click.help_option('--help', hidden = True)
-def convert(target, input, prefix, barcodes, cache_size):
+def convert(target, input, prefix, barcodes, cache_size, threads):
     """
     Convert between linked-read formats
     
     Auto-detects the input data format and takes the positional argument `TARGET` specifying the target data format.
     10X data as input requires a `--barcodes` file (often called a barcode whitelist) so djinn can identify the inline
-    barcodes. In all cases, a file will be created with the barcode conversion map. Requires 2 threads.
+    barcodes. In all cases, a file will be created with the barcode conversion map. Specify `--threads` if `pigz` is
+    available in your PATH (the value will be divided between the number of input files).
     
     | from/to      | barcode format                                     | example                     |
     |:-------------|:---------------------------------------------------|:----------------------------|
@@ -63,11 +65,11 @@ def convert(target, input, prefix, barcodes, cache_size):
     if len(input) == 1:
         with (
             pysam.FastxFile(input[0], persist=False) as R1,
-            CachedFQWriter(prefix, cache_size) as writer,
+            CachedFQWriter(prefix, cache_size, n_out = 1, threads = threads) as writer,
             open(f"{prefix}.bc", "w") as bc_out
         ):
             for r1 in R1:
-                _r1 = FQRecord(r1, True, from_, BX.length)
+                _r1 = FQRecord(r1, from_, BX.length)
                 if _r1.barcode not in BX.inventory:
                     if from_ == "10x":
                         _r1.valid = _r1.barcode in barcodelist
@@ -76,25 +78,25 @@ def convert(target, input, prefix, barcodes, cache_size):
                             BX.inventory[_r1.barcode] = BX.next()
                         except StopIteration:
                             print_error(
-                                "too many barcodes",
+                                f"insufficient {to_} barcodes",
                                 f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from."
                             )
                     else:
                         BX.inventory[_r1.barcode] = BX.invalid
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                 converted_bc = BX.inventory[_r1.barcode]
-                writer.queue(_r1.convert2(to_, converted_bc), None)
+                writer.queue(_r1.convert2(to_, converted_bc))
         return
 
     with (
         pysam.FastxFile(input[0], persist=False) as R1,
         pysam.FastxFile(input[1], persist=False) as R2,
-        CachedFQWriter(prefix, cache_size) as writer,
+        CachedFQWriter(prefix, cache_size, threads = threads) as writer,
         open(f"{prefix}.bc", "w") as bc_out
     ):
         for r1,r2 in zip_longest(R1,R2):
             if r1:
-                _r1 = FQRecord(r1, True, from_, BX.length)
+                _r1 = FQRecord(r1, from_, BX.length)
                 if _r1.barcode not in BX.inventory:
                     if from_ == "10x":
                         _r1.valid = _r1.barcode in barcodelist
@@ -102,12 +104,15 @@ def convert(target, input, prefix, barcodes, cache_size):
                         try:
                             BX.inventory[_r1.barcode] = BX.next()
                         except StopIteration:
-                            print_error("too many barcodes", f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
+                            print_error(
+                                f"insufficient {to_} barcodes",
+                                f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from."
+                            )
                     else:
                         BX.inventory[_r1.barcode] = BX.invalid
                     bc_out.write(f"{_r1.barcode}\t{BX.inventory[_r1.barcode]}\n")
                 converted_bc = BX.inventory[_r1.barcode]
-                writer.queue(_r1.convert2(to_, converted_bc), None)
+                writer.queue(_r1.convert2(to_, converted_bc))
             if r2:
                 if r1 and from_ == "10x":
                     _bc = _r1.barcode
@@ -116,7 +121,7 @@ def convert(target, input, prefix, barcodes, cache_size):
                 else:
                     _bc = from_
                 # if input format is 10x, copy the barcode to R2
-                _r2 = FQRecord(r2, False, _bc, 0)
+                _r2 = FQRecord(r2, _bc, 0)
                 # check the inventory for existing barcode match
                 if _r2.barcode not in BX.inventory:
                     # if it's just tellseq<->10x, keep the existing nucleotide barcode
@@ -124,9 +129,12 @@ def convert(target, input, prefix, barcodes, cache_size):
                         try:
                             BX.inventory[_r2.barcode] = BX.next()
                         except StopIteration:
-                            print_error("too many barcodes", f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from.")
+                            print_error(
+                                f"insufficient {to_} barcodes",
+                                f"There are more {from_} barcodes in the input data than it is possible to generate {to_} barcodes from."
+                            )
                     else:
                         BX.inventory[_r2.barcode] = BX.invalid
                     bc_out.write(f"{_r2.barcode}\t{BX.inventory[_r2.barcode]}\n")
                 converted_bc = BX.inventory[_r2.barcode]
-                writer.queue(None, _r2.convert2(to_, converted_bc))
+                writer.queue(_r2.convert2(to_, converted_bc))

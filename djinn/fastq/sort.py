@@ -38,7 +38,6 @@ def sort(samtag,prefix,input,threads):
         stdin = sam_import.stdout
     )
 
-
     sam_fastq = subprocess.run(
         f'samtools fastq -@ {threads_fastq -1} -N -c 6 -T * {_outfiles}'.split(),
         stdin = sam_sort.stdout,
@@ -46,4 +45,7 @@ def sort(samtag,prefix,input,threads):
     )
 
     if sam_fastq.returncode == 1:
-        print_error("samtools failure", f"Samtools was unable to process your input file(s). See the error log from samtools fastq:\n\033[31m{sam_fastq.stderr.decode()}\033[0m")
+        print_error(
+            "samtools failure",
+            f"Samtools was unable to process your input file(s). See the error log from samtools fastq:\n\033[31m{sam_fastq.stderr.decode()}\033[0m"
+        )

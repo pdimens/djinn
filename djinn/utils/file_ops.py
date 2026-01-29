@@ -152,7 +152,7 @@ def validate_sam(ctx, param, value):
     """
     Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
     """
-    if not value[0].lower().endswith(".bam") or value[0].lower().endswith(".sam"):
+    if not value.lower().endswith(".bam") or value[0].lower().endswith(".sam"):
         print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
 
     return value

@@ -27,7 +27,7 @@ def count_barcodes(bamfile: str, invalid: bool = False) -> Counter:
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-s", "--singletons", type = str, help = "Print valid singleton records to this file")
-@click.argument('input', nargs=1, required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
+@click.argument('input', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
 def filter_singletons(input, singletons):
     '''
@@ -37,14 +37,14 @@ def filter_singletons(input, singletons):
     SAM tag. Use `--singletons` to optionally output reads with singleton barcodes into a separate BAM file whose name
     is provided for this option. Writes to stdout.
     '''
-    bc_counts = count_barcodes(input[0])
+    bc_counts = count_barcodes(input)
     linked = list(filter(lambda x: bc_counts[x] > 2, bc_counts.keys()))
     if not linked:
         print("There are no barcodes with >2 reads. Nothing to do.")
         return
 
     with (
-        pysam.AlignmentFile(input[0], check_sq=False) as xam,
+        pysam.AlignmentFile(input, check_sq=False) as xam,
         pysam.AlignmentFile(sys.stdout.buffer, "wb", template = xam) as xam_out,
     ):
         if singletons:

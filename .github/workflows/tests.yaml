@@ -32,89 +32,89 @@ jobs:
           activate-environment: true
       - name: fastq-stlfr
         run: |
-          djinn fastq result stlfr test/*.gz &&\
+          djinn fastq convert result stlfr test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-tellseq
         run: |
-          djinn fastq result tellseq test/*.gz &&\
+          djinn fastq convert result tellseq test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: fastq-10x
         run: |
-          djinn fastq result 10x test/*.gz &&\
+          djinn fastq convert result 10x test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: to-ncbi
         run: |
-          djinn ncbi result test/*.gz &&
+          djinn fastq ncbi result test/*.gz &&
           samtools view result.bam
       - name: from-ncbi
         run: |
-          djinn ncbi result test/test.bam &&\
+          djinn sam ncbi result test/test.bam &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: std-bam
         run: |
-          djinn standardize -s stlfr result test/test.bam &&\
+          djinn sam standardize -s stlfr result test/test.bam &&\
           samtools view result.bam
       - name: std-fastq
         run: |
-          djinn standardize -s tellseq result test/*.gz &&\
+          djinn fastq standardize -s tellseq result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: downsample-fastq
         run: |
-          djinn downsample -d 2 result test/*.gz &&\
+          djinn fastq downsample -d 2 result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: downsample-bam
         run: |
-          djinn downsample -d 2 result test/test.bam &&\
+          djinn sam downsample -d 2 result test/test.bam &&\
           samtools view result.bam
 
       - name: extract-fastq
-        run: djinn extract test/*.gz
+        run: djinn fastq extract test/*.gz
       - name: extract-bam
-        run: djinn extract test/test.bam
+        run: djinn sam extract test/test.bam
 
       - name: sort-fastq
         run: |
-          djinn sort BX result test/test.bam &&\
+          djinn fastq sort BX result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
       - name: sort-bam
         run: |
-          djinn sort BX result test/test.bam &&\
+          djinn sam sort BX result test/test.bam &&\
           samtools view result.bam
 
       - name: spoof-hic
         run: |
-          djinn spoof-hic result test/*.gz &&\
+          djinn fastq spoof-hic result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-invalid-bam
         run: |
-          djinn filter-invalid result test/test.bam &&\
+          djinn sam filter-invalid result test/test.bam &&\
           samtools view result.bam
 
       - name: filter-invalid-fastq
         run: |
-          djinn filter-invalid result test/*.gz &&\
+          djinn fastq filter-invalid result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
 
       - name: filter-singletons-bam
         run: |
-          djinn filter-singletons result test/test.bam &&\
+          djinn sam filter-singletons result test/test.bam &&\
           samtools view result.bam
 
       - name: filter-singletons-fastq
         run: |
-          djinn filter-singletons result test/*.gz &&\
+          djinn fastq filter-singletons result test/*.gz &&\
           echo "==R1==" && zcat result.R1.fq.gz &&\
           echo "==R2==" && zcat result.R2.fq.gz
