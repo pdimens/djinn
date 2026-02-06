@@ -3,6 +3,7 @@ import gzip
 import os
 import pysam
 import re
+import rich_click as click
 from rich import print as rprint
 import sys
 from djinn.utils.barcodes import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX
@@ -76,22 +77,22 @@ def validate_barcodefile(infile: str, limit: int = 60) -> set[str]:
     def validate(line_num, bc_line):
         barcode = bc_line.rstrip()
         if len(barcode.split()) > 1:
-            print_error("incorrect barcode format", f"There must be one barcode per line, but multiple entries were detected on line {line_num} in {infile}")
+            raise click.BadParameter(f"There must be one barcode per line, but multiple entries were detected on line {line_num} in {infile}")
         if not set(barcode).issubset(nucleotides) or barcode != barcode.upper():
-            print_error("incorrect barcode format", f"Invalid barcode format on line {line_num }: {barcode}.\nBarcodes in {infile} must be captial letters and only contain standard nucleotide characters ATCG.")
+            raise click.BadParameter(f"Invalid barcode format on line {line_num }: {barcode}.\nBarcodes in {infile} must be captial letters and only contain standard nucleotide characters ATCG.")
         return len(barcode)
     with safe_read(infile) as bc_file:
         for line,bc in enumerate(bc_file, 1):
             length = validate(line, bc)
             if length > limit:
-                print_error("barcodes too long", f"Barcodes in {infile} are {length}bp and cannot exceed a length of {limit}. Please use shorter barcodes.")
+                raise click.BadParameter(f"Barcodes in {infile} are {length}bp and cannot exceed a length of {limit}. Please use shorter barcodes.")
             lengths.add(length)
             if len(lengths) > 1:
                 str_len = ", ".join(str(_length) for _length in lengths)
-                print_error("inconsistent length", f"Barcodes in {infile} must all be a single length, but multiple lengths were detected: {str_len}")
+                raise click.BadParameter(f"Barcodes in {infile} must all be a single length, but multiple lengths were detected: {str_len}")
             barcodes.add(bc)
     if not lengths:
-        print_error("no barcodes detected", f"No barcodes were found in {infile}. Please check the input file.")
+        raise click.BadParameter(f"No barcodes were found in {infile}. Please check the input file.")
     return barcodes
 
 def which_linkedread(fastq: str, n: int = 100) -> str:
@@ -147,17 +148,38 @@ def validate_fq(ctx, param, value):
     Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
     """
     if len(value) > 2:
-        print_error("incorrect number of input files","Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
-        sys.exit(1)
+        raise click.BadParameter("Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
 
     if len(value) == 2 and value[0] == value[1]:
-        print_error('identical fastq files', 'The two input fastq files cannot be the same file')
+        raise click.BadParameter('The two input fastq files cannot be the same file')
     
     re_ext = re.compile(r"\.(fq|fastq)(?:\.gz)?$", re.IGNORECASE)
     for i in value:
         if not re_ext.search(i):
-            print_error('unrecognized format', "Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
+            raise click.BadParameter("Inputs must be 1 or 2 FASTQ (.fastq|.fq) files, which can be gzipped.")
     return value
+
+def sam_stdin_or_file(ctx, param, value):
+    """Validate SAM/BAM input file or stdin."""
+    if value == '-':
+        # stdin is always valid
+        return value
+    
+    # For actual file paths, validate existence
+    if not os.path.exists(value):
+        raise click.BadParameter(f"File '{value}' does not exist")
+    
+    if not os.path.isfile(value):
+        raise click.BadParameter(f"'{value}' is not a file")
+    
+    if not value.lower().endswith(".bam") or value.lower().endswith(".sam"):
+        raise click.BadParameter('Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension.')
+
+    # Add any SAM/BAM specific validation here
+    # e.g., check file extension, check if it's readable by pysam, etc.
+    
+    return value
+
 
 def validate_sam(ctx, param, value):
     """
@@ -166,10 +188,10 @@ def validate_sam(ctx, param, value):
     if isinstance(value, tuple):
         for i in value:
             if not i.lower().endswith(".bam") or i.lower().endswith(".sam"):
-                print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+                raise click.BadParameter(f'Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension. Error caused by: {value}.')
     else:
         if not value.lower().endswith(".bam") or value.lower().endswith(".sam"):
-            print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+            raise click.BadParameter('Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension.')
 
 
     return value

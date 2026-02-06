@@ -43,4 +43,4 @@ def extract(input):
     (@seq_id:barcode) formats.  Writes to stdout.
     '''
     bc = extract_barcodes(input)
-    sys.stdout.write("\n".join(bc))
+    sys.stdout.write("\n".join(bc) + "\n")
