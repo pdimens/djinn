@@ -60,13 +60,17 @@ jobs:
 
       - name: sam standardize
         if: success() || failure()
-        run: djinn sam standardize -s stlfr test/test.bam | samtools view
+        run: djinn sam standardize -s stlfr test/test.bam > standard.bam && samtools view standard.bam
       - name: fastq standardize
         if: success() || failure()
         run: |
           djinn fastq standardize -s tellseq result test/*.gz &&\
           echo "============= R1 =============" && zcat result.R1.fq.gz &&\
           echo "============= R2 =============" && zcat result.R2.fq.gz
+
+      - name: sam assign-mi
+        if: success() || failure()
+        run: djinn sam assign-mi -c 0 standard.bam | samtools view
 
       - name: fastq sample
         if: success() || failure()
@@ -112,6 +116,10 @@ jobs:
           djinn fastq filter-invalid result test/*.gz &&\
           echo "============= R1 =============" && zcat result.R1.fq.gz &&\
           echo "============= R2 =============" && zcat result.R2.fq.gz
+
+      - name: sam concat
+        if: success() || failure()
+        run: djinn sam concat test/test.bam test/test.bam | samtools view
 
       - name: sam filter-singletons
         if: success() || failure()
