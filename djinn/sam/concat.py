@@ -36,14 +36,17 @@ def concat(input, bx, sam):
         del header['PG']
     # Add a new @PG line
     sys.argv[0] = os.path.basename(sys.argv[0])
-    new_pg_line = {'ID': 'concatenate', 'PN': 'harpy', 'VN': '1.x', 'CL': " ".join(sys.argv)}
+    new_pg_line = {'ID': 'concatenate', 'PN': 'djinn', 'VN': '1.x', 'CL': " ".join(sys.argv)}
     if 'PG' not in header:
         header['PG'] = []
     header['PG'].append(new_pg_line)
 
     # update RG lines to match output filename name
-    header['RG'][0]['ID'] = "concat"
-    header['RG'][0]['SM'] = "concat"
+    if 'RG' not in header:
+        header['RG'] = [{'ID': 'concat', 'SM': 'concat'}]
+    else:
+        header['RG'][0]['ID'] = "concat"
+        header['RG'][0]['SM'] = "concat"
 
     # set up a generator for the bx tags if --bx was invoked
     if bx:
@@ -67,7 +70,7 @@ def concat(input, bx, sam):
         for xam in input:
             # create MI dict for this sample
             MI_LOCAL = {}
-            with pysam.AlignmentFile(xam, require_index=False) as xamfile:
+            with pysam.AlignmentFile(xam, require_index=False, check_sq = False) as xamfile:
                 for record in xamfile.fetch(until_eof=True):
                     try:
                         mi = record.get_tag("MI")
