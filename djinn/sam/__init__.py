@@ -5,6 +5,8 @@ from djinn.sam.singletons import filter_singletons
 from djinn.sam.invalid import filter_invalid
 from djinn.sam.standardize import standardize
 from djinn.sam.sort import sort
+from djinn.sam.concat import concat
+from djinn.sam.assign_mi import assign_mi
 import rich_click as click
 
 @click.group(options_metavar='')
@@ -19,7 +21,9 @@ def sam():
     ```
     """
 
+sam.add_command(assign_mi)
 sam.add_command(sample)
+sam.add_command(concat)
 sam.add_command(extract)
 sam.add_command(ncbi)
 sam.add_command(filter_invalid)

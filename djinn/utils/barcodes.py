@@ -31,7 +31,10 @@ class haplotagging():
         )
 
     def next(self):
-        return "".join(next(self.barcodes))
+        try:
+            return "".join(next(self.barcodes))
+        except StopIteration:
+            print("Cannot generate new unique barcode, exceeded the maximum number of possible haplotagging barcodes.")
 
 class stlfr():
     def __init__(self):
@@ -42,7 +45,10 @@ class stlfr():
         self.barcodes = product(*[sample(range(1,1538), 1537) for i in range(3)])
 
     def next(self):
-        return "_".join(str(i) for i in next(self.barcodes))
+        try:
+            return "_".join(str(i) for i in next(self.barcodes))
+        except StopIteration:
+            print("Cannot generate new unique barcode, exceeded the maximum number of possible stlfr barcodes.")
 
 class tellseq():
     def __init__(self):
@@ -53,7 +59,10 @@ class tellseq():
         self.barcodes = product(*[sample("ATCG", 4) for i in range(18)])
 
     def next(self):
-        return "".join(next(self.barcodes))
+        try:
+            return "".join(next(self.barcodes))
+        except StopIteration:
+            print("Cannot generate new unique barcode, barcodes exceeded the maximum number of possible tellseq barcodes.")
 
 class tenx():
     def __init__(self):
@@ -64,7 +73,10 @@ class tenx():
         self.barcodes = product(*[sample("ATCG", 4) for i in range(16)])
 
     def next(self):
-        return "".join(next(self.barcodes))
+        try:
+            return "".join(next(self.barcodes))
+        except StopIteration:
+            print("Cannot generate new unique barcode, exceeded the maximum number of possible 10X barcodes.")
 
 class _ncbi():
     def __init__(self, preserve_invalid: bool):
@@ -78,11 +90,16 @@ class _ncbi():
         self.barcodes = product(*[sample("ATCG", 4) for i in range(20)])
 
     def next(self):
-        return "".join(next(self.barcodes))
-    
+        try:
+            return "".join(next(self.barcodes))
+        except StopIteration:
+            print("Cannot generate new unique barcode, exceeded the maximum number of possible barcodes.")
+
     def next_invalid(self):
         try:
             return "".join(next(self.invalid))
         except TypeError:
             return self.invalid
+        except StopIteration:
+            print("Cannot generate new unique barcode, exceeded the maximum number of possible invalid barcodes.")
 

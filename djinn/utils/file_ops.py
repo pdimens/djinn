@@ -3,6 +3,7 @@ import gzip
 import os
 import pysam
 import re
+from rich import print as rprint
 import sys
 from djinn.utils.barcodes import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX
 from djinn.utils.barcodes import HAPLOTAGGING_SIMPLE, STLFR_SIMPLE, TELLSEQ_SIMPLE
@@ -49,9 +50,9 @@ def print_error(title:str, text: str):
     """Print the error text to stderr and exit with code 1"""
     print(f"\033[33mError: {title}\033[0m", file = sys.stderr)
     try:
-        print(text.encode('ascii', 'ignore').decode('unicode_escape'), file = sys.stderr)
+        rprint(text.encode('ascii', 'ignore').decode('unicode_escape'), file = sys.stderr)
     except:
-        print(text, file = sys.stderr)
+        rprint(text, file = sys.stderr)
     sys.exit(1)
 
 def safe_read(file_path: str):
@@ -115,7 +116,7 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
     Scans the first 100 records of a SAM/BAM file and tries to determine the barcode technology
     Returns one of: "haplotagging", "stlfr", "tellseq", or "none"
     """
-    with pysam.AlignmentFile(sam, check_sq=False) as _sam:
+    with pysam.AlignmentFile(sam, check_sq=False, require_index=False) as _sam:
         i = 1
         for record in _sam.fetch(until_eof=True):
             if i > n:
@@ -130,6 +131,16 @@ def which_linkedread_sam(sam: str, n: int = 100) -> str:
                     return "tellseq"
             i += 1
     return "none"
+
+def is_standard(sam: str, n: int =  100):
+    with pysam.AlignmentFile(sam, check_sq=False, require_index=False) as _sam:
+        i = 1
+        for record in _sam.fetch(until_eof=True):
+            if i > n:
+                break
+            if record.has_tag("VX") and record.has_tag("BX"):
+                return True
+    return False
 
 def validate_fq(ctx, param, value):
     """
@@ -152,8 +163,14 @@ def validate_sam(ctx, param, value):
     """
     Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
     """
-    if not value.lower().endswith(".bam") or value[0].lower().endswith(".sam"):
-        print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+    if isinstance(value, tuple):
+        for i in value:
+            if not i.lower().endswith(".bam") or i.lower().endswith(".sam"):
+                print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+    else:
+        if not value.lower().endswith(".bam") or value.lower().endswith(".sam"):
+            print_error('unrecognized format','Input must be 1 SAM (.sam|.bam) file.')
+
 
     return value
 
