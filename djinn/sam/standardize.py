@@ -1,4 +1,3 @@
-import os
 import pysam
 import sys
 import rich_click as click
@@ -7,9 +6,9 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STL
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
-@click.option('-S', '--SAM', hidden = True, is_flag = True, default = False, help = 'Output as SAM instead of BAM')
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', type = click.Path(exists=True,dir_okay=False,readable=True,resolve_path=True), required = True, callback = validate_sam)
-def standardize(input, style, SAM):
+def standardize(input, style, sam):
     """
     Move barcodes to `BX`+`VX` sequence header tags
 
@@ -40,7 +39,7 @@ def standardize(input, style, SAM):
 
     with (
         pysam.AlignmentFile(input, require_index=False, check_sq=False) as samfile,
-        pysam.AlignmentFile(sys.stdout.buffer, "w" if SAM else "wb" , template = samfile) as outfile
+        pysam.AlignmentFile(sys.stdout.buffer, "w" if sam else "wb" , template = samfile) as outfile
     ):
         for record in samfile.fetch(until_eof=True):
             if record.has_tag("BX"):

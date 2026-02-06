@@ -8,11 +8,12 @@ import rich_click as click
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.00000001), help = 'Number/fraction of barcodes to retain')
 @click.option('-i', '--invalid', default = 0, show_default = True, type=click.FloatRange(min=0,max=1), help = "Proportion of invalid barcodes to sample")
-@click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.option('--random-seed', type = click.IntRange(min = 1), help = "Random seed for sampling")
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
+@click.option("--threads", "-t", type = click.IntRange(min = 4, max_open=True), default=10, show_default=True, help = "Number of threads to use")
 @click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def sample(input, invalid, downsample, random_seed, threads):
+def sample(input, invalid, downsample, random_seed, threads, sam):
     """
     Downsample data by barcode
     
@@ -57,6 +58,6 @@ def sample(input, invalid, downsample, random_seed, threads):
         bc_file.write("\n".join(barcodes))
 
     try:
-        pysam.view("-O", "BAM", "-@", f"{threads-1}", "-h", "-D", f"BX:{_input}.bc", input, catch_stdout=False)
+        pysam.view("-O", "SAM" if sam else "BAM", "-@", f"{threads-1}", "-h", "-D", f"BX:{_input}.bc", input, catch_stdout=False)
     except pysam.SamtoolsError as e:
         print_error("Samtools experienced an error", f"Filtering the input alignment file using samtools view resulted in an error. See the samtools error information below:\n{e}")

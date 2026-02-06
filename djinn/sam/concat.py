@@ -8,9 +8,10 @@ from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/concat")
 @click.option('--bx', is_flag = True, default = True, show_default = True, help="Rewrite BX tags for uniqueness")
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', nargs = -1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def concat(input, bx):
+def concat(input, bx, sam):
     """
     Molecule-aware file concatenation
     
@@ -55,7 +56,7 @@ def concat(input, bx):
         else:
             bc_generator = haplotagging()
         
-    with pysam.AlignmentFile(sys.stdout.buffer, "wb", header = header) as bam_out:
+    with pysam.AlignmentFile(sys.stdout.buffer, "w" if sam else "wb", header = header) as bam_out:
         # current available unused MI tag
         MI_NEW = 1
         if bx:

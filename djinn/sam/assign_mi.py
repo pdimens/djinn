@@ -69,9 +69,10 @@ def write_missingbx(bam, alnrecord, missing):
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/assign_mi")
 @click.option('-c', '--cutoff', type = int, default = 0, show_default = True, help="Distance in base pairs at which alignments with the same barcode should be considered different molecules. If 0, then alignment distance is ignored.")
 @click.option('-u', '--keep-unmapped', is_flag = True, default = False, show_default = True, help="Keep unmapped records")
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def assign_mi(input, cutoff, keep_unmapped):
+def assign_mi(input, cutoff, keep_unmapped, sam):
     """
     Assign an MI:i (Molecular Identifier) tags
     
@@ -110,7 +111,7 @@ def assign_mi(input, cutoff, keep_unmapped):
     # iniitalize input/output files
     with (
         pysam.AlignmentFile(input, check_sq=False, require_index=False) as alnfile,
-        pysam.AlignmentFile(sys.stdout.buffer, "wb", template = alnfile) as outfile
+        pysam.AlignmentFile(sys.stdout.buffer, "w" if sam else "wb", template = alnfile) as outfile
     ):
         for record in alnfile.fetch(until_eof = True):
             chrm = record.reference_name

@@ -27,9 +27,10 @@ def count_barcodes(bamfile: str, invalid: bool = False) -> Counter:
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-s", "--singletons", type = str, help = "Print valid singleton records to this file")
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def filter_singletons(input, singletons):
+def filter_singletons(input, singletons, sam):
     '''
     Retain only non-singleton reads
 
@@ -45,10 +46,10 @@ def filter_singletons(input, singletons):
 
     with (
         pysam.AlignmentFile(input, check_sq=False) as xam,
-        pysam.AlignmentFile(sys.stdout.buffer, "wb", template = xam) as xam_out,
+        pysam.AlignmentFile(sys.stdout.buffer, "w" if sam else "wb", template = xam) as xam_out,
     ):
         if singletons:
-            singleton_out = pysam.AlignmentFile(singletons, "wb", template = xam)
+            singleton_out = pysam.AlignmentFile(singletons, "w" if sam else "wb", template = xam)
         for record in xam.fetch(until_eof=True):
             #SEARCH FOR BARCODE
             bc = bam_barcode(record)

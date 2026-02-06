@@ -6,10 +6,11 @@ from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-i", "--invalid", type = str, default=False, help = "Output records with invalid barcodes to this file")
+@click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.option("-t", "--threads", type = click.IntRange(min = 2, max_open=True), default=4, show_default=True, help = "Number of threads to use")
 @click.argument('input', required=True, type=click.Path(exists = True,dir_okay=False,readable=True,resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def filter_invalid(input, invalid, threads):
+def filter_invalid(input, invalid, threads, sam):
     '''
     Retain only valid-barcoded reads
 
@@ -28,6 +29,6 @@ def filter_invalid(input, invalid, threads):
 
     _inv = f"--unoutput {invalid}" if invalid else ""
     try:
-        pysam.view("-O", "BAM", "-@", f"{threads-1}", *_inv.split(), "-h", "-e", invalid_rx, input, catch_stdout=False)
+        pysam.view("-O", "SAM" if sam else "BAM", "-@", f"{threads-1}", *_inv.split(), "-h", "-e", invalid_rx, input, catch_stdout=False)
     except pysam.SamtoolsError as e:
         print_error("Samtools error", str(e))
