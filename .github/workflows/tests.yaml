@@ -70,7 +70,7 @@ jobs:
 
       - name: sam assign-mi
         if: success() || failure()
-        run: djinn sam assign-mi -c 0 standard.bam | samtools view
+        run: djinn sam assign-mi -u -c 0 standard.bam | samtools view
 
       - name: fastq sample
         if: success() || failure()

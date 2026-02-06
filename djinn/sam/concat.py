@@ -29,7 +29,7 @@ def concat(input, bx, sam):
             "Unable to determine linked-read chemistry based on barcodes in the first 100 records. Barcodes must conform to one of `haplotagging`, `stlfr`, or `tellseq`"
         )     
 
-    with pysam.AlignmentFile(input[0], require_index=False) as xam_in:
+    with pysam.AlignmentFile(input[0], require_index=False, check_sq = False) as xam_in:
         header = xam_in.header.to_dict()
     # Remove all @PG lines
     if 'PG' in header:
