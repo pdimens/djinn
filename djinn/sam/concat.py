@@ -7,7 +7,7 @@ from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/concat")
-@click.option('--mi', is_flag = True, default = True, show_default = True, help="Use the MI tag as the primary molecule identifier instead of BX tag")
+@click.option('--mi', type = click.Choice(['haplotagging', 'tellseq', 'stlfr'], case_sensitive = False), help="MI tag is the primary molecule identifier and write new barcodes in this format [`haplotagging`, `stlfr`, `tellseq`]")
 @click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', nargs = -1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
@@ -19,15 +19,18 @@ def concat(input, mi, sam):
     remain unique for every sample. This is a means of accomplishing the same as 'samtools cat', except all MI/BX tags are updated
     so individuals don't have overlapping tags (which would mess up all the linked-read info). The default ignores existing `MI` tags
     and writes new ones that correspond to unique `BX` tags. Using `--mi` is the opposite, where it ignores existing `BX` tags and writes
-    new ones that correspond with the `MI` tags.
+    new ones that correspond with the `MI` tags in the barcode style of your choice.
     """
     # Get the max number of unique haplotagging barcodes
-    lrtype = which_linkedread_sam(input[0])
-    if lrtype == "none" and not mi:
-        print_error(
-            "undetermined chemistry",
-            "Unable to determine linked-read chemistry based on barcodes in the first 100 records. Barcodes must conform to one of `haplotagging`, `stlfr`, or `tellseq`"
-        )     
+    if not mi:
+        lrtype = which_linkedread_sam(input[0])
+        if lrtype == "none" and not mi:
+            print_error(
+                "undetermined chemistry",
+                "Unable to determine linked-read chemistry based on barcodes in the first 100 records. Barcodes must conform to one of `haplotagging`, `stlfr`, or `tellseq`"
+            )     
+    else:
+        lrtype = mi.lower()
 
     with pysam.AlignmentFile(input[0], require_index=False, check_sq = False) as xam_in:
         header = xam_in.header.to_dict()
