@@ -7,23 +7,22 @@ from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/concat")
-@click.option('--bx', is_flag = True, default = True, show_default = True, help="Rewrite BX tags for uniqueness")
+@click.option('--mi', is_flag = True, default = True, show_default = True, help="Use the MI tag as the primary molecule identifier instead of BX tag")
 @click.option('-S', '--sam', is_flag = True, default = False, help = 'Output as SAM instead of BAM')
 @click.argument('input', nargs = -1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_sam)
 @click.help_option('--help', hidden = True)
-def concat(input, bx, sam):
+def concat(input, mi, sam):
     """
     Molecule-aware file concatenation
     
-    Concatenate records from linked-read SAM/BAM files while making sure molecule identification tags (`MI`)
-    remain unique for every sample. This is a means of accomplishing the same as \'samtools cat\', except all MI/BX tags are updated
-    so individuals don't have overlapping tags (which would mess up all the linked-read info). Use the \'--bx\'
-    option to also rewrite BX tags such that they are unique between samples too. Use `djinn sam assign-mi` if your alignments
-    do not have `MI` tags.
+    Concatenate records from linked-read SAM/BAM files while making sure molecule identification tags (`MI` or `BX`)
+    remain unique for every sample. This is a means of accomplishing the same as 'samtools cat', except all MI/BX tags are updated
+    so individuals don't have overlapping tags (which would mess up all the linked-read info). When using `--mi`, ignores `BX` tags
+    and writes new unique `BX` tags that correspond with the `MI` tags (default is the opposite).
     """
     # Get the max number of unique haplotagging barcodes
     lrtype = which_linkedread_sam(input[0])
-    if lrtype == "none":
+    if lrtype == "none" and not mi:
         print_error(
             "undetermined chemistry",
             "Unable to determine linked-read chemistry based on barcodes in the first 100 records. Barcodes must conform to one of `haplotagging`, `stlfr`, or `tellseq`"
@@ -48,24 +47,20 @@ def concat(input, bx, sam):
         header['RG'][0]['ID'] = "concat"
         header['RG'][0]['SM'] = "concat"
 
-    # set up a generator for the bx tags if --bx was invoked
-    if bx:
-        if lrtype == "tellseq":
-            bc_generator = tellseq()
-        if lrtype == "10x":
-            bc_generator = tenx()
-        elif lrtype == "stlfr":
-            bc_generator = stlfr()
-        else:
-            bc_generator = haplotagging()
+    # set up a generator for the bx tags
+    if lrtype == "haplotagging":
+        bc_generator = haplotagging()
+    elif lrtype == "10x":
+        bc_generator = tenx()
+    elif lrtype == "stlfr":
+        bc_generator = stlfr()
+    else:
+        bc_generator = tellseq()
         
     with pysam.AlignmentFile(sys.stdout.buffer, "w" if sam else "wb", header = header) as bam_out:
         # current available unused MI tag
         MI_NEW = 1
-        if bx:
-            BX_NEW = bc_generator.next()
-        else:
-            BX_NEW = None
+        BX_NEW = bc_generator.next()
         # iterate through the bam files
         for xam in input:
             # create MI dict for this sample
@@ -73,24 +68,38 @@ def concat(input, bx, sam):
             with pysam.AlignmentFile(xam, require_index=False, check_sq = False) as xamfile:
                 for record in xamfile.fetch(until_eof=True):
                     try:
-                        mi = record.get_tag("MI")
+                        mitag = record.get_tag("MI") if record.has_tag("MI") else None
+                        barcode = record.get_tag("BX") if record.has_tag("BX") else None
                         # if previously converted for this sample, use that
-                        if mi in MI_LOCAL:
-                            record.set_tag("MI", MI_LOCAL[mi][0])
-                            if bx:
-                                record.set_tag("bx", MI_LOCAL[mi][1])
-                        else:
-                            record.set_tag("MI", MI_NEW)
-                            if bx:
+                        if mi and mitag:
+                            if mitag in MI_LOCAL:
+                                record.set_tag("MI", MI_LOCAL[mitag][0])
+                                record.set_tag("BX", MI_LOCAL[mitag][1])
+                            else:
+                                record.set_tag("MI", MI_NEW)
                                 record.set_tag("BX", BX_NEW)
-                            # add to sample conversion dict
-                            MI_LOCAL[mi] = [MI_NEW, BX_NEW]
-                            # increment to next unique MI
-                            MI_NEW += 1
-                            if bx:
+                                # add to sample conversion dict
+                                MI_LOCAL[mitag] = [MI_NEW, BX_NEW]
+                                # increment to next unique MI
+                                MI_NEW += 1
                                 BX_NEW = bc_generator.next()
+                        elif not mi and barcode:
+                            # use BX and flip order in dict
+                            if barcode in MI_LOCAL:
+                                record.set_tag("BX", MI_LOCAL[barcode][0])
+                                record.set_tag("MI", MI_LOCAL[barcode][1])
+                            else:
+                                record.set_tag("BX", BX_NEW)
+                                record.set_tag("MI", MI_NEW)
+                                # add to sample conversion dict
+                                MI_LOCAL[barcode] = [BX_NEW,MI_NEW]
+                                # increment to next unique MI
+                                MI_NEW += 1
+                                BX_NEW = bc_generator.next()
+
                     except StopIteration:
-                        sys.exit(1)
-                    except KeyError:
-                        pass
+                        print_error(
+                            "barcode limit reached",
+                            "Reached limit of creating new barcodes and unable to continue."
+                        )     
                     bam_out.write(record)
