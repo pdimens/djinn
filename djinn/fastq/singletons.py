@@ -52,10 +52,11 @@ def filter_singletons(prefix, input, cache_size, singletons, threads):
     Use `--singletons` to output reads with singleton barcodes into a separate file(s). This method also
     filters out invalid barcodes, since they are not considered linked. Expects barcode to be in haplotagging,
     stlfr, or tellseq formats. Specify `--threads` if `pigz` is available in your PATH (the value will be divided
-    between the number of input files).
+    between the number of input files). Interleaved FASTQ files are **not supported** for paired-end data due to the
+    way barcodes are counted.
     '''
-    from_ = which_linkedread(input[0])
-    bc_counts = count_barcodes_fq(from_, input)
+    lrtype = which_linkedread(input[0])
+    bc_counts = count_barcodes_fq(lrtype, input)
     linked = list(filter(lambda x: bc_counts[x] > 1, bc_counts.keys()))
     if not linked:
         print("There are no barcodes with >1 read. Nothing to do.")
@@ -66,11 +67,11 @@ def filter_singletons(prefix, input, cache_size, singletons, threads):
         for i in input:
             with pysam.FastxFile(i, persist=False) as FQ:
                 for record in FQ:
-                    _read = FQRecord(record, from_, 0)
+                    _read = FQRecord(record, lrtype, 0)
                     if _read.valid:
                         if _read.barcode in linked:
-                            writer.queue(_read.convert2(from_, _read.barcode))
+                            writer.queue(_read.convert2(lrtype, _read.barcode))
                         elif singletons:
-                            writer_single.queue(_read.convert2(from_, _read.barcode))
+                            writer_single.queue(_read.convert2(lrtype, _read.barcode))
         if singletons:
             writer_single.close()
