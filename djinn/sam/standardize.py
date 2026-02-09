@@ -2,7 +2,7 @@ import pysam
 import sys
 import rich_click as click
 from djinn.utils.file_ops import print_error, validate_sam
-from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, TELLSEQ_HAPLOTAGGING_INVALID_RX
+from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, ANY_INVALID
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')
@@ -24,15 +24,14 @@ def standardize(input, style, sam):
     | `tellseq`      | 18-base nucleotide (e.g. AGCCATGTACGTATGGTA) |
     | `10X`          | 16-base nucleotide (e.g. GGCTGAACACGTGCAG)   |
     """
-    convert = None
     if style:
         bc_out = open(f"{input}.bc", "w")
-        convert = style.lower()
-        if convert == "tellseq":
+        style = style.lower()
+        if style == "tellseq":
             BX = tellseq()
-        if convert == "10x":
+        if style == "10x":
             BX = tenx()
-        elif convert == "stlfr":
+        elif style == "stlfr":
             BX = stlfr()
         else:
             BX = haplotagging()
@@ -49,7 +48,7 @@ def standardize(input, style, sam):
                 bx_sanitized = str(record.get_tag("BX"))
                 # try to split by "_" (stlfr) and if any of the ints are zero, it's invalid
                 # otherwise look for the tellseq N or haplotag 00
-                if "0" in bx_sanitized.split("_") or TELLSEQ_HAPLOTAGGING_INVALID_RX.search(bx_sanitized):
+                if ANY_INVALID.search(bx_sanitized):
                     record.set_tag("VX", 0, "i")
                     vx = 0
                 else:
@@ -62,7 +61,7 @@ def standardize(input, style, sam):
                     # the 1:0 ignores the first character, which will either be : or #
                     bx_sanitized = bx[0][1:]
                     record.query_name = record.query_name.remove_suffix(bx[0])
-                    if "0" in bx_sanitized.split("_") or "N" in bx_sanitized:
+                    if any(int(z) == 0 for z in bx_sanitized.split("_")) or "N" in bx_sanitized:
                         record.set_tag("VX", 0, "i")
                         vx = 0
                     else:
@@ -73,7 +72,7 @@ def standardize(input, style, sam):
                     # write record that is missing BX tag to output
                     outfile.write(record)
 
-            if convert:
+            if style:
                 if bx_sanitized not in BX.inventory:
                     if bool(vx):
                         try:
@@ -81,12 +80,12 @@ def standardize(input, style, sam):
                         except StopIteration:
                             print_error(
                                 "too many barcodes",
-                                f"There are more barcodes in the input file than it is possible to generate {convert} barcodes from."
+                                f"There are more barcodes in the input file than it is possible to generate {style} barcodes from."
                             )
                     else:
                         BX.inventory[bx_sanitized] = BX.invalid
                     bc_out.write(f"{bx_sanitized}\t{BX.inventory[bx_sanitized]}\n")
-                    record.set_tag("BX", BX.inventory[bx_sanitized], "Z")
+                record.set_tag("BX", BX.inventory[bx_sanitized], "Z")                 
             outfile.write(record)
-    if convert:
+    if style:
         bc_out.close()

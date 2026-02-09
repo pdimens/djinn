@@ -18,7 +18,7 @@ def count_barcodes_fq(barcode_type: str, fq: list[str], invalid: bool = False) -
             for _read in FQ:
                 _read = FQRecord(_read, barcode_type, 0)
                 if invalid or _read.valid:
-                    barcodes.update(_read.barcode)
+                    barcodes[_read.barcode] += 1
     else:
         with(
             pysam.FastxFile(fq[0], persist=False) as R1,
@@ -29,10 +29,12 @@ def count_barcodes_fq(barcode_type: str, fq: list[str], invalid: bool = False) -
                 bc_r2 = FQRecord(r2, barcode_type, 0).barcode if r2 else None
                 # if paired reads have same barcode, update barcode once
                 if bc_r1 == bc_r2:
-                    barcodes.update(bc_r1)
+                    barcodes[bc_r1] += 1
                 else:
                     # update barcode counts separately
-                    [barcodes.update(i) for i in [bc_r1, bc_r2] if i]
+                    for i in [bc_r1, bc_r2]:
+                        if i:
+                            barcodes[i] += 1
     return barcodes
 
 
@@ -54,11 +56,10 @@ def filter_singletons(prefix, input, cache_size, singletons, threads):
     '''
     from_ = which_linkedread(input[0])
     bc_counts = count_barcodes_fq(from_, input)
-    linked = list(filter(lambda x: bc_counts[x] > 2, bc_counts.keys()))
+    linked = list(filter(lambda x: bc_counts[x] > 1, bc_counts.keys()))
     if not linked:
-        print("There are no barcodes with >2 reads. Nothing to do.")
+        print("There are no barcodes with >1 read. Nothing to do.")
         return
-
     with CachedFQWriter(prefix, cache_size, len(input), threads = threads) as writer:
         if singletons:
             writer_single = CachedFQWriter(f"{prefix}.singletons", cache_size, len(input))
@@ -66,6 +67,7 @@ def filter_singletons(prefix, input, cache_size, singletons, threads):
             with pysam.FastxFile(i, persist=False) as FQ:
                 for record in FQ:
                     _read = FQRecord(record, from_, 0)
+                    print(_read.convert2(from_, _read.barcode))
                     if _read.valid:
                         if _read.barcode in linked:
                             writer.queue(_read.convert2(from_, _read.barcode))
