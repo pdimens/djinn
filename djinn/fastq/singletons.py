@@ -67,7 +67,6 @@ def filter_singletons(prefix, input, cache_size, singletons, threads):
             with pysam.FastxFile(i, persist=False) as FQ:
                 for record in FQ:
                     _read = FQRecord(record, from_, 0)
-                    print(_read.convert2(from_, _read.barcode))
                     if _read.valid:
                         if _read.barcode in linked:
                             writer.queue(_read.convert2(from_, _read.barcode))
