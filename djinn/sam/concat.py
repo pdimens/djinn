@@ -17,8 +17,9 @@ def concat(input, mi, sam):
     
     Concatenate records from linked-read SAM/BAM files while making sure molecule identification tags (`MI` or `BX`)
     remain unique for every sample. This is a means of accomplishing the same as 'samtools cat', except all MI/BX tags are updated
-    so individuals don't have overlapping tags (which would mess up all the linked-read info). When using `--mi`, ignores `BX` tags
-    and writes new unique `BX` tags that correspond with the `MI` tags (default is the opposite).
+    so individuals don't have overlapping tags (which would mess up all the linked-read info). The default ignores existing `MI` tags
+    and writes new ones that correspond to unique `BX` tags. Using `--mi` is the opposite, where it ignores existing `BX` tags and writes
+    new ones that correspond with the `MI` tags.
     """
     # Get the max number of unique haplotagging barcodes
     lrtype = which_linkedread_sam(input[0])
