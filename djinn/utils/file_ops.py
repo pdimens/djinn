@@ -164,36 +164,27 @@ def sam_stdin_or_file(ctx, param, value):
     if value == '-':
         # stdin is always valid
         return value
-    
+
     # For actual file paths, validate existence
     if not os.path.exists(value):
         raise click.BadParameter(f"File '{value}' does not exist")
-    
+
     if not os.path.isfile(value):
         raise click.BadParameter(f"'{value}' is not a file")
-    
-    if not value.lower().endswith(".bam") or value.lower().endswith(".sam"):
+
+    if not value.lower().endswith(".bam") and not value.lower().endswith(".sam"):
         raise click.BadParameter('Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension.')
 
-    # Add any SAM/BAM specific validation here
-    # e.g., check file extension, check if it's readable by pysam, etc.
-    
     return value
 
 
 def validate_sam(ctx, param, value):
     """
-    Take input fastq files or sam/bam file and do quick checks. Either errors or returns None.
+    Take input sam/bam file and do quick checks. Either errors or returns None.
     """
-    if isinstance(value, tuple):
-        for i in value:
-            if not i.lower().endswith(".bam") or i.lower().endswith(".sam"):
-                raise click.BadParameter(f'Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension. Error caused by: {value}.')
-    else:
-        if not value.lower().endswith(".bam") or value.lower().endswith(".sam"):
-            raise click.BadParameter('Input must be 1 SAM (.sam|.bam) file with the corresponding .sam/.bam extension.')
-
-
+    for i in ([value] if not isinstance(value, tuple) else value):
+        if not i.lower().endswith(".bam") and not i.lower().endswith(".sam"):
+            raise click.BadParameter(f'Input must be a SAM (.sam|.bam) file with the corresponding .sam/.bam extension. Error caused by: {i}.')
     return value
 
 def make_dir(ctx, param, value):
