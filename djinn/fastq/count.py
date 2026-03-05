@@ -1,9 +1,9 @@
-import pysam
-import sys
 from collections import Counter
+import pysam
+import rich_click as click
+import sys
 from djinn.utils.fq_tools import FQRecord
 from djinn.utils.file_ops import which_linkedread, validate_fq
-import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
 @click.argument('input', nargs = -1, required=True, type=click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True), callback = validate_fq)
