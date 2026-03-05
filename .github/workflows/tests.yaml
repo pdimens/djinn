@@ -89,6 +89,13 @@ jobs:
         if: success() || failure()
         run: djinn sam extract test/test.bam
 
+      - name: fastq count
+        if: success() || failure()
+        run: djinn fastq counnt test/*.gz
+      - name: sam count
+        if: success() || failure()
+        run: djinn sam count test/test.bam
+
       - name: fastq sort
         if: success() || failure()
         run: |
