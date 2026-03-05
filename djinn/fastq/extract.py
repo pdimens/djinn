@@ -1,7 +1,7 @@
 import pysam
 import sys
 from djinn.utils.fq_tools import FQRecord
-from djinn.utils.file_ops import print_error, which_linkedread, validate_fq
+from djinn.utils.file_ops import which_linkedread, validate_fq
 import rich_click as click
 
 def extract_barcodes_fq(barcode_type: str, fq: list[str], separate_invalid: bool = False):
@@ -11,7 +11,7 @@ def extract_barcodes_fq(barcode_type: str, fq: list[str], separate_invalid: bool
     '''
     barcodes = set()
     invalid = set()
-    for i,j in enumerate(fq):
+    for j in fq:
         with pysam.FastxFile(j, persist=False) as FQ:
             for _read in FQ:
                 _read = FQRecord(_read, barcode_type, 0)

@@ -1,12 +1,13 @@
-from djinn.fastq.sample import sample
-from djinn.fastq.convert import convert
-from djinn.fastq.extract import extract
-from djinn.fastq.singletons import filter_singletons
-from djinn.fastq.invalid import filter_invalid
-from djinn.fastq.ncbi import ncbi
-from djinn.fastq.spoof_hic import spoof_hic
-from djinn.fastq.standardize import standardize
-from djinn.fastq.sort import sort
+from .convert import convert
+from .count import count
+from .extract import extract
+from .singletons import filter_singletons
+from .invalid import filter_invalid
+from .ncbi import ncbi
+from .sample import sample
+from .sort import sort
+from .spoof_hic import spoof_hic
+from .standardize import standardize
 import rich_click as click
 
 @click.group(options_metavar='')
@@ -21,6 +22,7 @@ def fastq():
     """
 
 fastq.add_command(convert)
+fastq.add_command(count)
 fastq.add_command(extract)
 fastq.add_command(filter_invalid)
 fastq.add_command(filter_singletons)

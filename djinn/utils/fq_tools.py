@@ -16,7 +16,7 @@ def is_forward(pysamfq):
     return FW
 
 class FQRecord():
-    def __init__(self, pysamfq, bc: str, length: int):
+    def __init__(self, pysamfq, bc: str, length: int, skipmissing: bool = False):
         """Initialize a FASTQ record where `bc` is the barcode type, `length` is the length of the barcode (10X only)"""
         self.forward = is_forward(pysamfq)
         fr = "1" if self.forward else "2"
@@ -29,34 +29,43 @@ class FQRecord():
         self.seq = pysamfq.sequence
         self.qual = pysamfq.quality
         self.valid = True
-        # account for /1 and /2 formatting at the end of the read (if present)
+        self.process_barcode(bc, length, skipmissing)
+
+    def __str__(self):
+        """Default string method returns a formatted FASTQ record."""
+        return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n"
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def process_barcode(self, bc, length, skipmissing):
         if bc == "stlfr":
             # identify the trailing #1_2_3 barcode and remove it from the ID
             if self.id.endswith("#"):
                 # is invalid
                 self.id = self.id.rstrip("#")
-                self.barcode = "0_0_0"
+                self.barcode = "0_0_0" if not skipmissing else ""
                 self.valid = False
             else:
-                _id = pysamfq.name.split("#")
+                _id = self.id.split("#")
                 self.barcode = _id.pop(-1)
                 self.id = "#".join(_id)
                 self.valid = not bool(STLFR_INVALID_RX.search(self.barcode))
         elif bc == "10x":
             # identify the first N bases and remove it from the seq and qual of R1
             if self.forward:
-                self.seq = pysamfq.sequence[length:]
-                self.qual = pysamfq.quality[length:]
-                self.barcode = pysamfq.sequence[:length]
+                self.barcode = self.seq[:length]
+                self.seq = self.seq[length:]
+                self.qual = self.qual[length:]
         elif bc == "tellseq":
             # identify the trailing :ATCG barcode and remove it from the ID
             if self.id.endswith(":"):
                 # is invalid
                 self.id = self.id.rstrip(":")
-                self.barcode = "N" * 18
+                self.barcode = "N" * 18 if not skipmissing else ""
                 self.valid = False
             else:
-                _id = pysamfq.name.split(":")
+                _id = self.id.split(":")
                 self.barcode = _id.pop(-1)
                 self.id = ":".join(_id)
                 self.valid = "N" not in self.barcode
@@ -65,7 +74,7 @@ class FQRecord():
             bc = [i for i in self.comment.split() if i.startswith("BX:Z")]
             if len(bc) < 1:
                 # is invalid
-                self.barcode = "A00C00B00D00"
+                self.barcode = "A00C00B00D00" if not skipmissing else ""
             else:
                 self.barcode = bc.pop().removeprefix("BX:Z:")
             self.comment = "\t".join(i for i in self.comment.split() if not i.startswith("BX:Z"))
@@ -77,16 +86,10 @@ class FQRecord():
             # clear out existing BX or # tags
             self.comment = "\t".join(i for i in self.comment.split() if not i.startswith("BX:Z"))
             if "#" in self.id:
-                _id = pysamfq.name.split("#")
+                _id = self.id.split("#")
                 bc = _id.pop(-1)
                 self.id = "#".join(_id)
             self.id = self.id.rstrip(":")
-    def copy(self):
-        return copy.deepcopy(self)
-
-    def __str__(self):
-        """Default string method returns a formatted FASTQ record."""
-        return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n"
 
     def convert(self, _type: str, BC: str):
         """In-place mutating conversion"""

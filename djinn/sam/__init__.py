@@ -1,12 +1,13 @@
-from djinn.sam.sample import sample
-from djinn.sam.extract import extract
-from djinn.sam.ncbi import ncbi
-from djinn.sam.singletons import filter_singletons
-from djinn.sam.invalid import filter_invalid
-from djinn.sam.standardize import standardize
-from djinn.sam.sort import sort
-from djinn.sam.concat import concat
-from djinn.sam.assign_mi import assign_mi
+from .assign_mi import assign_mi
+from .concat import concat
+from .count import count
+from .extract import extract
+from .invalid import filter_invalid
+from .ncbi import ncbi
+from .sample import sample
+from .singletons import filter_singletons
+from .sort import sort
+from .standardize import standardize
 import rich_click as click
 
 @click.group(options_metavar='')
@@ -22,11 +23,12 @@ def sam():
     """
 
 sam.add_command(assign_mi)
-sam.add_command(sample)
 sam.add_command(concat)
+sam.add_command(count)
 sam.add_command(extract)
-sam.add_command(ncbi)
 sam.add_command(filter_invalid)
 sam.add_command(filter_singletons)
+sam.add_command(ncbi)
+sam.add_command(sample)
 sam.add_command(sort)
 sam.add_command(standardize)
