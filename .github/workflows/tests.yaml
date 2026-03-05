@@ -91,7 +91,7 @@ jobs:
 
       - name: fastq count
         if: success() || failure()
-        run: djinn fastq counnt test/*.gz
+        run: djinn fastq count test/*.gz
       - name: sam count
         if: success() || failure()
         run: djinn sam count test/test.bam
