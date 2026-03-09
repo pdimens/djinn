@@ -3,6 +3,9 @@ import sys
 import rich_click as click
 from djinn.utils.file_ops import print_error, validate_sam
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, ANY_INVALID
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")
 @click.option('-s', '--style', type = click.Choice(["haplotagging", "stlfr", "tellseq", "10x"], case_sensitive=False), help = 'Change the barcode style')

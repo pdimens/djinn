@@ -4,6 +4,9 @@ import pysam
 from djinn.sam.extract import extract_barcodes
 from djinn.utils.file_ops import print_error, validate_sam
 import rich_click as click
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option('-d', '--downsample', type = click.FloatRange(min = 0.00000001), help = 'Number/fraction of barcodes to retain')

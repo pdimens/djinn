@@ -3,6 +3,9 @@
 import rich_click as click
 import pysam
 from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-i", "--invalid", type = str, default=False, help = "Output records with invalid barcodes to this file")

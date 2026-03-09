@@ -1,6 +1,9 @@
 import rich_click as click
 import subprocess
 from djinn.utils.file_ops import make_dir, print_error, validate_sam
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("--threads", "-t", type = click.IntRange(min = 2, max_open=True), default=10, show_default=True, help = "Number of threads to use")

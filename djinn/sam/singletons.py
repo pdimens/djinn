@@ -7,6 +7,9 @@ import sys
 from djinn.utils.barcodes import is_invalid
 from djinn.utils.file_ops import validate_sam
 from djinn.utils.xam_tools import bam_barcode
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def count_barcodes(bamfile: str, invalid: bool = False) -> Counter:
     '''

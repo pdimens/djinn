@@ -5,6 +5,9 @@ import pysam
 import rich_click as click
 from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/concat")
 @click.option('--mi', type = click.Choice(['haplotagging', 'tellseq', 'stlfr'], case_sensitive = False), help="MI tag is the primary molecule identifier and write new barcodes in this format [`haplotagging`, `stlfr`, `tellseq`]")

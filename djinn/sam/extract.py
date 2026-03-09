@@ -3,6 +3,9 @@ import sys
 from djinn.utils.barcodes import ANY_INVALID, TELLSEQ_STLFR_RX
 from djinn.utils.file_ops import validate_sam
 import rich_click as click
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def extract_barcodes(bamfile: str, separate_invalid: bool = False):
     '''

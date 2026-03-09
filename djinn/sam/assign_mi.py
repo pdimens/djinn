@@ -4,6 +4,9 @@ import sys
 import pysam
 import rich_click as click
 from djinn.utils.file_ops import validate_sam, which_linkedread_sam, print_error, is_standard
+import signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def write_validbx(bam, alnrecord, mol_id):
     '''
