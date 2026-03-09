@@ -71,6 +71,8 @@ def standardize(prefix, input, style, cache_size, threads):
                             bc_out.write(f"{_record.barcode}\t{BX.inventory[_record.barcode]}\n")
                         # overwrite the record's barcode
                         _record.convert("standard", BX.inventory[_record.barcode])
+                    else:
+                        _record.convert("standard", _record.barcode)
                     writer.queue(_record)
     if style:
         bc_out.close()
