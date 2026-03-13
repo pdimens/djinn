@@ -18,10 +18,15 @@ package xam
 
 import (
 	"bytes"
-	"strings"
+	"regexp"
 
 	"github.com/biogo/hts/sam"
 )
+
+var HaploRe = regexp.MustCompile(`(?:[ABCD][0-9]{2}){4}`)
+var StlfrRe = regexp.MustCompile("([0-9]+_[0-9]+_[0-9]+)$")
+var TellseqRe = regexp.MustCompile("([ATCGN]+)$")
+var InvalidRe = regexp.MustCompile("(?:N|[ABCD]00|^0_|_0_|_0$)")
 
 // ── SAM formatting ────────────────────────────────────────────────────────────
 
@@ -73,33 +78,22 @@ func (ws *WorkerState) writeInt(n int) {
 	ws.outBuf.Write(tmp[i:])
 }
 
-// ─── barcode reconstruction ───────────────────────────────────────────────────
+// ─── barcode information ───────────────────────────────────────────────────
+// Idenftify the barcode type as one of haplotagging, stlfr, or tellseq
+// and whether it is valid or not. Returns barcode type (string) and valid (bool)
+func DetermineBarcode(bc string) (string, bool) {
+	var barcode string
 
-func ReconstructBarcode(nucBC, origBC string, stagger, bc map[string]string) (string, int, int) {
-	corrected := 0
-	seg := strings.SplitN(nucBC, "-", 4)
-	if nucBC != origBC {
-		corrected = 1
-	}
-	if len(seg) != 4 {
-		return "A00C00B00D00", 0, corrected
-	}
-	A := "A" + lookup(bc, seg[1])
-	B := "B" + lookup(bc, seg[2])
-	C := "C" + lookup(bc, seg[3])
-	D := "D" + lookup(stagger, seg[0])
-	valid := 1
-	if A == "A00" || B == "B00" || C == "C00" || D == "D00" {
-		valid = 0
-	}
-	return A + C + B + D, valid, corrected
-}
+	invalid := InvalidRe.MatchString(bc)
 
-func lookup(m map[string]string, key string) string {
-	if v, ok := m[key]; ok {
-		return v
+	if HaploRe.MatchString(bc) {
+		barcode = "haplotagging"
+	} else if StlfrRe.MatchString(bc) {
+		barcode = "stlfr"
+	} else if TellseqRe.MatchString(bc) {
+		barcode = "tellseq"
 	}
-	return "00"
+	return barcode, !invalid
 }
 
 // ─── SAM tag helpers ──────────────────────────────────────────────────────────

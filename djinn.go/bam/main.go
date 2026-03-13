@@ -1,8 +1,9 @@
 package main
 
 import (
-	"djinn/bam/internal/extract"
+	"djinn/bam/xam"
 	"flag"
+	"fmt"
 	"os"
 )
 
@@ -15,6 +16,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+	fmt.Println(xam.DetermineBarcode("TAGAGAN"))
 	//args := flag.Args()
-	extract.Extract()
+	//extract.Extract()
 }

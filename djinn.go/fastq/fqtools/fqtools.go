@@ -109,7 +109,7 @@ func newFastqWriter(path string, readnum string, level, threads int) (*fastqWrit
 		f.Close()
 		return nil, err
 	}
-	gz.SetConcurrency(1<<20, threads)
+	gz.SetConcurrency(2<<20, threads)
 	return &fastqWriter{
 		gz:  gz,
 		buf: bufio.NewWriterSize(gz, 2<<20),

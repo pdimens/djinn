@@ -31,7 +31,7 @@ func Extract() error {
 	}
 	defer bf.Close()
 
-	br, err := bam.NewReader(bufio.NewReaderSize(bf, 1<<20), 1)
+	br, err := bam.NewReader(bufio.NewReaderSize(bf, 2<<20), 1)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating BAM reader: %v\n", err)
 		os.Exit(1)
