@@ -1,4 +1,4 @@
-package main
+package extract
 
 import (
 	"bufio"
@@ -7,35 +7,22 @@ import (
 	"os"
 
 	"github.com/biogo/hts/bam"
-	"github.com/biogo/hts/sam"
 )
 
-func getStringTag(r *sam.Record, tag string) (string, bool) {
-	t := sam.Tag{tag[0], tag[1]}
-	for _, aux := range r.AuxFields {
-		if aux.Tag() == t {
-			if s, ok := aux.Value().(string); ok {
-				return s, true
-			}
-		}
-	}
-	return "", false
-}
-
-func main() {
-	flag.Usage = func() {
+func Extract(args []string) error {
+	flagSet := flag.NewFlagSet("extract", flag.ExitOnError)
+	flagSet.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: count input.bam > output.bc\n")
-		flag.PrintDefaults()
+		flagSet.PrintDefaults()
 	}
-	flag.Parse()
-	args := flag.Args()
+	args = flagSet.Args()
 	if len(args) != 1 {
-		flag.Usage()
+		flagSet.Usage()
 		os.Exit(1)
 	}
 	infile := args[0]
 
-	set := make(map[string]int16, 1_000_000)
+	set := make(map[string]struct{}, 1_000_000)
 	// ── open BAM ──────────────────────────────────────────────────────────────
 	bf, err := os.Open(infile)
 	if err != nil {
@@ -62,9 +49,11 @@ func main() {
 		if !hasBX {
 			continue
 		}
-		set[bxVal]++
+		set[bxVal] = struct{}{}
+
 	}
 	for key, val := range set {
 		fmt.Printf("%s\t%d\n", key, val)
 	}
+	return nil
 }

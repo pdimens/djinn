@@ -27,7 +27,7 @@ import (
 
 // pairedFlag returns the SAM FLAG integer for a paired unmapped read.
 // R1: 0x1|0x4|0x8|0x40 = 77   R2: 0x1|0x4|0x8|0x80 = 141
-func pairedFlag(isRead1 bool) int {
+func PairedFlag(isRead1 bool) int {
 	if isRead1 {
 		return 77
 	}
@@ -35,7 +35,7 @@ func pairedFlag(isRead1 bool) int {
 }
 
 // workerState holds reusable per-goroutine scratch buffers.
-type workerState struct {
+type WorkerState struct {
 	seqBuf  []byte       // assembled seq (pad + barcode + biological)
 	qualBuf []byte       // assembled qual in ASCII Phred+33
 	outBuf  bytes.Buffer // SAM text accumulator for the whole batch
@@ -44,7 +44,7 @@ type workerState struct {
 // writeSAMRecord appends a single SAM record as a text line to ws.outBuf.
 // qual is expected in ASCII Phred+33 (as read from FASTQ).
 // This avoids constructing a sam.Record object entirely for the write path.
-func (ws *workerState) writeSAMRecord(name string, flag int, seq, qual []byte) {
+func (ws *WorkerState) writeuSAMRecord(name string, flag int, seq, qual []byte) {
 	ws.outBuf.WriteString(name)
 	ws.outBuf.WriteByte('\t')
 	// write flag as decimal
@@ -58,7 +58,7 @@ func (ws *workerState) writeSAMRecord(name string, flag int, seq, qual []byte) {
 }
 
 // writeInt writes a non-negative integer to outBuf without allocating.
-func (ws *workerState) writeInt(n int) {
+func (ws *WorkerState) writeInt(n int) {
 	if n == 0 {
 		ws.outBuf.WriteByte('0')
 		return
@@ -75,7 +75,7 @@ func (ws *workerState) writeInt(n int) {
 
 // ─── barcode reconstruction ───────────────────────────────────────────────────
 
-func reconstructBarcode(nucBC, origBC string, stagger, bc map[string]string) (string, int, int) {
+func ReconstructBarcode(nucBC, origBC string, stagger, bc map[string]string) (string, int, int) {
 	corrected := 0
 	seg := strings.SplitN(nucBC, "-", 4)
 	if nucBC != origBC {
