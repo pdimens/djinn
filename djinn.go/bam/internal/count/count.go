@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"djinn/bam/xam"
+
 	"github.com/biogo/hts/bam"
 	"github.com/biogo/hts/sam"
 )
@@ -23,15 +25,13 @@ func getStringTag(r *sam.Record, tag string) (string, bool) {
 }
 
 func count(args []string) error {
-	flagSet := flag.NewFlagSet("count", flag.ExitOnError)
-	flagSet.Usage = func() {
+	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: count input.bam > output.bc\n")
-		flagSet.PrintDefaults()
 	}
-	flagSet.Parse()
-	args = flagSet.Args()
+	flag.Parse()
+	args = flag.Args()
 	if len(args) != 1 {
-		flagSet.Usage()
+		flag.Usage()
 		os.Exit(1)
 	}
 	infile := args[0]
@@ -59,7 +59,7 @@ func count(args []string) error {
 			break // EOF
 		}
 
-		bxVal, hasBX := getStringTag(rec, "BX")
+		bxVal, hasBX := xam.GetStringTag(rec, "BX")
 		if !hasBX {
 			continue
 		}

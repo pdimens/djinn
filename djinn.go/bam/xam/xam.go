@@ -1,4 +1,4 @@
-package xamtools
+package xam
 
 // preproc_barcodes - renames and records demultiplexed linked-read barcodes
 // coming out of Pheniqs. Reads a Pheniqs JSON config and a BAM file, rewrites

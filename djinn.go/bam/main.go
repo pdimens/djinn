@@ -1,6 +1,7 @@
 package main
 
 import (
+	"djinn/bam/internal/extract"
 	"flag"
 	"os"
 )
@@ -14,6 +15,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	args := flag.Args()
-	Extract(args)
+	//args := flag.Args()
+	extract.Extract()
 }
