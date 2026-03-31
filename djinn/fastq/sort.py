@@ -23,7 +23,7 @@ def sort(samtag,prefix,input,threads):
     threads_fastq = quotient
     _outfiles = f"-1 {prefix}.R1.fq.gz"
     if len(input) == 2:
-        _outfiles += " -2 {prefix}.R2.fq.gz"
+        _outfiles += f" -2 {prefix}.R2.fq.gz"
 
     sam_import = subprocess.Popen(
         f'samtools import -@ 1 -T * {" ".join(input)}'.split(),
