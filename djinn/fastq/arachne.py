@@ -3,7 +3,8 @@ import rich_click as click
 import subprocess
 from pysam import FastxFile
 from djinn.utils.file_ops import print_error, which_linkedread, make_dir, validate_fq
-from djinn.utils.fq_tools import FQRecord
+from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+from djinn.fastq.singletons import count_barcodes_fq
 
 config = click.RichHelpConfiguration(
     max_width=80,
@@ -29,10 +30,12 @@ def arachne(input, prefix, threads):
     Prepare FASTQ pair for arachne input
 
     This command shortcuts performing the necessary file processing to make a pair of FASTQ files compliant with
-    the Arachne linked-read sequence aligner, which includes standardizing linked-read barcode format and sorting by barcode.
-    You [bold yellow]must[/] provide a prefix for the output FASTQ files.
+    the Arachne linked-read sequence aligner, which includes standardizing linked-read barcode format, sorting by barcode,
+    and filtering out invalid and singleton barcodes. You [bold yellow]must[/] provide a prefix for the output FASTQ files.
     """
     BC_TYPE = which_linkedread(input[0])
+    bc_counts = count_barcodes_fq(BC_TYPE, input)
+    linked = list(filter(lambda x: bc_counts[x] > 1, bc_counts.keys()))
     quotient, remainder = divmod(threads - 2, 2)
     threads_sort = quotient + remainder
     threads_fastq = quotient
@@ -57,17 +60,27 @@ def arachne(input, prefix, threads):
         stderr=subprocess.PIPE
     )
 
-    with FastxFile(input[0], persist=False) as FQF, FastxFile(input[1], persist=False) as FQR:
+    with (
+        FastxFile(input[0], persist=False) as FQF,
+        FastxFile(input[1], persist=False) as FQR,
+        CachedFQWriter(f"{prefix}.filtered_out", 10000, 2) as invalids
+    ):
         for _read1, _read2 in zip_longest(FQF, FQR):
             if _read1 is not None:
                 _record1 = FQRecord(_read1, BC_TYPE, 0)
                 _record1.convert("standard", _record1.barcode)
-                sam_import.stdin.write(_record1.encode())
+                if _record1.valid and _record1.barcode in linked:
+                    sam_import.stdin.write(_record1.encode())
+                else:
+                    invalids.queue(_record1)
 
             if _read2 is not None:
                 _record2 = FQRecord(_read2, BC_TYPE, 0)
                 _record2.convert("standard", _record2.barcode)
-                sam_import.stdin.write(_record2.encode())
+                if _record2.valid and _record2.barcode in linked:
+                    sam_import.stdin.write(_record2.encode())
+                else:
+                    invalids.queue(_record2)
 
     # Close stdin to signal EOF to samtools import
     sam_import.stdin.close()

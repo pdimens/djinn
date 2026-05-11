@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-from itertools import zip_longest
-import os
 import rich_click as click
 import pysam
 from djinn.utils.file_ops import make_dir, validate_fq, which_linkedread
