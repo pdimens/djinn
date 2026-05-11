@@ -32,8 +32,12 @@ class FQRecord():
         self.process_barcode(bc, length, skipmissing)
 
     def __str__(self):
-        """Default string method returns a formatted FASTQ record, without any barcode."""
+        """Default string method returns a formatted FASTQ record, without any barcode, unless the barcode has already been added to self.comment via convert()."""
         return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n"
+
+    def encode(self) -> bytes:
+        """Returns the formatted FASTQ record as bytes. Just a shortcut to self.__str__().encode()"""
+        return self.__str__().encode("utf-8")
 
     def copy(self):
         return copy.deepcopy(self)

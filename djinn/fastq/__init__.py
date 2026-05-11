@@ -1,3 +1,4 @@
+#from .arachne import arachne
 from .convert import convert
 from .count import count
 from .extract import extract
@@ -20,7 +21,7 @@ def fastq():
     djinn will fall back to `gzip` and this value will be ignored. Otherwise, the number of threads will be divided evenly
     between the number of FASTQ output files (therefore use even numbers for paired-end FASTQ files).
     """
-
+#fastq.add_command(arachne)
 fastq.add_command(convert)
 fastq.add_command(count)
 fastq.add_command(extract)

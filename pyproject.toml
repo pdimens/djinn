@@ -13,6 +13,7 @@ license = "GPL-3.0-or-later"
 
 [project.scripts]
 djinn = "djinn.__main__:cli"
+arachne-prep = "djinn.fastq.arachne:arachne"
 
 [project.urls]
 Homepage = "https://github.com/pdimens/djinn"

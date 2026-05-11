@@ -1,0 +1,95 @@
+from itertools import zip_longest
+import rich_click as click
+import subprocess
+from pysam import FastxFile
+from djinn.utils.file_ops import print_error, which_linkedread, make_dir, validate_fq
+from djinn.utils.fq_tools import FQRecord
+
+config = click.RichHelpConfiguration(
+    max_width=80,
+    theme = "magenta2-slim",
+    use_rich_markup=True,
+    show_arguments=False,
+    style_options_panel_border = "magenta",
+    style_commands_panel_border = "blue",
+    style_option_default= "dim",
+    style_deprecated="dim red",
+    options_table_column_types = ["opt_long", "opt_short", "help"],
+    options_table_help_sections = ["required", "help", "default"]
+)
+
+@click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/arachne/")
+@click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use (min: 6)")
+@click.argument('prefix', type = str, required = True, nargs=1, callback=make_dir)
+@click.argument('input', nargs=2, type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, callback = validate_fq)
+@click.rich_config(config)
+@click.help_option('--help', hidden = True)
+def arachne(input, prefix, threads):
+    """
+    Prepare FASTQ pair for arachne input
+
+    This command shortcuts performing the necessary file processing to make a pair of FASTQ files compliant with
+    the Arachne linked-read sequence aligner, which includes standardizing linked-read barcode format and sorting by barcode.
+    You [bold yellow]must[/] provide a prefix for the output FASTQ files.
+    """
+    BC_TYPE = which_linkedread(input[0])
+    quotient, remainder = divmod(threads - 2, 2)
+    threads_sort = quotient + remainder
+    threads_fastq = quotient
+
+    sam_import = subprocess.Popen(
+        f'samtools import -@ 1 -O SAM -T * {" ".join(input)}'.split(),
+        stdout=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    sam_sort = subprocess.Popen(
+        f"samtools sort -@ {threads_sort - 1} -O SAM -t BX".split(),
+        stdout=subprocess.PIPE,
+        stdin=sam_import.stdout,
+        stderr=subprocess.PIPE
+    )
+
+    sam_fastq = subprocess.Popen(
+        f'samtools fastq -@ {threads_fastq - 1} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
+        stdin=sam_sort.stdout,
+        stderr=subprocess.PIPE
+    )
+
+    with FastxFile(input[0], persist=False) as FQF, FastxFile(input[1], persist=False) as FQR:
+        for _read1, _read2 in zip_longest(FQF, FQR):
+            if _read1 is not None:
+                _record1 = FQRecord(_read1, BC_TYPE, 0)
+                _record1.convert("standard", _record1.barcode)
+                sam_import.stdin.write(_record1.encode())
+
+            if _read2 is not None:
+                _record2 = FQRecord(_read2, BC_TYPE, 0)
+                _record2.convert("standard", _record2.barcode)
+                sam_import.stdin.write(_record2.encode())
+
+    # Close stdin to signal EOF to samtools import
+    sam_import.stdin.close()
+    # Release the parent's copy of the stdout fd so sam_sort sees EOF when import exits
+    sam_import.stdout.close()
+
+    # Wait for the pipeline to finish in order
+    sam_fastq.wait()
+    sam_sort.wait()
+    sam_import.wait()
+
+    errs = []
+    for proc, name in [
+        (sam_import, "samtools import"),
+        (sam_sort,   "samtools sort"),
+        (sam_fastq,  "samtools fastq"),
+    ]:
+        if proc.returncode != 0:
+            errs += f"\033[33m{name}\033[0m" + "\n" + proc.stderr.read().decode() + "\n"
+
+    if errs:
+        print_error(
+            "samtools failure",
+            f"Samtools was unable to process your input. See the error logs:\n" + "\n".join(errs)
+    )
