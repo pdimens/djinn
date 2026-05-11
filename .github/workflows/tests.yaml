@@ -142,6 +142,6 @@ jobs:
       - name: arachne preprocessing
         if: success() || failure()
         run: |
-          arachne-pre arachne test/*.gz &&\
+          arachne-prep arachne test/*.gz &&\
           echo "============= R1 =============" && zcat arachne.R1.fq.gz &&\
           echo "============= R2 =============" && zcat arachne.R2.fq.gz
