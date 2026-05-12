@@ -5,22 +5,10 @@ from pysam import FastxFile
 from djinn.utils.file_ops import print_error, which_linkedread, make_dir, validate_fq
 from djinn.utils.fq_tools import FQRecord, CachedFQWriter
 from djinn.fastq.singletons import count_barcodes_fq
-
-config = click.RichHelpConfiguration(
-    max_width=80,
-    theme = "magenta2-slim",
-    use_rich_markup=True,
-    show_arguments=False,
-    style_options_panel_border = "magenta",
-    style_commands_panel_border = "blue",
-    style_option_default= "dim",
-    style_deprecated="dim red",
-    options_table_column_types = ["opt_long", "opt_short", "help"],
-    options_table_help_sections = ["required", "help", "default"]
-)
+from djinn.__main__ import config
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/arachne/")
-@click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use (min: 6)")
+@click.option("--threads", "-t", type = click.IntRange(min = 5, max_open=True), default=5, show_default=True, help = "Number of threads to use (min: 5)")
 @click.argument('prefix', type = str, required = True, nargs=1, callback=make_dir)
 @click.argument('input', nargs=2, type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, callback = validate_fq)
 @click.rich_config(config)
@@ -31,14 +19,11 @@ def arachne(input, prefix, threads):
 
     This command shortcuts performing the necessary file processing to make a pair of FASTQ files compliant with
     the Arachne linked-read sequence aligner, which includes standardizing linked-read barcode format, sorting by barcode,
-    and filtering out invalid and singleton barcodes. You [bold yellow]must[/] provide a prefix for the output FASTQ files.
+    and filtering out invalid and singleton barcodes. You **must** provide a prefix for the output FASTQ files.
     """
     BC_TYPE = which_linkedread(input[0])
     bc_counts = count_barcodes_fq(BC_TYPE, input)
     linked = list(filter(lambda x: bc_counts[x] > 1, bc_counts.keys()))
-    quotient, remainder = divmod(threads - 2, 2)
-    threads_sort = quotient + remainder
-    threads_fastq = quotient
 
     sam_import = subprocess.Popen(
         f'samtools import -@ 1 --no-PG -O SAM -T * -s -'.split(),
@@ -48,14 +33,14 @@ def arachne(input, prefix, threads):
     )
 
     sam_sort = subprocess.Popen(
-        f"samtools sort -@ {threads_sort - 1} --no-PG -O SAM -t BX".split(),
+        f"samtools sort --no-PG -O SAM -t BX".split(),
         stdout=subprocess.PIPE,
         stdin=sam_import.stdout,
         stderr=subprocess.PIPE
     )
 
     sam_fastq = subprocess.Popen(
-        f'samtools fastq -@ {threads_fastq - 1} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
+        f'samtools fastq -@ {threads - 4} -N -c 6 -T * -1 {prefix}.R1.fq.gz -2 {prefix}.R2.fq.gz'.split(),
         stdin=sam_sort.stdout,
         stderr=subprocess.PIPE
     )
