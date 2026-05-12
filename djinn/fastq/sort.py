@@ -26,12 +26,12 @@ def sort(samtag,prefix,input,threads):
         _outfiles += f" -2 {prefix}.R2.fq.gz"
 
     sam_import = subprocess.Popen(
-        f'samtools import -@ 1 -T * {" ".join(input)}'.split(),
+        f'samtools import -@ 1 --no-PG -T * {" ".join(input)}'.split(),
         stdout = subprocess.PIPE
     )
 
     sam_sort = subprocess.Popen(
-        f"samtools sort -@ {threads_sort -1} -O SAM -t {samtag}".split(),
+        f"samtools sort -@ {threads_sort -1} --no-PG -O SAM -t {samtag}".split(),
         stdout = subprocess.PIPE,
         stdin = sam_import.stdout
     )

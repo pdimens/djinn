@@ -41,14 +41,14 @@ def arachne(input, prefix, threads):
     threads_fastq = quotient
 
     sam_import = subprocess.Popen(
-        f'samtools import -@ 1 -O SAM -T * {" ".join(input)}'.split(),
+        f'samtools import -@ 1 --no-PG -O SAM -T * -s -'.split(),
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
 
     sam_sort = subprocess.Popen(
-        f"samtools sort -@ {threads_sort - 1} -O SAM -t BX".split(),
+        f"samtools sort -@ {threads_sort - 1} --no-PG -O SAM -t BX".split(),
         stdout=subprocess.PIPE,
         stdin=sam_import.stdout,
         stderr=subprocess.PIPE
@@ -59,7 +59,6 @@ def arachne(input, prefix, threads):
         stdin=sam_sort.stdout,
         stderr=subprocess.PIPE
     )
-
     with (
         FastxFile(input[0], persist=False) as FQF,
         FastxFile(input[1], persist=False) as FQR,
@@ -99,7 +98,7 @@ def arachne(input, prefix, threads):
         (sam_fastq,  "samtools fastq"),
     ]:
         if proc.returncode != 0:
-            errs += f"\033[33m{name}\033[0m" + "\n" + proc.stderr.read().decode() + "\n"
+            errs.append(f"[red]{name}[/]\n" + proc.stderr.read().decode() + "\n")
 
     if errs:
         print_error(

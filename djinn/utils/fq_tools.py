@@ -37,7 +37,7 @@ class FQRecord():
 
     def encode(self) -> bytes:
         """Returns the formatted FASTQ record as bytes. Just a shortcut to self.__str__().encode()"""
-        return self.__str__().encode("utf-8")
+        return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n".encode("utf-8")
 
     def copy(self):
         return copy.deepcopy(self)
