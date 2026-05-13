@@ -39,6 +39,15 @@ class FQRecord():
         """Returns the formatted FASTQ record as bytes. Just a shortcut to self.__str__().encode()"""
         return f"@{self.id}\t{self.comment}\n{self.seq}\n+\n{self.qual}\n".encode("utf-8")
 
+    def asBam(self, as_bytes: bool = True) -> str|bytes:
+        """Return the record in SAM format encoded as bytes. Use `as_bytes=False` to return as a string."""
+        flag = 77 if self.forward else 144
+        record = f"{self.id}\t{flag}\t*\t0\t0\t*\t*\t0\t0\t{self.seq}\t{self.qual}\t{self.comment}\n"
+        if as_bytes:
+            return record.encode("utf-8")
+        else:
+            return record
+
     def copy(self):
         return copy.deepcopy(self)
 
