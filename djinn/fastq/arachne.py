@@ -10,7 +10,7 @@ from djinn.utils.fq_tools import CachedFQWriter, FQRecord
 import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/arachne/")
-@click.option("--threads", "-t", type = click.IntRange(min = 5, max_open=True), default=4, show_default=True, help = "Number of threads to use (min: 4)")
+@click.option("--threads", "-t", type = click.IntRange(min = 5, max_open=True), default=5 show_default=True, help = "Number of threads to use (min: 4)")
 @click.argument('prefix', type = str, required = True, nargs=1, callback=make_dir)
 @click.argument('input', nargs=2, type = click.Path(dir_okay=False,readable=True,resolve_path=True, exists = True), required = True, callback = validate_fq)
 @click.rich_config(config)
