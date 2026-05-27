@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 import os
-import sys
-import pysam
-import rich_click as click
-from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
-from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 import signal
+import sys
+
+import pysam
+
+from djinn.utils.barcodes import haplotagging, stlfr, tellseq, tenx
+from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

@@ -1,13 +1,15 @@
 #! /usr/bin/env python
 
 from collections import Counter
-import pysam
-import rich_click as click
+import signal
 import sys
+
+import pysam
+
 from djinn.utils.barcodes import is_invalid
 from djinn.utils.file_ops import validate_sam
 from djinn.utils.xam_tools import bam_barcode
-import signal
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

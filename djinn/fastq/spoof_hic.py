@@ -1,7 +1,8 @@
 import pysam
-import rich_click as click
+
 from djinn.utils.file_ops import make_dir, print_error, which_linkedread
-from djinn.utils.fq_tools import FQRecord, FQBarcodePool
+from djinn.utils.fq_tools import FQBarcodePool, FQRecord
+import rich_click as click
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")

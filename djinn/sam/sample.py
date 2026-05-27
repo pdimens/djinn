@@ -1,10 +1,12 @@
 import os
 import random
+import signal
+
 import pysam
+
 from djinn.sam.extract import extract_barcodes
 from djinn.utils.file_ops import print_error, validate_sam
 import rich_click as click
-import signal
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

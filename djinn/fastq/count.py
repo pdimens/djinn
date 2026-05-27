@@ -1,9 +1,12 @@
 from collections import Counter
-import pysam
-import rich_click as click
+from operator import itemgetter
 import sys
+
+import pysam
+
+from djinn.utils.file_ops import validate_fq, which_linkedread
 from djinn.utils.fq_tools import FQRecord
-from djinn.utils.file_ops import which_linkedread, validate_fq
+import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/extract")
 @click.option("-i", "--invalid", is_flag=True, default=False, help = "Include invalid barcodes")
@@ -30,5 +33,5 @@ def count(input, invalid):
                     if _read.valid or (not _read.valid and invalid):
                         barcodes.update([_read.barcode])
 
-    for k,v in barcodes.items():
+    for k, v in sorted(barcodes.items(), key=itemgetter(1), reverse=True):
         sys.stdout.buffer.write(f"{k}\t{v}\n".encode())

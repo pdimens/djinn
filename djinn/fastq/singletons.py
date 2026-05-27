@@ -2,10 +2,12 @@
 
 from collections import Counter
 from itertools import zip_longest
+
 import pysam
-import rich_click as click
+
 from djinn.utils.file_ops import make_dir, validate_fq, which_linkedread
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
+import rich_click as click
 
 def count_barcodes_fq(barcode_type: str, fq: list[str], invalid: bool = False) -> Counter:
     '''

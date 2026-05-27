@@ -1,7 +1,8 @@
-import rich_click as click
 import subprocess
 import sys
+
 from djinn.utils.file_ops import print_error, validate_fq
+import rich_click as click
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/ncbi/")
 @click.option("--threads", "-t", type = click.IntRange(min = 1, max_open=True), default=4, show_default=True, help = "Number of threads to use")

@@ -1,9 +1,18 @@
-import pysam
-import sys
-import rich_click as click
-from djinn.utils.file_ops import print_error, validate_sam
-from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx, TELLSEQ_STLFR_RX, ANY_INVALID
 import signal
+import sys
+
+import pysam
+
+from djinn.utils.barcodes import (
+    ANY_INVALID,
+    TELLSEQ_STLFR_RX,
+    haplotagging,
+    stlfr,
+    tellseq,
+    tenx,
+)
+from djinn.utils.file_ops import print_error, validate_sam
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

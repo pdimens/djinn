@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
-import rich_click as click
 from djinn.fastq import fastq
 from djinn.sam import sam
+import rich_click as click
 
 config = click.RichHelpConfiguration(
     max_width=80,

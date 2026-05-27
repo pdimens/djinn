@@ -1,10 +1,17 @@
 #! /usr/bin/env python
 """assign molecular identifier (MI) tags to alignments based on distance and barcode"""
-import sys
-import pysam
-import rich_click as click
-from djinn.utils.file_ops import validate_sam, which_linkedread_sam, print_error, is_standard
 import signal
+import sys
+
+import pysam
+
+from djinn.utils.file_ops import (
+    is_standard,
+    print_error,
+    validate_sam,
+    which_linkedread_sam,
+)
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

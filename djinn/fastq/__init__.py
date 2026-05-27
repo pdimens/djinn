@@ -1,15 +1,16 @@
 #from .arachne import arachne
+import rich_click as click
+
 from .convert import convert
 from .count import count
 from .extract import extract
-from .singletons import filter_singletons
 from .invalid import filter_invalid
 from .ncbi import ncbi
 from .sample import sample
+from .singletons import filter_singletons
 from .sort import sort
 from .spoof_hic import spoof_hic
 from .standardize import standardize
-import rich_click as click
 
 @click.group(options_metavar='')
 @click.help_option('--help', hidden = True)

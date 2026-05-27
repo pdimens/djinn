@@ -1,10 +1,14 @@
 from collections import Counter
-import pysam
-import rich_click as click
-import sys
-from djinn.utils.file_ops import validate_sam
-from djinn.utils.barcodes import ANY_INVALID
+from operator import itemgetter
 import signal
+import sys
+
+import pysam
+
+from djinn.utils.barcodes import ANY_INVALID
+from djinn.utils.file_ops import validate_sam
+import rich_click as click
+
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
@@ -33,5 +37,5 @@ def count(input, invalid):
                 if not is_invalid or (is_invalid and invalid):
                     barcodes.update([_bc])
 
-    for k,v in barcodes.items():
-        sys.stdout.write(f"{k}\t{v}\n")
+    for k, v in sorted(barcodes.items(), key=itemgetter(1), reverse=True):
+        sys.stdout.buffer.write(f"{k}\t{v}\n".encode())

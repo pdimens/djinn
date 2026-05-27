@@ -1,9 +1,17 @@
 from itertools import zip_longest
+
 import pysam
+
+from djinn.utils.barcodes import haplotagging, stlfr, tellseq, tenx
+from djinn.utils.file_ops import (
+    make_dir,
+    print_error,
+    validate_barcodefile,
+    validate_fq,
+    which_linkedread,
+)
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
 import rich_click as click
-from djinn.utils.file_ops import make_dir, print_error, validate_barcodefile, which_linkedread, validate_fq
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
-from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/convert/")
 @click.option('-b','--barcodes', type = click.Path(exists=True, readable=True, dir_okay=False), help='barcodes file [10x input only]', required=False)

@@ -1,8 +1,10 @@
 import os
+
 import pysam
-from djinn.utils.file_ops import print_error, which_linkedread, make_dir, validate_fq
-from djinn.utils.barcodes import haplotagging, tellseq, stlfr, tenx
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+
+from djinn.utils.barcodes import haplotagging, stlfr, tellseq, tenx
+from djinn.utils.file_ops import make_dir, print_error, validate_fq, which_linkedread
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
 import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/standardize/#fastq")

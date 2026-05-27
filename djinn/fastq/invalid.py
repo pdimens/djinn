@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
-import rich_click as click
 import pysam
+
 from djinn.utils.file_ops import make_dir, validate_fq, which_linkedread
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
+import rich_click as click
 
 @click.command(no_args_is_help = True, epilog = "Documentation: https://pdimens.github.io/djinn/filter/")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")

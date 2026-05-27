@@ -1,13 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
 import gzip
 import os
-import pysam
 import re
-import rich_click as click
-from rich import print as rprint
 import sys
+
+import pysam
+from rich import print as rprint
+
 from djinn.utils.barcodes import HAPLOTAGGING_RX, STLFR_RX, TELLSEQ_RX
 from djinn.utils.barcodes import HAPLOTAGGING_SIMPLE, STLFR_SIMPLE, TELLSEQ_SIMPLE
+import rich_click as click
 
 def _compress_fq(fq: str):
     """use pysam bgzip to compress fastq and delete the original"""

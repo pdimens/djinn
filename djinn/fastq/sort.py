@@ -1,6 +1,7 @@
-import rich_click as click
 import subprocess
+
 from djinn.utils.file_ops import make_dir, print_error, validate_fq
+import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/sort/")
 @click.option("--threads", "-t", type = click.IntRange(min = 6, max_open=True), default=10, show_default=True, help = "Number of threads to use")

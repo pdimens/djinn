@@ -1,9 +1,11 @@
 import random
+
 import pysam
-import rich_click as click
+
 from djinn.fastq.extract import extract_barcodes_fq
-from djinn.utils.file_ops import make_dir, print_error, which_linkedread, validate_fq
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
+from djinn.utils.file_ops import make_dir, print_error, validate_fq, which_linkedread
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
+import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/downsample")
 @click.option("-c", "--cache-size", hidden=True, type=click.IntRange(min=1000, max_open=True), default=10000, help = "Number of cached reads for write operations")

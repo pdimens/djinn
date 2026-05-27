@@ -1,4 +1,5 @@
 import pysam
+
 from djinn.utils.barcodes import TELLSEQ_STLFR_RX
 
 def bam_barcode(record: pysam.AlignedSegment) -> str:

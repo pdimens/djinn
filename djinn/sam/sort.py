@@ -1,8 +1,9 @@
-import rich_click as click
+import signal
 import subprocess
 import sys
+
 from djinn.utils.file_ops import print_error, validate_sam
-import signal
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

@@ -1,7 +1,9 @@
-import pysam
 import sys
+
+import pysam
+
+from djinn.utils.file_ops import validate_fq, which_linkedread
 from djinn.utils.fq_tools import FQRecord
-from djinn.utils.file_ops import which_linkedread, validate_fq
 import rich_click as click
 
 def extract_barcodes_fq(barcode_type: str, fq: list[str], separate_invalid: bool = False):

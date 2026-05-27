@@ -1,3 +1,5 @@
+import rich_click as click
+
 from .assign_mi import assign_mi
 from .concat import concat
 from .count import count
@@ -8,7 +10,6 @@ from .sample import sample
 from .singletons import filter_singletons
 from .sort import sort
 from .standardize import standardize
-import rich_click as click
 
 @click.group(options_metavar='')
 @click.help_option('--help', hidden = True)

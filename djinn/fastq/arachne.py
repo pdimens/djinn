@@ -1,11 +1,13 @@
 from itertools import zip_longest
-import rich_click as click
 import subprocess
+
 from pysam import FastxFile
-from djinn.utils.file_ops import print_error, which_linkedread, make_dir, validate_fq
-from djinn.utils.fq_tools import FQRecord, CachedFQWriter
-from djinn.fastq.singletons import count_barcodes_fq
+
 from djinn.__main__ import config
+from djinn.fastq.singletons import count_barcodes_fq
+from djinn.utils.file_ops import make_dir, print_error, validate_fq, which_linkedread
+from djinn.utils.fq_tools import CachedFQWriter, FQRecord
+import rich_click as click
 
 @click.command(no_args_is_help = True, context_settings={"allow_interspersed_args" : False}, epilog = "Documentation: https://pdimens.github.io/djinn/arachne/")
 @click.option("--threads", "-t", type = click.IntRange(min = 5, max_open=True), default=4, show_default=True, help = "Number of threads to use (min: 4)")

@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 
-import rich_click as click
-import pysam
-from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
 import signal
+
+import pysam
+
+from djinn.utils.file_ops import print_error, validate_sam, which_linkedread_sam
+import rich_click as click
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
