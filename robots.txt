@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pdimens.github.io/djinn/sitemap.xml.gz
+Sitemap: https://pdimens.github.io/djinn/sitemap.xml

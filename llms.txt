@@ -1,0 +1,12 @@
+﻿#  | Djinn
+
+- [ Installing Djinn](https://pdimens.github.io/djinn/install.md): Installing Djinn
+- [ Convert between FASTQ formats](https://pdimens.github.io/djinn/convert.md): Convert between linked-read FASTQ data formats
+- [ Count linked-read barcodes](https://pdimens.github.io/djinn/extract.md): Count linked-read barcodes
+- [ Extract linked-read barcodes](https://pdimens.github.io/djinn/count.md): Extract linked-read barcodes
+- [ Remove singletons or invalid barcodes](https://pdimens.github.io/djinn/filter.md): Remove singletons or invalid barcodes
+- [ Convert to/from NCBI format](https://pdimens.github.io/djinn/ncbi.md): Convert linked-read data to unaligned BAM for NCBI subission
+- [ Downsample data by barcode](https://pdimens.github.io/djinn/sample.md): Downsample data by barcode
+- [ Sort linked-read data by barcode](https://pdimens.github.io/djinn/sort.md): Sort linked-read data by barcode
+- [ Spoof linked-read data into HI-C-like data](https://pdimens.github.io/djinn/spoof-hic.md): Convert linked-read data into HI-C-like data
+- [ Convert data to Standard format](https://pdimens.github.io/djinn/standardize.md): Convert linked-read data to the Standard format
