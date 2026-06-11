@@ -2,7 +2,6 @@ package xam
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,14 +10,26 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-// AlignmentReader is satisfied by both bam.Reader and sam.Reader
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const ChanCap = 2000
+const IoBuf = 4 << 20 // 4 MiB
+
+// ── Interfaces ────────────────────────────────────────────────────────────────
+
 type AlignmentReader interface {
 	Read() (*sam.Record, error)
 	Header() *sam.Header
 	Close() error
 }
 
-// wrapper for SAM to satisfy the interface
+type AlignmentWriter interface {
+	Write(*sam.Record) error
+	Close() error
+}
+
+// ── SAM wrappers (sam.Reader/Writer lack Close()) ─────────────────────────────
+
 type SamReader struct {
 	*sam.Reader
 	closer io.Closer
@@ -28,94 +39,143 @@ func (s *SamReader) Close() error {
 	return s.closer.Close()
 }
 
-// An interface that satisfies both SAM and BAM writers
-type AlignmentWriter interface {
-	Write(*sam.Record) error
-	Close() error
-}
-
-// A wrapper to implement Close() to satsify the SAM/BAM writer interface.
 type SamWriter struct {
 	*sam.Writer
 }
 
 func (s *SamWriter) Close() error {
-	return nil // sam.Writer has no resources to release
+	return nil
 }
 
-// Given an infile, will check for the gzip magic bytes and if present, will open an bam.Reader,
-// otherwise opening a sam.Reader. Returns a reader that satisfied the AlignmentReader interface,
-// a closer function to use with defer after invocation, and an error.
-func OpenXAM(infile string, threads, buffer int) (AlignmentReader, func(), error) {
-	var (
-		bf  io.ReadCloser
-		err error
-	)
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-	switch infile {
-	case "", "-":
-		bf = os.Stdin
-	default:
-		bf, err = os.Open(infile)
-		if err != nil {
-			return nil, nil, fmt.Errorf("opening file: %w", err)
-		}
-	}
-
-	bufReader := bufio.NewReaderSize(bf, buffer)
-
-	magic, err := bufReader.Peek(2)
+func checkError(err error) {
 	if err != nil {
-		if bf != os.Stdin {
-			bf.Close()
-		}
-		return nil, nil, fmt.Errorf("peeking magic bytes for SAM/BAM determination: %w", err)
+		log.Fatalf("%v", err)
 	}
-
-	baseCleanup := func() {
-		if bf != os.Stdin {
-			bf.Close()
-		}
-	}
-
-	if magic[0] == 0x1f && magic[1] == 0x8b {
-		br, err := bam.NewReader(bufReader, threads)
-		if err != nil {
-			baseCleanup()
-			return nil, nil, fmt.Errorf("creating BAM reader: %w", err)
-		}
-		return br, func() { br.Close(); baseCleanup() }, nil
-	}
-
-	sr, err := sam.NewReader(bufReader)
-	if err != nil {
-		baseCleanup()
-		return nil, nil, fmt.Errorf("creating SAM reader: %w", err)
-	}
-	wrapped := &SamReader{Reader: sr, closer: bf}
-	return wrapped, func() { wrapped.Close() }, nil
 }
 
-// Checks if the last argument is a file or input is coming from stdin
-// returns either: file name, "-" (stdin), or usage and exit 1.
+// FileOrStdin resolves a positional argument to a file path or "-" for stdin.
+// Emits usage and exits if stdin is a terminal and no argument was provided.
 func FileOrStdin(args []string, usage func()) string {
-	var infile string
 	switch len(args) {
 	case 0:
 		stat, err := os.Stdin.Stat()
-		if err != nil {
-			log.Fatalf("checking stdin: %v", err)
-		}
+		checkError(err)
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
 			usage()
 			os.Exit(1)
 		}
-		infile = "-"
+		return "-"
 	case 1:
-		infile = args[0]
+		return args[0]
 	default:
 		usage()
 		os.Exit(1)
 	}
-	return infile
+	return ""
+}
+
+// ── Reader channel ────────────────────────────────────────────────────────────
+
+// NewXamReaderChan opens a SAM or BAM file (or stdin if inFile == "-") and
+// streams records into the returned channel. The returned AlignmentReader
+// exposes the file header. The goroutine owns all cleanup.
+func NewXamReaderChan(inFile string, cp, buff, threads int) (chan *sam.Record, AlignmentReader) {
+	outChan := make(chan *sam.Record, cp)
+
+	fh, err := os.Stdin, error(nil)
+	if inFile != "-" {
+		fh, err = os.Open(inFile)
+		checkError(err)
+	}
+
+	bufReader := bufio.NewReaderSize(fh, buff)
+
+	magic, err := bufReader.Peek(2)
+	if err != nil {
+		if fh != os.Stdin {
+			fh.Close()
+		}
+		checkError(err)
+	}
+
+	// Build the reader. For SAM, fh ownership passes into SamReader so the
+	// goroutine does not also close it. For BAM, the goroutine closes fh.
+	var r AlignmentReader
+	isBAM := magic[0] == 0x1f && magic[1] == 0x8b
+	if isBAM {
+		br, err := bam.NewReader(bufReader, threads)
+		checkError(err)
+		r = br
+	} else {
+		sr, err := sam.NewReader(bufReader)
+		checkError(err)
+		r = &SamReader{Reader: sr, closer: fh}
+	}
+
+	go func() {
+		// Only close fh here for BAM; SamReader.Close() owns it for SAM.
+		if isBAM && fh != os.Stdin {
+			defer fh.Close()
+		}
+		for {
+			rec, err := r.Read()
+			if err == io.EOF {
+				close(outChan)
+				return
+			}
+			if err != nil {
+				close(outChan)
+				checkError(err) // fatal — exits, no fallthrough
+				return          // defensive
+			}
+			outChan <- rec
+		}
+	}()
+
+	return outChan, r
+}
+
+// ── Writer channel ────────────────────────────────────────────────────────────
+
+// NewXamWriterChan writes records received on the returned channel to outFile
+// (or stdout if outFile == "-"). Sends true on doneChan when the input channel
+// is closed and all records have been flushed.
+func NewXamWriterChan(outFile string, head *sam.Header, cp, buff, threads int, uncompressed bool) (chan *sam.Record, chan bool) {
+	outChan := make(chan *sam.Record, cp)
+	doneChan := make(chan bool)
+
+	fh, err := os.Stdout, error(nil)
+	if outFile != "-" {
+		fh, err = os.Create(outFile)
+		checkError(err)
+	}
+
+	bio := bufio.NewWriterSize(fh, buff)
+
+	var w AlignmentWriter
+	if uncompressed {
+		sw, err := sam.NewWriter(bio, head, sam.FlagDecimal)
+		checkError(err) // was silently discarded before
+		w = &SamWriter{Writer: sw}
+	} else {
+		bw, err := bam.NewWriter(bio, head, threads)
+		checkError(err)
+		w = bw
+	}
+
+	go func() {
+		for rec := range outChan {
+			checkError(w.Write(rec))
+		}
+		w.Close()
+		checkError(bio.Flush()) // always flush — was skipped for SAM before
+		if fh != os.Stdout {
+			fh.Close()
+		}
+		doneChan <- true
+	}()
+
+	return outChan, doneChan
 }

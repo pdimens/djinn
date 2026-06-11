@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
-	"log"
 	"os"
 
 	"djinn/xam"
@@ -22,23 +20,11 @@ func main() {
 	infile := xam.FileOrStdin(args, flag.Usage)
 	set := make(map[string]struct{}, 5_000_000)
 
-	// ── open BAM ──────────────────────────────────────────────────────────────
-	r, cleanup, err := xam.OpenXAM(infile, *threads, 2<<20)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cleanup()
+	// ── open reader ───────────────────────────────────────────────────────────
+	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, *threads)
 
-	// ── loop through BAM records ───────────────────────────────────────────────
-	for {
-		rec, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("reading record: %v", err)
-		}
-
+	// ── loop record channel ──────────────────────────────────────────────
+	for rec := range recChan {
 		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
 		if !hasBX {
 			continue
