@@ -1,8 +1,6 @@
 package xam
 
 import (
-	"log"
-	"os"
 	"regexp"
 	"strconv"
 
@@ -192,28 +190,4 @@ func lastPGID(h *sam.Header) string {
 		return ""
 	}
 	return strconv.Itoa(progs[len(progs)-1].ID())
-}
-
-// Checks if the last argument is a file or input is coming from stdin
-// returns either: file name, "-" (stdin), usage and exit.
-func FileOrStdin(args []string, usage func()) string {
-	var infile string
-	switch len(args) {
-	case 0:
-		stat, err := os.Stdin.Stat()
-		if err != nil {
-			log.Fatalf("checking stdin: %v", err)
-		}
-		if (stat.Mode() & os.ModeCharDevice) != 0 {
-			usage()
-			os.Exit(1)
-		}
-		infile = "-"
-	case 1:
-		infile = args[0]
-	default:
-		usage()
-		os.Exit(1)
-	}
-	return infile
 }

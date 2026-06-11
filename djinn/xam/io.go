@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
 
 	"github.com/biogo/hts/bam"
@@ -93,4 +94,28 @@ func OpenXAM(infile string, threads, buffer int) (AlignmentReader, func(), error
 	}
 	wrapped := &SamReader{Reader: sr, closer: bf}
 	return wrapped, func() { wrapped.Close() }, nil
+}
+
+// Checks if the last argument is a file or input is coming from stdin
+// returns either: file name, "-" (stdin), or usage and exit 1.
+func FileOrStdin(args []string, usage func()) string {
+	var infile string
+	switch len(args) {
+	case 0:
+		stat, err := os.Stdin.Stat()
+		if err != nil {
+			log.Fatalf("checking stdin: %v", err)
+		}
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			usage()
+			os.Exit(1)
+		}
+		infile = "-"
+	case 1:
+		infile = args[0]
+	default:
+		usage()
+		os.Exit(1)
+	}
+	return infile
 }
