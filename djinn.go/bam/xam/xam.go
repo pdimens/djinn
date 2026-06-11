@@ -1,17 +1,5 @@
 package xam
 
-// preproc_barcodes - renames and records demultiplexed linked-read barcodes
-// coming out of Pheniqs. Reads a Pheniqs JSON config and a BAM file, rewrites
-// BX and VX tags on every record that has an RX tag, and writes R1/R2 FASTQ
-// output files compressed with pgzip.
-//
-// Usage:
-//
-//	preproc_barcodes [--threads N] <pheniqs.json> <input.bam> <out_R1.fq.gz> <out_R2.fq.gz>
-//
-// Build:
-//
-//	go mod init preproc_barcodes
 //	go get github.com/biogo/hts@latest
 //	go get github.com/klauspost/pgzip
 //	go build -ldflags="-s -w" -o preproc_barcodes preproc_barcodes.go
