@@ -191,3 +191,12 @@ func lastPGID(h *sam.Header) string {
 	}
 	return strconv.Itoa(progs[len(progs)-1].ID())
 }
+
+// pairedFlag returns the SAM FLAG integer for a paired unmapped read.
+// R1: 0x1|0x4|0x8|0x40 = 77   R2: 0x1|0x4|0x8|0x80 = 141
+func PairedFlag(isRead1 bool) int {
+	if isRead1 {
+		return 77
+	}
+	return 141
+}
