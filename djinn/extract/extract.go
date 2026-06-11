@@ -39,11 +39,11 @@ func main() {
 			log.Fatalf("reading record: %v", err)
 		}
 
-		bxVal, hasBX := xam.FindBarcode(rec)
+		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
 		if !hasBX {
 			continue
 		}
-		if xam.IsInvalid(bxVal) && !*invalid {
+		if !vxVal && !*invalid {
 			continue
 		}
 		set[bxVal] = struct{}{}

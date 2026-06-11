@@ -61,7 +61,6 @@ func main() {
 			log.Fatalf("creating BAM writer: %v", err)
 		}
 	}
-	var VX bool
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -70,9 +69,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("reading record: %v", err)
 		}
-		bxVal, hasBX := xam.FindBarcode(rec)
+		bxVal, hasBX, VX := xam.FindBarcode(rec)
 		if hasBX {
-			VX = xam.Invalid.MatchString(bxVal)
 			xam.SetBX(rec, bxVal)
 			xam.SetVX(rec, VX)
 		}

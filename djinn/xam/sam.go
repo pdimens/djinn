@@ -21,18 +21,40 @@ var VxTag = sam.Tag{'V', 'X'}
 // BX sam tag
 var BxTag = sam.Tag{'B', 'X'}
 
-// Returns a true if a barcode is invalid in either
-// standard, haplotagging, tellseq, or stlfr formats
-func IsInvalid(barcode string) bool {
-	return Invalid.MatchString(barcode)
+// Returns a true if a barcode is valid (i.e. not invalid) in either
+// haplotagging, tellseq, or stlfr formats
+func IsValid(barcode string) bool {
+	return !Invalid.MatchString(barcode)
 }
 
-// Search for an return a linked read barcode and whether a barcode
-// was found or not (bool). First searches for a BX tag, and if that isn't found, searches
-// the record ID for a tellseq/stlfr style barcode. If nothing was found, returns
-// ("", false)
-func FindBarcode(rec *sam.Record) (string, bool) {
+// Convenience function to convert a boolean to integer,
+// where false -> 0 and true -> 1.
+func BoolToInt(vx bool) int {
+	var i int
+	if vx {
+		i = 1
+	}
+	return i
+}
+
+// Convenience function to convert a boolean to integer string,
+// where false -> "0" and true -> "1".
+func BoolToSInt(vx bool) string {
+	if vx {
+		return "1"
+	} else {
+		return "0"
+	}
+}
+
+// Search for an return a linked read barcode, whether a barcode
+// was found (bool), and the value of the VX tag (bool). First searches for a BX tag,
+// and if that isn't found, searches the record ID for a tellseq/stlfr style barcode.
+// If nothing was found, returns ("", false, false). If a barcode was identified and
+// a VX tag wasnt, the VX will be inferred from the barcode.
+func FindBarcode(rec *sam.Record) (string, bool, bool) {
 	bxVal, hasBX := GetStringTag(rec, "BX")
+	vxVal, hasVX := GetVX(rec)
 	if !hasBX {
 		matches := StlfTell.FindStringSubmatch(rec.Name)
 		if matches != nil {
@@ -48,7 +70,10 @@ func FindBarcode(rec *sam.Record) (string, bool) {
 			}
 		}
 	}
-	return bxVal, hasBX
+	if !hasVX && hasBX {
+		vxVal = IsValid(bxVal)
+	}
+	return bxVal, hasBX, vxVal
 }
 
 // SetBX sets a string aux tag on a record
@@ -69,6 +94,25 @@ func SetBX(rec *sam.Record, val string) {
 	rec.AuxFields = append(rec.AuxFields, aux)
 }
 
+/*
+Convenience function to return the VX tag as a bool.
+Returns (bool, bool), where the 2nd bool is whether
+the VX tag was present. i.e.:
+
+true, true -> VX:i = 1 and it was present
+
+true, false -> VX:i = 1 and it wasn't present (impossible)
+
+false, true -> VX:i = 0 and it was present
+
+false, false VX:i = 0 because it wasn't present
+*/
+func GetVX(rec *sam.Record) (bool, bool) {
+	vx, hasVX := GetIntTag(rec, "VX")
+	vxVal := vx == 1
+	return vxVal, hasVX
+}
+
 // SetVX sets an integer (0/1) auxiliary tag on a record.
 func SetVX(rec *sam.Record, val bool) {
 	b := byte(1)
@@ -85,7 +129,7 @@ func SetVX(rec *sam.Record, val bool) {
 	rec.AuxFields = append(rec.AuxFields, sam.Aux{'V', 'X', 'c', b})
 }
 
-// Return the value of the string tag `tag` for a sam.Record
+// Return the value of the string tag `tag` (XX:Z) for a sam.Record
 func GetStringTag(r *sam.Record, tag string) (string, bool) {
 	t := sam.Tag{tag[0], tag[1]}
 	for _, aux := range r.AuxFields {
@@ -96,6 +140,19 @@ func GetStringTag(r *sam.Record, tag string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// Return the value of the integer tag `tag` (XX:i) for a sam.Record
+func GetIntTag(r *sam.Record, tag string) (int, bool) {
+	t := sam.Tag{tag[0], tag[1]}
+	for _, aux := range r.AuxFields {
+		if aux.Tag() == t {
+			if s, ok := aux.Value().(int); ok {
+				return s, true
+			}
+		}
+	}
+	return 0, false
 }
 
 // Create a copy of SAM header and add a new PG line for the djinn command `cmd`
