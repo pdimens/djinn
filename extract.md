@@ -1,4 +1,4 @@
-# :icon-view-files: Extract linked-read barcodes
+# :icon-share: Extract linked-read barcodes
 
 You might want a list of all the unique barcodes in your data and [!badge corners="pill" text="extract"] will do just that.
 
