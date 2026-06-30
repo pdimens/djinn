@@ -2,51 +2,51 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pdimens.github.io/djinn/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pdimens.github.io/djinn/extract/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pdimens.github.io/djinn/convert/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pdimens.github.io/djinn/concat/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/count/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/djinn/convert/</loc>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/djinn/concat/</loc>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/djinn/extract/</loc>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/filter/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/sort/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/sample/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/install/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/ncbi/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/standardize/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/spoof-hic/</loc>
-    <lastmod>2026-06-30T00:06:47Z</lastmod>
+    <lastmod>2026-06-30T00:15:39Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/djinn/tags/fastq/</loc>

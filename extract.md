@@ -1,24 +1,21 @@
-# :icon-fold-down: Count linked-read barcodes
+# :icon-view-files: Extract linked-read barcodes
 
-You might want a table of the counts (frequency) of all the unique barcodes in your data and that's what [!badge corners="pill" text="count"] is for. Records
-with missing barcodes are ignored.
+You might want a list of all the unique barcodes in your data and [!badge corners="pill" text="extract"] will do just that.
 
 ### FASTQ
-You can use one file of a pair (e.g. R1 or R2), but including both files will prioritize counting the first file and only count occurences of _new_ barcodes in the second file that aren't present in the first file. This is done to avoid double-counting barcodes.
 ```bash usage
-djinn fastq count INPUT...
+djinn fastq extract INPUT...
 ```
 
 ```bash example 
-djinn fastq count sample1.F.fq.gz sample1.R.fq.gz > sample1.bxcount
+djinn fastq extract sample1.F.fq.gz sample1.R.fq.gz > sample1.bc
 ```
 
 ### SAM
-Similarly, counting barcodes in SAM/BAM files avoids double-counting by counting forward reads if they are unpaired or unpaired, and reverse reads if they are unpaired or the barcode has not been observed yet.
 ```bash usage
 djinn sam extract INPUT
 ```
 
 ```bash example
-djinn sam count sample1.bam > sample1.bxcount
+djinn sam extract sample1.bam > sample1.bc
 ```
