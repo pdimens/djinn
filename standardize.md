@@ -1,7 +1,7 @@
 # :icon-file-badge: Convert data to Standard format
 
 In the effort of making it painless to have your data in the preferred standard format, use [!badge corners="pill" text="standardize"]
-to quickly standardize FASTQ and BAM files. By default, standardization just moves the barcode (wherever it may be)
+to quickly standardize FASTQ and BAM files (i.e. convert them to the [Standard linked-read data format](https://pdimens.github.io/lastq/)). By default, standardization just moves the barcode (wherever it may be)
 into a `BX:Z` SAM tag as-is and does a technology-appropriate validation of the barcode value, which it writes to the
 `VX:i` tag. However, you can use `--style` to also convert the barcode style between formats. Keep in mind that each
 barcode style has a different upper limit as to how many unique barcodes it can support, which may prevent successful conversions.
