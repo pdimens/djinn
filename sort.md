@@ -16,8 +16,8 @@ djinn fastq sort BC pebbles_sorted data/pebbles.R1.fq.gz data/pebbles.R2.fq.gz
 ```
 
 ### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument    {.whitespace-nowrap}       | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `SAMTAG`          | [!badge variant="info" text="required"] 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
@@ -35,8 +35,8 @@ djinn sam sort BC data/pebbles.bam
 ```
 
 ### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument    {.whitespace-nowrap}       | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `SAMTAG`          | [!badge variant="info" text="required"] 2-letter name of the SAM tag storing the barcode (e.g. `BC` or `BX`)  |
 | `INPUT`          | [!badge variant="info" text="required"] SAM/BAM file         |

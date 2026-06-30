@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.834241160787">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836107623910">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.834241160787" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836107623910" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.834241160787" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836107623910" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.834241160787" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.834241160787" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836107623910" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836107623910" defer></script>
     <link href="../resources/css/katex.css?v=4.6.0" rel="stylesheet">
     <script id="katex-js" data-cfasync="false" src="../resources/js/katex.js?v=4.6.0" defer></script>
 </head>
@@ -236,8 +236,8 @@ The styles are given as:</p>
 | `stlfr`        |    $1537^3$    | 1_2_3               | 901_3_1121         |
 | `tellseq`      |    $4^{18}$    | 18-base nucleotide  | AGCCATGTACGTATGGTA |
 | `10X`          |    $4^{16}$    | 16-base nucleotide  | GGCTGAACACGTGCAG   |">
-<div class="table-wrapper scrollbar overflow-hidden">
-<table class="compact">
+<div class="table-wrapper clean scrollbar overflow-hidden">
+<table class="compact clean whitespace-nowrap">
 <thead>
 <tr>
 <th style="text-align: left;">Style</th>
@@ -276,39 +276,39 @@ The styles are given as:</p>
 </div>
 </retype-table>
 <h2 id="running-options"><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</h2>
-<retype-table copy-text="| argument       | description                                                                          |
+<retype-table copy-text="| argument| description                                                                          |
 |:---------------|:-------------------------------------------------------------------------------------|
 | `PREFIX`       | [!badge variant=&quot;info&quot; text=&quot;required&quot;] prefix for output filenames                  |
 | `INPUTS`       | [!badge variant=&quot;info&quot; text=&quot;required&quot;] input FASTQ file pair or SAM/BAM file        |
 | `-s` `--style` | change barcode style in the output FASTQ: [`10x`,`haplotagging`, `stlfr`, `tellseq`] |
 | `-c` `--cache-size` | [!badge text=&quot;FASTQ only&quot;] [!badge variant=&quot;ghost&quot; text=&quot;hidden&quot;] number of reads to store before writing (bigger is faster, default: `5000`) |">
-<div class="table-wrapper scrollbar overflow-hidden">
-<table class="compact">
+<div class="table-wrapper clean scrollbar overflow-hidden">
+<table class="compact clean">
 <thead>
 <tr>
-<th style="text-align: left;">argument</th>
+<th style="text-align: left;" class="whitespace-nowrap">argument</th>
 <th style="text-align: left;">description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code translate="no" v-pre>PREFIX</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>PREFIX</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> prefix for output filenames</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code translate="no" v-pre>INPUTS</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>INPUTS</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>required</span>
 </span> input FASTQ file pair or SAM/BAM file</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code translate="no" v-pre>-s</code> <code translate="no" v-pre>--style</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>-s</code> <code translate="no" v-pre>--style</code></td>
 <td style="text-align: left;">change barcode style in the output FASTQ: [<code translate="no" v-pre>10x</code>,<code translate="no" v-pre>haplotagging</code>, <code translate="no" v-pre>stlfr</code>, <code translate="no" v-pre>tellseq</code>]</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code translate="no" v-pre>-c</code> <code translate="no" v-pre>--cache-size</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>-c</code> <code translate="no" v-pre>--cache-size</code></td>
 <td style="text-align: left;"><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
     <span>FASTQ only</span>
 </span> <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-ghost-text bg-badge-ghost border border-badge-ghost-border h-6 px-2 text-xs rounded-md">

@@ -19,8 +19,8 @@ djinn fastq spoof-hic a_felis_hic a_felis.R1.fq a_felis.R2.fq
 ```
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap}        | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUT`          | [!badge variant="info" text="required"] FASTQ file pair (can be gzipped) **must be sorted by barcode**  |

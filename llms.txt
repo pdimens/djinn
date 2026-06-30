@@ -1,6 +1,7 @@
 ﻿#  | Djinn
 
 - [ Installing Djinn](https://pdimens.github.io/djinn/install.md): Installing Djinn
+- [ Concatenate reads with linked-read barcodes](https://pdimens.github.io/djinn/concat.md): Molecule-aware Concatenation
 - [ Convert between FASTQ formats](https://pdimens.github.io/djinn/convert.md): Convert between linked-read FASTQ data formats
 - [ Count linked-read barcodes](https://pdimens.github.io/djinn/extract.md): Count linked-read barcodes
 - [ Extract linked-read barcodes](https://pdimens.github.io/djinn/count.md): Extract linked-read barcodes

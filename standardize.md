@@ -7,7 +7,7 @@ into a `BX:Z` SAM tag as-is and does a technology-appropriate validation of the 
 barcode style has a different upper limit as to how many unique barcodes it can support, which may prevent successful conversions.
 The styles are given as:
 
-{.compact}
+{.compact .clean .whitespace-nowrap}
 | Style          | Maximum Unique | What they look like | Example            |
 |:---------------|:--------------:|:--------------------|:-------------------|
 | `haplotagging` |     $96^4$     | AxxCxxBxxDxx        | A41C22B70D93       |
@@ -16,8 +16,8 @@ The styles are given as:
 | `10X`          |    $4^{16}$    | 16-base nucleotide  | GGCTGAACACGTGCAG   |
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument       | description                                                                          |
+{.compact .clean}
+| argument   {.whitespace-nowrap}     | description                                                                          |
 |:---------------|:-------------------------------------------------------------------------------------|
 | `PREFIX`       | [!badge variant="info" text="required"] prefix for output filenames                  |
 | `INPUTS`       | [!badge variant="info" text="required"] input FASTQ file pair or SAM/BAM file        |

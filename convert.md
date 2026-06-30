@@ -30,8 +30,8 @@ ATGTTTGCCGTAGTTT
 
 ## :icon-move-to-end: Conversion targets
 
-{.compact}
-| `TARGET`       | barcode format                                     | example                     |
+{.compact .clean}
+| `TARGET` {.whitespace-nowrap} | barcode format                                     | example     {.whitespace-nowrap}                 |
 |:---------------|:---------------------------------------------------|:----------------------------|
 | `10x`          | the first N base pairs of R1, given `--barcodes`   |                             |
 | `haplotagging` | a `BX:Z:ACBD` SAM tag in the sequence header       | `@SEQID BX:Z:A01C93B56D11`  |
@@ -39,8 +39,8 @@ ATGTTTGCCGTAGTTT
 | `tellseq`      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap} | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `TARGET`          | [!badge variant="info" text="required"] target format for output FASTQ files  |

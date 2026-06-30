@@ -17,8 +17,8 @@ djinn fastq filter-invalid --invalid echidna_valid echidna.R1.fq.gz echidna.R2.f
 ```
 
 #### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument  {.whitespace-nowrap}  | description                                                     |
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUTS`          | [!badge variant="info" text="required"] FASTQ or file pair                    |
@@ -36,8 +36,8 @@ djinn fastq filter-singletons --singletons hyena_filt hyena.R1.fq.gz hyena.R2.fq
 ```
 
 #### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap}        | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
 | `INPUT`          | [!badge variant="info" text="required"] FASTQ file or file pair                |
@@ -57,8 +57,8 @@ djinn sam filter-invalid --invalid echidnda.invalid.bam echidna.bam > echidna.fi
 ```
 
 #### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap}        | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUT`          | [!badge variant="info" text="required"] SAM/BAM file                           |
 | `-i` `--invalid`  | output records with invalid barcodes to this file                    |
@@ -74,8 +74,8 @@ djinn sam filter-singletons --singletons hyena.singles.bam hyena.bam > hyena.fil
 ```
 
 #### :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument    {.whitespace-nowrap}       | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUTS`          | [!badge variant="info" text="required"] SAM/BAM file           |
 | `-s` `--singletons` | write valid singleton records to this file |

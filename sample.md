@@ -14,8 +14,8 @@ djinn fastq sample -d 1000 -i sample1.sub1000 sample1.F.fq.gz sample1.R.fq.gz
 ```
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument                | description                                                                                          |
+{.compact .clean}
+| argument   {.whitespace-nowrap}              | description                                                                                          |
 |:---------------------|:-----------------------------------------------------------------------------------------------------|
 | `INPUT`             | [!badge variant="info" text="required"] A FASTQ file or file pair |
 | `-c` `--cache-size` |  [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
@@ -34,8 +34,8 @@ djinn sam sample -t 8 -d 0.5 -b BC sample1.bam > sample1.half.bam
 ```
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument                | description                                                                                          |
+{.compact .clean}
+| argument    {.whitespace-nowrap}             | description                                                                                          |
 |:---------------------|:-----------------------------------------------------------------------------------------------------|
 | `INPUT`             | [!badge variant="info" text="required"] SAM/BAM file                                   |
 | `-d` `--downsample`  | [!badge variant="info" text="required"] Number/fraction of barcodes to downsample to                          |

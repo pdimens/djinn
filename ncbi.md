@@ -31,8 +31,8 @@ djinn fastq ncbi INPUT > output.bam
 ```
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap}        | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUT`          | [!badge variant="info" text="required"] FASTQ file or file pair                |
 | `-t` `--threads`  | Number of threads to use (default: 4)                                         |
@@ -48,8 +48,8 @@ samtools fastq -N -c 6 -T "*" -1 PREFIX.R1.fq.gz -2 PREFIX.R2.fq.gz infile.bam
 ```
 
 ## :icon-terminal: Running Options
-{.compact}
-| argument          | description                                                                   |
+{.compact .clean}
+| argument   {.whitespace-nowrap}        | description                                                                   |
 |:------------------|:------------------------------------------------------------------------------|
 | `INPUT`           | [!badge variant="info" text="required"] SAM/BAM file            |
 | `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
