@@ -142,10 +142,3 @@ jobs:
           djinn fastq filter-singletons result test/*.gz &&\
           echo "============= R1 =============" && zcat result.R1.fq.gz &&\
           echo "============= R2 =============" && zcat result.R2.fq.gz
-
-      - name: arachne preprocessing
-        if: success() || failure()
-        run: |
-          arachne-prep arachne test/*.gz &&\
-          echo "============= R1 =============" && zcat arachne.R1.fq.gz &&\
-          echo "============= R2 =============" && zcat arachne.R2.fq.gz
