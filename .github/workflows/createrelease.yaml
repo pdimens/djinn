@@ -15,7 +15,7 @@ jobs:
       repository-projects: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Bump Djinn Version
         run: |
           sed -i "s/0\.0\.0/${{ github.ref_name }}/g" djinn/__main__.py
