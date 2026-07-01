@@ -3,11 +3,11 @@ label: Count
 description: Count linked-read barcodes
 category: [fastq,bam]
 tags: [fastq,bam]
-icon: fold-down
+icon: number
 order: 10
 ---
 
-# :icon-fold-down: Count linked-read barcodes
+# :icon-number: Count linked-read barcodes
 
 You might want a table of the counts (frequency) of all the unique barcodes in your data and that's what [!badge corners="pill" text="count"] is for. Records
 with missing barcodes are ignored.
