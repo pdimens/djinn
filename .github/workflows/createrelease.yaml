@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - name: Bump Djinn Version
         run: |
           sed -i "s/0\.0\.0/${{ github.ref_name }}/g" djinn/__main__.py
