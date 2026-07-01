@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/djinn">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836168522918">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836181209207">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836168522918" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836181209207" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836168522918" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836181209207" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836168522918" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836168522918" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836181209207" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836181209207" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -246,12 +246,12 @@ ATGTTTGCCGTAGTTT</code></pre>
 </doc-codeblock></div>
 </doc-panel>
 <h2 id="conversion-targets"><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M11.22 5.22a.749.749 0 0 1 1.06 0l6.25 6.25a.749.749 0 0 1 0 1.06l-6.25 6.25a.749.749 0 1 1-1.06-1.06l4.969-4.97H1.75a.75.75 0 0 1 0-1.5h14.439L11.22 6.28a.749.749 0 0 1 0-1.06Zm10.03-1.47a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.5 0v-15a.75.75 0 0 1 .75-.75Z"/></g></g></svg> Conversion targets</h2>
-<retype-table copy-text="| `TARGET`| barcode format                                     | example|
-|:---------------|:---------------------------------------------------|:----------------------------|
-| `10x`          | the first N base pairs of R1, given `--barcodes`   |                             |
-| `haplotagging` | a `BX:Z:ACBD` SAM tag in the sequence header       | `@SEQID BX:Z:A01C93B56D11`  |
-| `stlfr`        | `#1_2_3` format appended to the sequence ID        | `@SEQID#1_2_3`              |
-| `tellseq`      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |">
+<retype-table copy-text="| `TARGET`| barcode format                                   | example|
+| :---------------------------- | :----------------------------------------------- | :------------------------------- |
+| `10x`                         | the first N base pairs of R1, given `--barcodes` |                                  |
+| `haplotagging`                | a `BX:Z:ACBD` SAM tag in the sequence header     | `@SEQID BX:Z:A01C93B56D11`       |
+| `stlfr`                       | `#1_2_3` format appended to the sequence ID      | `@SEQID#1_2_3`                   |
+| `tellseq`                     | `:ATCG` format appended to the sequence ID       | `@SEQID:GGCAAATATCGAGAAGTC`      |">
 <div class="table-wrapper clean scrollbar overflow-hidden">
 <table class="compact clean">
 <thead>
@@ -287,15 +287,15 @@ ATGTTTGCCGTAGTTT</code></pre>
 </div>
 </retype-table>
 <h2 id="running-options"><svg xmlns="http://www.w3.org/2000/svg" class="docs-icon" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><g><path d="M9.25 12a.75.75 0 0 1-.22.53l-2.75 2.75a.75.75 0 0 1-1.06-1.06L7.44 12 5.22 9.78a.75.75 0 1 1 1.06-1.06l2.75 2.75c.141.14.22.331.22.53Zm2 2a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5h-5Z"/><path d="M0 4.75C0 3.784.784 3 1.75 3h20.5c.966 0 1.75.784 1.75 1.75v14.5A1.75 1.75 0 0 1 22.25 21H1.75A1.75 1.75 0 0 1 0 19.25Zm1.75-.25a.25.25 0 0 0-.25.25v14.5c0 .138.112.25.25.25h20.5a.25.25 0 0 0 .25-.25V4.75a.25.25 0 0 0-.25-.25Z"/></g></g></svg> Running Options</h2>
-<retype-table copy-text="| argument| description                                                                   |
-|:------------------|:------------------------------------------------------------------------------|
-| `PREFIX`          | [!badge variant=&quot;info&quot; text=&quot;required&quot;] output filename prefix                |
-| `TARGET`          | [!badge variant=&quot;info&quot; text=&quot;required&quot;] target format for output FASTQ files  |
-| `FQ1`             | [!badge variant=&quot;info&quot; text=&quot;required&quot;] forward reads of FASTQ pair           |
-| `FQ2`             | [!badge variant=&quot;info&quot; text=&quot;required&quot;] reverse reads of FASTQ pair           |
-| `-b` `--barcodes` | [!badge variant=&quot;info&quot; text=&quot;conditional&quot;] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data  |
-| `-c` `--cache-size` |[!badge variant=&quot;ghost&quot; text=&quot;hidden&quot;] number of reads to store before writing (bigger is faster, default: `10000`) |
-| `-t` `--threads`    | Number of threads to use for writing compressed output fastq files (default: 2)                                                                              |">
+<retype-table copy-text="| argument| description                                                                                                                         |
+| :------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `PREFIX`                        | [!badge variant=&quot;info&quot; text=&quot;required&quot;] output filename prefix                                                                      |
+| `TARGET`                        | [!badge variant=&quot;info&quot; text=&quot;required&quot;] target format for output FASTQ files                                                        |
+| `FQ1`                           | [!badge variant=&quot;info&quot; text=&quot;required&quot;] forward reads of FASTQ pair                                                                 |
+| `FQ2`                           | [!badge variant=&quot;info&quot; text=&quot;required&quot;] reverse reads of FASTQ pair                                                                 |
+| `-b` `--barcodes`               | [!badge variant=&quot;info&quot; text=&quot;conditional&quot;] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data |
+| `-c` `--cache-size`             | [!badge variant=&quot;ghost&quot; text=&quot;hidden&quot;] number of reads to store before writing (bigger is faster, default: `10000`)                 |
+| `-t` `--threads`                | Number of threads to use for writing compressed output fastq files (default: 2)                                                     |">
 <div class="table-wrapper clean scrollbar overflow-hidden">
 <table class="compact clean">
 <thead>

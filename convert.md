@@ -31,21 +31,21 @@ ATGTTTGCCGTAGTTT
 ## :icon-move-to-end: Conversion targets
 
 {.compact .clean}
-| `TARGET` {.whitespace-nowrap} | barcode format                                     | example     {.whitespace-nowrap}                 |
-|:---------------|:---------------------------------------------------|:----------------------------|
-| `10x`          | the first N base pairs of R1, given `--barcodes`   |                             |
-| `haplotagging` | a `BX:Z:ACBD` SAM tag in the sequence header       | `@SEQID BX:Z:A01C93B56D11`  |
-| `stlfr`        | `#1_2_3` format appended to the sequence ID        | `@SEQID#1_2_3`              |
-| `tellseq`      | `:ATCG` format appended to the sequence ID         | `@SEQID:GGCAAATATCGAGAAGTC` |
+| `TARGET` {.whitespace-nowrap} | barcode format                                   | example     {.whitespace-nowrap} |
+| :---------------------------- | :----------------------------------------------- | :------------------------------- |
+| `10x`                         | the first N base pairs of R1, given `--barcodes` |                                  |
+| `haplotagging`                | a `BX:Z:ACBD` SAM tag in the sequence header     | `@SEQID BX:Z:A01C93B56D11`       |
+| `stlfr`                       | `#1_2_3` format appended to the sequence ID      | `@SEQID#1_2_3`                   |
+| `tellseq`                     | `:ATCG` format appended to the sequence ID       | `@SEQID:GGCAAATATCGAGAAGTC`      |
 
 ## :icon-terminal: Running Options
 {.compact .clean}
-| argument   {.whitespace-nowrap} | description                                                                   |
-|:------------------|:------------------------------------------------------------------------------|
-| `PREFIX`          | [!badge variant="info" text="required"] output filename prefix                |
-| `TARGET`          | [!badge variant="info" text="required"] target format for output FASTQ files  |
-| `FQ1`             | [!badge variant="info" text="required"] forward reads of FASTQ pair           |
-| `FQ2`             | [!badge variant="info" text="required"] reverse reads of FASTQ pair           |
-| `-b` `--barcodes` | [!badge variant="info" text="conditional"] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data  |
-| `-c` `--cache-size` |[!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`) |
-| `-t` `--threads`    | Number of threads to use for writing compressed output fastq files (default: 2)                                                                              |
+| argument   {.whitespace-nowrap} | description                                                                                                                         |
+| :------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `PREFIX`                        | [!badge variant="info" text="required"] output filename prefix                                                                      |
+| `TARGET`                        | [!badge variant="info" text="required"] target format for output FASTQ files                                                        |
+| `FQ1`                           | [!badge variant="info" text="required"] forward reads of FASTQ pair                                                                 |
+| `FQ2`                           | [!badge variant="info" text="required"] reverse reads of FASTQ pair                                                                 |
+| `-b` `--barcodes`               | [!badge variant="info" text="conditional"] file of nucleotide barcodes (one per line) to identify inline barcodes in input 10X data |
+| `-c` `--cache-size`             | [!badge variant="ghost" text="hidden"] number of reads to store before writing (bigger is faster, default: `10000`)                 |
+| `-t` `--threads`                | Number of threads to use for writing compressed output fastq files (default: 2)                                                     |
