@@ -50,6 +50,7 @@ links:
   icon: bug
   target: blank
 exclude:
-  - "src/"
   - "test/"
   - "djinn/"
+  - "resources/"
+
