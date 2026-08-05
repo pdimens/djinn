@@ -9,7 +9,7 @@ import (
 	"djinn/xam"
 )
 
-func Count(infile string, invalid bool, threads int) {
+func Count(infile string, invalid bool, threads int) error {
 	infile = xam.FileOrStdin(infile)
 	set := make(map[string]int16, 7_000_000)
 	// ── open reader ───────────────────────────────────────────────────────────
@@ -38,4 +38,5 @@ func Count(infile string, invalid bool, threads int) {
 		writer.WriteByte('\n')
 		fmt.Printf("%s\t%d\n", key, val)
 	}
+	return nil
 }

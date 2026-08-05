@@ -2,7 +2,7 @@
 package cmd
 
 import (
-	"djinn/count"
+	"djinn/sort"
 	"fmt"
 	"runtime"
 
@@ -10,10 +10,10 @@ import (
 )
 
 // preCmd represents the preprocess command
-var countCmd = &cobra.Command{
-	Use:     "count [options] file.bam",
-	Short:   "Count barcode occurance",
-	Example: "count -t 4 curratum.bam > curratum.bc",
+var sortCmd = &cobra.Command{
+	Use:     "sort [options] file.bam",
+	Short:   "Sort reads by barcode",
+	Example: "sort -t 4 curratum.bam > curratum.bc",
 	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
 		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats.  Writes to stdout.",
@@ -48,18 +48,23 @@ var countCmd = &cobra.Command{
 		threads = min(maxCores, max(threads, 1))
 		runtime.GOMAXPROCS(threads)
 
-		invalid, err := cmd.Flags().GetBool("invalid")
+		tmpDir, err := cmd.Flags().GetString("tmp-prefix")
 		if err != nil {
 			return err
 		}
-		return count.Count(args[0], invalid, threads)
+		asSam, err := cmd.Flags().GetBool("sam")
+		if err != nil {
+			return err
+		}
+		return sort.SortByBX(args[0], "-", tmpDir, threads, asSam)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(countCmd)
+	rootCmd.AddCommand(sortCmd)
 
 	//---Command line arguments-------------
-	countCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
-	countCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
+	sortCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM") //not implemented yet
+	sortCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sortCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 }

@@ -7,7 +7,7 @@ import (
 	"djinn/xam"
 )
 
-func Extract(infile string, invalid bool, threads int) {
+func Extract(infile string, invalid bool, threads int) error {
 	infile = xam.FileOrStdin(infile)
 	set := make(map[string]struct{}, 7_000_000)
 
@@ -35,4 +35,5 @@ func Extract(infile string, invalid bool, threads int) {
 			writer.WriteByte('\n')
 		}
 	}
+	return nil
 }

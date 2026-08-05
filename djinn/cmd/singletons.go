@@ -60,8 +60,7 @@ var singletonCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		singletons.FilterSingletons(args[0], singles, sam, threads)
-		return nil
+		return singletons.FilterSingletons(args[0], singles, sam, threads)
 	},
 }
 
@@ -70,6 +69,6 @@ func init() {
 
 	//---Command line arguments-------------
 	singletonCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	singletonCmd.Flags().IntP("threads", "t", 2, "Worker threads to use")
-	singletonCmd.Flags().StringP("singletons", "s", "", "Print valid singleton records to this file")
+	singletonCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	singletonCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
 }

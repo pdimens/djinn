@@ -3,7 +3,6 @@ package singletons
 import (
 	"djinn/xam"
 	"io"
-	"log"
 	"os"
 
 	"github.com/biogo/hts/sam"
@@ -25,7 +24,11 @@ func getCount(infile string, threads int) map[string]int16 {
 	return set
 }
 
-func FilterSingletons(infile, singletons string, asSam bool, threads int) {
+func FilterSingletons(infile, singletons string, asSam bool, threads int) error {
+	err := xam.BamNotStdout(asSam)
+	if err != nil {
+		return err
+	}
 	// guard against draining stdin when getting barcode counts
 	var f *os.File
 	if infile == "-" {
@@ -51,22 +54,9 @@ func FilterSingletons(infile, singletons string, asSam bool, threads int) {
 
 	// ── update PG line in header ───────────────────────────────────────────────
 	hdr := br.Header()
-	progs := hdr.Progs()
-
-	var prev string
-	if len(progs) > 0 {
-		prev = progs[len(progs)-1].UID()
-	}
-
-	pg := sam.NewProgram(
-		"djinn",                        // ID
-		"djinn",                        // name (PN)
-		"djinn sam singletons "+infile, // command line (CL)
-		prev,                           // previous PG ID (PP), or "" if none
-		"3.0",                          // version (VN) — set as appropriate
-	)
+	pg := xam.NewPG(hdr, "djinn sam filter-singletons "+infile)
 	if err := hdr.AddProgram(pg); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// ── open writer ───────────────────────────────────────────────────────────
@@ -101,4 +91,5 @@ func FilterSingletons(infile, singletons string, asSam bool, threads int) {
 		close(singletonChan)
 		<-singleDone
 	}
+	return nil
 }

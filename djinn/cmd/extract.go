@@ -13,7 +13,7 @@ import (
 // preCmd represents the preprocess command
 var extractCmd = &cobra.Command{
 	Use:     "extract [options] file.bam",
-	Short:   "Extract all barcodes",
+	Short:   "Extract all unique barcodes",
 	Example: "extract -t 4 bombus.bam > bombus.bc",
 	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
 		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
@@ -54,8 +54,7 @@ var extractCmd = &cobra.Command{
 			return err
 		}
 
-		extract.Extract(args[0], invalid, threads)
-		return nil
+		return extract.Extract(args[0], invalid, threads)
 	},
 }
 
@@ -64,5 +63,5 @@ func init() {
 
 	//---Command line arguments-------------
 	extractCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
-	extractCmd.Flags().IntP("threads", "t", 2, "Decompression threads to use")
+	extractCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
 }

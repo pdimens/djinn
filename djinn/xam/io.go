@@ -2,6 +2,7 @@ package xam
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,7 +13,7 @@ import (
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const ChanCap = 2000
+const ChanCap = 5000
 const IoBuf = 4 << 20 // 4 MiB
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
@@ -55,8 +56,18 @@ func checkError(err error) {
 	}
 }
 
+func BamNotStdout(isSam bool) error {
+	stat, err := os.Stdout.Stat()
+	if err != nil {
+		return err
+	}
+	if (stat.Mode()&os.ModeCharDevice) != 0 && !isSam {
+		return fmt.Errorf("refusing to write BAM to the terminal, as this was likely unintended. Use -S or pipe to another tool/file")
+	}
+	return nil
+}
+
 // FileOrStdin resolves a positional argument to a file path or "-" for stdin.
-// Emits usage and exits if stdin is a terminal and no argument was provided.
 func FileOrStdin(infile string) string {
 	if len(infile) == 0 {
 		stat, err := os.Stdin.Stat()
@@ -67,6 +78,23 @@ func FileOrStdin(infile string) string {
 		return "-"
 	}
 	return infile
+}
+
+// Create a formatted Djinn PG line to add to SAM header
+func NewPG(hdr *sam.Header, cl string) *sam.Program {
+	var prev string
+	progs := hdr.Progs()
+	if len(progs) > 0 {
+		prev = progs[len(progs)-1].UID()
+	}
+
+	return sam.NewProgram(
+		"djinn", // ID
+		"djinn", // name (PN)
+		cl,      // command line (CL)
+		prev,    // previous PG ID (PP), or "" if none
+		"3.0",   // version (VN) — set as appropriate
+	)
 }
 
 // ── Reader channel ────────────────────────────────────────────────────────────
@@ -136,6 +164,7 @@ func NewXamReaderChan(inFile string, cp, buff, threads int) (chan *sam.Record, A
 // (or stdout if outFile == "-"). Sends true on doneChan when the input channel
 // is closed and all records have been flushed.
 func NewXamWriterChan(outFile string, head *sam.Header, cp, buff, threads int, uncompressed bool) (chan *sam.Record, chan bool) {
+	var w AlignmentWriter
 	outChan := make(chan *sam.Record, cp)
 	doneChan := make(chan bool)
 
@@ -147,10 +176,9 @@ func NewXamWriterChan(outFile string, head *sam.Header, cp, buff, threads int, u
 
 	bio := bufio.NewWriterSize(fh, buff)
 
-	var w AlignmentWriter
 	if uncompressed {
 		sw, err := sam.NewWriter(bio, head, sam.FlagDecimal)
-		checkError(err) // was silently discarded before
+		checkError(err)
 		w = &SamWriter{Writer: sw}
 	} else {
 		bw, err := bam.NewWriter(bio, head, threads)
@@ -163,7 +191,7 @@ func NewXamWriterChan(outFile string, head *sam.Header, cp, buff, threads int, u
 			checkError(w.Write(rec))
 		}
 		w.Close()
-		checkError(bio.Flush()) // always flush — was skipped for SAM before
+		checkError(bio.Flush()) // always flush
 		if fh != os.Stdout {
 			fh.Close()
 		}
