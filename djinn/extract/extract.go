@@ -1,27 +1,22 @@
-package main
+package extract
 
 import (
-	"flag"
-	"fmt"
+	"bufio"
 	"os"
 
 	"djinn/xam"
 )
 
-func main() {
-	threads := flag.Int("threads", 1, "Number of threads for reading BAM. Diminishing returns beyond 2-4.")
-	invalid := flag.Bool("invalid", false, "Include invalid barcodes")
-
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: djinn sam extract [options] input.bam > output.bc\n")
-	}
-	flag.Parse()
-	args := flag.Args()
-	infile := xam.FileOrStdin(args, flag.Usage)
-	set := make(map[string]struct{}, 5_000_000)
+func Extract(infile string, invalid bool, threads int) {
+	infile = xam.FileOrStdin(infile)
+	set := make(map[string]struct{}, 7_000_000)
 
 	// ── open reader ───────────────────────────────────────────────────────────
-	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, *threads)
+	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
+
+	// ── open writer ───────────────────────────────────────────────────────────
+	writer := bufio.NewWriter(os.Stdout)
+	defer writer.Flush()
 
 	// ── loop record channel ──────────────────────────────────────────────
 	for rec := range recChan {
@@ -29,12 +24,15 @@ func main() {
 		if !hasBX {
 			continue
 		}
-		if !vxVal && !*invalid {
+		if !vxVal && !invalid {
 			continue
 		}
-		set[bxVal] = struct{}{}
-	}
-	for key := range set {
-		fmt.Printf("%s\n", key)
+		if _, ok := set[bxVal]; ok {
+			continue
+		} else {
+			set[bxVal] = struct{}{}
+			writer.WriteString(bxVal)
+			writer.WriteByte('\n')
+		}
 	}
 }

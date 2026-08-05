@@ -57,23 +57,16 @@ func checkError(err error) {
 
 // FileOrStdin resolves a positional argument to a file path or "-" for stdin.
 // Emits usage and exits if stdin is a terminal and no argument was provided.
-func FileOrStdin(args []string, usage func()) string {
-	switch len(args) {
-	case 0:
+func FileOrStdin(infile string) string {
+	if len(infile) == 0 {
 		stat, err := os.Stdin.Stat()
 		checkError(err)
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
-			usage()
 			os.Exit(1)
 		}
 		return "-"
-	case 1:
-		return args[0]
-	default:
-		usage()
-		os.Exit(1)
 	}
-	return ""
+	return infile
 }
 
 // ── Reader channel ────────────────────────────────────────────────────────────
