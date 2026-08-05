@@ -93,6 +93,7 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 		for _, f := range tmpFiles {
 			os.Remove(f)
 		}
+		os.Remove(tmpDir)
 	}()
 
 	select {
