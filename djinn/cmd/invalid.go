@@ -13,7 +13,7 @@ import (
 var invalidCmd = &cobra.Command{
 	Use:     "filter-invalid [options] file.bam",
 	Short:   "Filter out invalid barcodes",
-	Example: "filter-invalid -t 10 curratum.bam > curratum.linked.bam",
+	Example: "filter-invalid -t 10 curratum.bam > curratum.valid.bam",
 	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
 		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats. Writes to stdout.",

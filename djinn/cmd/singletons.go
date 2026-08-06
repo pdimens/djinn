@@ -15,7 +15,7 @@ var singletonCmd = &cobra.Command{
 	Short:   "Filter out singleton barcodes",
 	Example: "filter-singletons -t 10 curratum.bam > curratum.linked.bam",
 	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
-		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
+		"inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,

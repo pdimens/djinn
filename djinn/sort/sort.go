@@ -196,18 +196,6 @@ func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool)
 	}
 	// --- Create writer channel --------------------------
 	writeChan, writeDone := xam.NewXamWriterChan("-", hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
-	/*
-
-		bw, err := bam.NewWriter(os.Stdout, hdr, 1)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if cerr := bw.Close(); err == nil {
-				err = cerr
-			}
-		}()
-	*/
 
 	h := &mergeHeap{}
 	for i, br := range readers {
@@ -223,9 +211,6 @@ func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool)
 	for h.Len() > 0 {
 		top := heap.Pop(h).(mergeItem)
 		writeChan <- top.rec
-		//if werr := bw.Write(top.rec); werr != nil {
-		//	return werr
-		//}
 		rec, rerr := readers[top.src].Read()
 		if rerr == nil {
 			heap.Push(h, mergeItem{rec, top.src})

@@ -13,10 +13,10 @@ import (
 var sortCmd = &cobra.Command{
 	Use:     "sort [options] file.bam",
 	Short:   "Sort reads by barcode",
-	Example: "sort -t 4 curratum.bam > curratum.bc",
+	Example: "sort -t 4 curratum.bam > curratum.sort.bam",
 	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
-		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats.  Writes to stdout.",
+		"inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
+		"(@seq_id:barcode) formats. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
