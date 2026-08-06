@@ -34,11 +34,12 @@ func Standardize(infile string, threads int, asSam bool) error {
 	// ── loop record channel ──────────────────────────────────────────────
 
 	for rec := range recChan {
-		bxVal, hasBX, VX := xam.FindBarcode(rec)
+		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
 		if hasBX {
 			xam.SetBX(rec, bxVal)
-			xam.SetVX(rec, VX)
+			xam.SetVX(rec, vxVal)
 		}
+		//fmt.Println(bxVal, vxVal)
 		// push updated record into writer channel
 		outChan <- rec
 	}

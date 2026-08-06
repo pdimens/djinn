@@ -112,10 +112,10 @@ func GetVX(rec *sam.Record) (bool, bool) {
 }
 
 // SetVX sets an integer (0/1) auxiliary tag on a record.
-func SetVX(rec *sam.Record, val bool) {
-	b := byte(1)
-	if val {
-		b = 0
+func SetVX(rec *sam.Record, isValid bool) {
+	b := byte(0)
+	if isValid {
+		b = 1
 	}
 	for i, a := range rec.AuxFields {
 		if a.Tag() == VxTag {
