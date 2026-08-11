@@ -2,7 +2,6 @@ package xam
 
 import (
 	"regexp"
-	"strconv"
 
 	"github.com/biogo/hts/sam"
 )
@@ -151,45 +150,6 @@ func GetIntTag(r *sam.Record, tag string) (int, bool) {
 		}
 	}
 	return 0, false
-}
-
-// Create a copy of SAM header and add a new PG line for the djinn command `cmd`
-func AddPG(src *sam.Header, cmd string) (*sam.Header, error) {
-	// Clone the header via marshal/unmarshal
-	b, err := src.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	dst := &sam.Header{}
-	if err := dst.UnmarshalText(b); err != nil {
-		return nil, err
-	}
-
-	// Build the @PG record
-	pg := sam.NewProgram(
-		"djinn",       // ID
-		"djinn",       // name (PN)
-		cmd,           // command line (CL)
-		lastPGID(src), // previous PG ID (PP), or "" if none
-		"1.0",         // version (VN) — set as appropriate
-	)
-
-	if err := dst.AddProgram(pg); err != nil {
-		return nil, err
-	}
-
-	return dst, nil
-}
-
-// lastPGID returns the ID of the last @PG record in the header,
-// which becomes the PP (previous program) of the new entry.
-// Returns "" if there are no existing @PG records.
-func lastPGID(h *sam.Header) string {
-	progs := h.Progs()
-	if len(progs) == 0 {
-		return ""
-	}
-	return strconv.Itoa(progs[len(progs)-1].ID())
 }
 
 // pairedFlag returns the SAM FLAG integer for a paired unmapped read.

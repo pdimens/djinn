@@ -12,7 +12,7 @@ var rootCmd = &cobra.Command{
 	Use:     "djinn",
 	Version: "3",
 	Short:   "Convert between linked-read formats and barcode styles",
-	Long:    "Use the subcommands (e.g. `djinn sam ...`) to explore the options for FASTQ and SAM files.",
+	Long:    "Use the subcommands (e.g. `djinn ...`) to explore the options for FASTQ and SAM files.",
 }
 
 func init() {

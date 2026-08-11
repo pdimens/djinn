@@ -82,19 +82,31 @@ func FileOrStdin(infile string) string {
 
 // Create a formatted Djinn PG line to add to SAM header
 func NewPG(hdr *sam.Header, cl string) *sam.Program {
-	var prev string
 	progs := hdr.Progs()
-	if len(progs) > 0 {
-		prev = progs[len(progs)-1].UID()
+
+	referenced := make(map[string]bool, len(progs))
+	seen := make(map[string]bool, len(progs))
+	for _, p := range progs {
+		if pp := p.Previous(); pp != "" {
+			referenced[pp] = true
+		}
+		seen[p.UID()] = true
 	}
 
-	return sam.NewProgram(
-		"djinn", // ID
-		"djinn", // name (PN)
-		cl,      // command line (CL)
-		prev,    // previous PG ID (PP), or "" if none
-		"3.0",   // version (VN) — set as appropriate
-	)
+	var prev string
+	for _, p := range progs {
+		if !referenced[p.UID()] {
+			prev = p.UID()
+			break
+		}
+	}
+
+	uid := "djinn"
+	for i := 1; seen[uid]; i++ {
+		uid = fmt.Sprintf("djinn.%d", i)
+	}
+
+	return sam.NewProgram(uid, "djinn", cl, prev, "3.0")
 }
 
 // ── Reader channel ────────────────────────────────────────────────────────────
