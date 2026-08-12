@@ -2,12 +2,13 @@ package xam
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/biogo/hts/sam"
 )
 
 // Regex for invalid haplotagging, stlfr, tellseq barcodes
-var Invalid = regexp.MustCompile("(?:N|[ABCD]00|^0_|_0_|_0$)")
+//var Invalid = regexp.MustCompile("(?:N|[ABCD]00|^0_|_0_|_0$)")
 
 // Regex for valid haplotagging, stlfr, tellseq barcodes
 var StlfTell = regexp.MustCompile(`(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))`)
@@ -21,8 +22,23 @@ var BxTag = sam.Tag{'B', 'X'}
 // Returns a true if a barcode is valid (i.e. not invalid) in either
 // haplotagging, tellseq, or stlfr formats
 func IsValid(barcode string) bool {
-	return !Invalid.MatchString(barcode)
+	if strings.IndexByte(barcode, 'N') != -1 {
+		return false
+	}
+	if strings.HasPrefix(barcode, "0_") || strings.HasSuffix(barcode, "_0") || strings.Contains(barcode, "_0_") {
+		return false
+	}
+	for _, p := range [...]string{"A00", "B00", "C00", "D00"} {
+		if strings.Contains(barcode, p) {
+			return false
+		}
+	}
+	return true
 }
+
+//func IsValid(barcode string) bool {
+//	return !Invalid.MatchString(barcode)
+//}
 
 // Convenience function to convert a boolean to integer,
 // where false -> 0 and true -> 1.

@@ -7,10 +7,24 @@ import (
 )
 
 func FilterInvalid(infile, invalid string, asSam bool, threads int) error {
-	err := xam.BamNotStdout(asSam)
-	if err != nil {
-		return err
-	}
+	/*
+
+		if f := os.Getenv("CPUPROFILE"); f != "" {
+			fh, err := os.Create(f)
+			if err != nil {
+				return err
+			}
+			pprof.StartCPUProfile(fh)
+			defer pprof.StopCPUProfile()
+		}
+		if f := os.Getenv("MEMPROFILE"); f != "" {
+			defer func() {
+				fh, _ := os.Create(f)
+				pprof.WriteHeapProfile(fh)
+				fh.Close()
+			}()
+		}
+	*/
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	readThread := 1

@@ -25,10 +25,6 @@ func getCount(infile string, threads int) map[string]int16 {
 }
 
 func FilterSingletons(infile, singletons string, asSam bool, threads int) error {
-	err := xam.BamNotStdout(asSam)
-	if err != nil {
-		return err
-	}
 	// guard against draining stdin when getting barcode counts
 	var f *os.File
 	if infile == "-" {

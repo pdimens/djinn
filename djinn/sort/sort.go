@@ -17,10 +17,6 @@ const chunkSize = 500_000 // records per temp file, tune to RAM
 
 // SortByBX streams inPath, spills BX:Z-sorted chunks in parallel, k-way merges into outPath.
 func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
-	err := xam.BamNotStdout(asSam)
-	if err != nil {
-		return err
-	}
 	// ── open reader -------------───────────────────────────────────────────────
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, max(2, threads))
 
@@ -29,6 +25,8 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 		if err := os.MkdirAll(tmpDir, 0o755); err != nil {
 			return err
 		}
+	} else {
+		tmpDir = "."
 	}
 
 	// ── update PG line in header ───────────────────────────────────────────────
@@ -118,13 +116,13 @@ func bxOf(r *sam.Record) string {
 func sortAndSpill(chunk []*sam.Record, hdr *sam.Header, tmpDir string) (string, error) {
 	sort.Slice(chunk, func(i, j int) bool { return bxOf(chunk[i]) < bxOf(chunk[j]) })
 
-	f, err := os.CreateTemp(tmpDir, "bxsort-*.bam")
+	f, err := os.CreateTemp(tmpDir, ".bxsort-*.bam")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 
-	bw, err := bam.NewWriter(f, hdr, 0)
+	bw, err := bam.NewWriterLevel(f, hdr, 0, 0)
 	if err != nil {
 		return "", err
 	}

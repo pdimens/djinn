@@ -193,7 +193,7 @@ func NewXamWriterChan(outFile string, head *sam.Header, cp, buff, threads int, u
 		checkError(err)
 		w = &SamWriter{Writer: sw}
 	} else {
-		bw, err := bam.NewWriter(bio, head, threads)
+		bw, err := bam.NewWriterLevel(bio, head, 4, threads)
 		checkError(err)
 		w = bw
 	}

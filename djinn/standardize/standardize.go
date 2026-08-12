@@ -6,10 +6,6 @@ import (
 
 // TODO need a mechanism for barcode conversion
 func Standardize(infile string, threads int, asSam bool) error {
-	err := xam.BamNotStdout(asSam)
-	if err != nil {
-		return err
-	}
 	infile = xam.FileOrStdin(infile)
 	readThread := 1
 	writeThread := 1

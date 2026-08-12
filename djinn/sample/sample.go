@@ -12,10 +12,6 @@ import (
 )
 
 func Sample(infile string, downsample float64, seed, threads int, invalid, asSam bool) error {
-	err := xam.BamNotStdout(asSam)
-	if err != nil {
-		return err
-	}
 	// --- Get barcode map --------------------------
 	infile = xam.FileOrStdin(infile)
 	set := make(map[string]struct{}, 7_000_000)
