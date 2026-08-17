@@ -9,9 +9,10 @@ import (
 	"djinn/xam"
 )
 
-func Count(infile string, invalid bool, threads int) error {
+func CountXam(infile string, invalid bool, threads int) error {
 	infile = xam.FileOrStdin(infile)
 	set := make(map[string]int16, 7_000_000)
+
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
 

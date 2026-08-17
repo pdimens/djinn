@@ -52,7 +52,7 @@ var countCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return count.Count(args[0], invalid, threads)
+		return count.CountXam(args[0], invalid, threads)
 	},
 }
 

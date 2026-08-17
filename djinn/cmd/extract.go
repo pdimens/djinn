@@ -12,12 +12,10 @@ import (
 
 // preCmd represents the preprocess command
 var extractCmd = &cobra.Command{
-	Use:     "extract [options] file.bam",
-	Short:   "Extract all unique barcodes",
-	Example: "extract -t 4 bombus.bam > bombus.bc",
-	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
-		"inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats.  Writes to stdout.",
+	Use:                   "extract [options] file.bam",
+	Short:                 "Extract all unique barcodes",
+	Example:               "extract -t 4 bombus.bam > bombus.bc",
+	Long:                  "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -58,10 +56,47 @@ var extractCmd = &cobra.Command{
 	},
 }
 
+var extractFqCmd = &cobra.Command{
+	Use:     "extract-fq <-i> file.fq",
+	Short:   "Extract all unique barcodes",
+	Example: "extract bombus.R1.fq bombus.R2.fq > bombus.bc",
+	Long: "Inputs must be any number of FASTQ files (R1 and R2, can be gzipped). " +
+		"Inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
+		"(@seq_id:barcode) formats. Writes to stdout.",
+	DisableFlagsInUseLine: true,
+	SilenceUsage:          true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			fmt.Printf("%s", cmd.UsageString())
+			return fmt.Errorf("please provide inputs")
+		}
+
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		for _, i := range args {
+			if err := filecheck(i); err != nil {
+				return err
+			}
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		invalid, err := cmd.Flags().GetBool("invalid")
+		if err != nil {
+			return err
+		}
+		return extract.ExtractFQ(args, invalid)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(extractCmd)
+	rootCmd.AddCommand(extractFqCmd)
 
 	//---Command line arguments-------------
 	extractCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	extractCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
+
+	extractFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }
