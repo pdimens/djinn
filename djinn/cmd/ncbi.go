@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var ncbiCmd = &cobra.Command{
+var ncbiXam2FqCmd = &cobra.Command{
 	Use:                   "ncbi [options] file.bam",
 	Short:                 "BAM → FASTQ conversion from NCBI",
 	Example:               "ncbi -t 10 obesus_stlfr obesus.bam",
@@ -49,11 +49,12 @@ var ncbiCmd = &cobra.Command{
 	},
 }
 
+// THIS IS PRETTY INCOMPLETE
 func init() {
-	rootCmd.AddCommand(ncbiCmd)
+	samCmd.AddCommand(ncbiXam2FqCmd)
 
 	//---Command line arguments-------------
-	ncbiCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	ncbiCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	ncbiCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
+	ncbiXam2FqCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	ncbiXam2FqCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
 }

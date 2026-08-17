@@ -2,7 +2,6 @@ package count
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -37,7 +36,6 @@ func CountXam(infile string, invalid bool, threads int) error {
 		writer.WriteByte('\t')
 		writer.WriteString(strconv.Itoa(int(val)))
 		writer.WriteByte('\n')
-		fmt.Printf("%s\t%d\n", key, val)
 	}
 	return nil
 }

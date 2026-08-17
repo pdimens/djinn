@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var sampleCmd = &cobra.Command{
+var sampleXamCmd = &cobra.Command{
 	Use:     "sample [options] file.bam",
 	Short:   "Downsample data by barcode",
 	Example: "sample -t 8 -d 50000 curratum.bam > curratum.sample50k.bam",
@@ -80,13 +80,13 @@ var sampleCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(sampleCmd)
+	samCmd.AddCommand(sampleXamCmd)
 
 	//---Command line arguments-------------
-	sampleCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	sampleCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
-	sampleCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	sampleCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
-	sampleCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to retain")
+	sampleXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	sampleXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
+	sampleXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sampleXamCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")
+	sampleXamCmd.Flags().Float64P("downsample", "d", 0.0, "Number (>=1) or fraction (<1) of barcodes to retain")
 
 }

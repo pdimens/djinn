@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var invalidCmd = &cobra.Command{
+var invalidXamCmd = &cobra.Command{
 	Use:     "filter-invalid [options] file.bam",
 	Short:   "Filter out invalid barcodes",
 	Example: "filter-invalid -t 10 curratum.bam > curratum.valid.bam",
@@ -65,10 +65,10 @@ var invalidCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(invalidCmd)
+	samCmd.AddCommand(invalidXamCmd)
 
 	//---Command line arguments-------------
-	invalidCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	invalidCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	invalidCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to this file")
+	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	invalidXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to this file")
 }

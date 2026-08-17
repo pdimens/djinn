@@ -98,7 +98,7 @@ func CountFQ(fqs []string, invalid bool) error {
 		writer.WriteByte('\t')
 		writer.WriteString(strconv.Itoa(int(val)))
 		writer.WriteByte('\n')
-		fmt.Printf("%s\t%d\n", key, val)
 	}
+
 	return nil
 }

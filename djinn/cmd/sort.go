@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var sortCmd = &cobra.Command{
+var sortXamCmd = &cobra.Command{
 	Use:     "sort [options] file.bam",
 	Short:   "Sort reads by barcode",
 	Example: "sort -t 4 curratum.bam > curratum.sort.bam",
@@ -61,10 +61,10 @@ var sortCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(sortCmd)
+	samCmd.AddCommand(sortXamCmd)
 
 	//---Command line arguments-------------
-	sortCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM") //not implemented yet
-	sortCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	sortCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
+	sortXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM") //not implemented yet
+	sortXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sortXamCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 }

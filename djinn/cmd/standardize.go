@@ -10,9 +10,9 @@ import (
 )
 
 // preCmd represents the preprocess command
-var stdCmd = &cobra.Command{
+var stdXamCmd = &cobra.Command{
 	Use:     "standardize [options] file.bam",
-	Short:   "Convert BAM to standard linked-read format with BX:Z and VX:i tags",
+	Short:   "Convert standard linked-read format with BX:Z and VX:i tags",
 	Example: "standardize -t 10 curratum.bam > curratum.std.bam",
 	Long: "This conversion moves the barcode to the `BX:Z` tag in sam/bam records, maintaining the same barcode type. " +
 		"See the documentation for a deeper look into the location and format expectations for different linked-read technologies. " +
@@ -60,9 +60,9 @@ var stdCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(stdCmd)
+	samCmd.AddCommand(stdXamCmd)
 
 	//---Command line arguments-------------
-	stdCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	stdCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	stdXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	stdXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 }

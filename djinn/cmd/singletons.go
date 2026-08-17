@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var singletonCmd = &cobra.Command{
+var singletonXamCmd = &cobra.Command{
 	Use:     "filter-singletons [options] file.bam",
 	Short:   "Filter out singleton barcodes",
 	Example: "filter-singletons -t 10 curratum.bam > curratum.linked.bam",
@@ -65,10 +65,10 @@ var singletonCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(singletonCmd)
+	samCmd.AddCommand(singletonXamCmd)
 
 	//---Command line arguments-------------
-	singletonCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
-	singletonCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	singletonCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
+	singletonXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	singletonXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	singletonXamCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
 }

@@ -11,19 +11,18 @@ import (
 )
 
 // preCmd represents the preprocess command
-var extractCmd = &cobra.Command{
+var extractXamCmd = &cobra.Command{
 	Use:                   "extract [options] file.bam",
 	Short:                 "Extract all unique barcodes",
 	Example:               "extract -t 4 bombus.bam > bombus.bc",
-	Long:                  "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Writes to stdout.",
+	Long:                  "Inputs must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Printf("%s", cmd.UsageString())
-			return fmt.Errorf("please provide inputs")
+			return fmt.Errorf("please provide a SAM/BAM input")
 		}
-		//TODO not exact args, needs min/max
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
@@ -57,7 +56,7 @@ var extractCmd = &cobra.Command{
 }
 
 var extractFqCmd = &cobra.Command{
-	Use:     "extract-fq <-i> file.fq",
+	Use:     "extract <-i> file.fq",
 	Short:   "Extract all unique barcodes",
 	Example: "extract bombus.R1.fq bombus.R2.fq > bombus.bc",
 	Long: "Inputs must be any number of FASTQ files (R1 and R2, can be gzipped). " +
@@ -91,12 +90,12 @@ var extractFqCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(extractCmd)
-	rootCmd.AddCommand(extractFqCmd)
+	samCmd.AddCommand(extractXamCmd)
+	fqCmd.AddCommand(extractFqCmd)
 
 	//---Command line arguments-------------
-	extractCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
-	extractCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
+	extractXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
+	extractXamCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
 
 	extractFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }

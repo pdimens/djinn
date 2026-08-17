@@ -15,9 +15,22 @@ var rootCmd = &cobra.Command{
 	Long:    "Use the subcommands (e.g. `djinn ...`) to explore the options for FASTQ and SAM files.",
 }
 
+var samCmd = &cobra.Command{
+	Use:   "sam",
+	Short: "SAM/BAM operations",
+}
+
+var fqCmd = &cobra.Command{
+	Use:   "fq",
+	Short: "FASTQ operations",
+}
+
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+
+	rootCmd.AddCommand(fqCmd)
+	rootCmd.AddCommand(samCmd)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

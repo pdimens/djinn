@@ -10,7 +10,7 @@ import (
 )
 
 // preCmd represents the preprocess command
-var countCmd = &cobra.Command{
+var countXamCmd = &cobra.Command{
 	Use:     "count [options] file.bam",
 	Short:   "Count barcode occurance",
 	Example: "count -t 4 curratum.bam > curratum.bc",
@@ -56,10 +56,43 @@ var countCmd = &cobra.Command{
 	},
 }
 
+var countFqCmd = &cobra.Command{
+	Use:     "count [options] file.bam",
+	Short:   "Count barcode occurance",
+	Example: "count -t 4 curratum.bam > curratum.bc",
+	Long: "Inputs must one or two FASTQ files (R1 and R2, can be gzipped). Inputs expect barcodes to follow the standard  (BX tag), stlfr (@seq_id#barcode), or tellseq " +
+		"(@seq_id:barcode) formats. Writes to stdout.",
+	DisableFlagsInUseLine: true,
+	SilenceUsage:          true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			fmt.Printf("%s", cmd.UsageString())
+			return fmt.Errorf("please provide inputs")
+		}
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		for i := range args {
+			if err := filecheck(args[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		invalid, err := cmd.Flags().GetBool("invalid")
+		if err != nil {
+			return err
+		}
+		return count.CountFQ(args, invalid)
+	},
+}
+
 func init() {
-	rootCmd.AddCommand(countCmd)
+	samCmd.AddCommand(countXamCmd)
+	fqCmd.AddCommand(countFqCmd)
 
 	//---Command line arguments-------------
-	countCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
-	countCmd.Flags().IntP("threads", "@", 2, "Decompression threads to use")
+	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
+	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }
