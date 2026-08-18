@@ -60,7 +60,7 @@ var singletonXamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return singletons.FilterSingletons(args[0], singles, sam, threads)
+		return singletons.FilterSingletonsXam(args[0], singles, sam, threads)
 	},
 }
 

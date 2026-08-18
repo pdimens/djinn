@@ -24,7 +24,7 @@ func CountFQ(fqs []string, invalid bool) error {
 	defer writer.Flush()
 
 	// ---- main loop -------------------------
-	set := make(map[string]int, 7_000_000) // barcode container
+	set := make(map[string]int16, 7_000_000) // barcode container
 	var bc string
 	var valid bool
 
@@ -59,12 +59,13 @@ func CountFQ(fqs []string, invalid bool) error {
 
 	// R2
 	if len(fqs) > 1 {
-		setR2 := make(map[string]int, 500_000) // R2 barcode container
+		setR2 := make(map[string]int16, 500_000) // R2 barcode container
 
 		fqReader, err = fastx.NewDefaultReader(fqs[1])
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", fqs[1], err)
 		}
+		defer fqReader.Close()
 
 		for {
 			rec, err := fqReader.Read()
