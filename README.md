@@ -22,7 +22,7 @@ Djinn converts between linked-read data formats. You can convert between formats
 - haplotagging
 - stLFR
 - TELLseq
-- [standard](https://pdimens.github.io/harpy/getting_started/linked_read_data/#linked-read-data-types)
+- [standard](https://blinkseq.github.io/lastq/)
 
 ## NCBI submission
 NCBI strips out sequence headers from FASTQ submissions, so it would be best to convert your linked-read
@@ -32,3 +32,22 @@ a basic `samtools` command.
 
 ## Hi-C spoofing
 This is **extremely experimental** and it converts a paired-end linked-read fastq file pair into one that conforms to Hi-C expectations by mix-matching the R1s and R2s of reads that share a barcode.
+
+
+---
+## Go Conversion Roadmap
+
+| fastq | sam | function |
+|:-----:|:-----:|:-----|
+| [ ] | [ ] | convert           |     
+| [x] | [x] | count             |     
+| [x] | [x] | extract           |              
+| [x] | [x] | filter-invalid    |            
+| [x] | [x] | filter-singletons |   
+| [ ] | [x] | ncbi              | 
+| [x] | [x] | sample            |               
+| [ ] | [x] | sort              |             
+| [ ] | [ ] | standardize       | 
+| [ ] | [ ] | concat            |
+| [ ] |     | spoof-hic         |               
+|     | [ ] | assign-mi         |

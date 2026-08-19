@@ -8,15 +8,20 @@ require (
 	github.com/shenwei356/bio v0.15.0
 	github.com/shenwei356/xopen v0.4.0
 	github.com/spf13/cobra v1.10.2
+	github.com/ivanpirog/coloredcobra v1.0.1
 )
 
 require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20260801111138-45c5fff54b41 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.19.2 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/pierrec/lz4/v4 v4.1.29 // indirect
 	github.com/shenwei356/util v0.5.6 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ulikunitz/xz v0.5.16 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )

@@ -4,6 +4,7 @@ package cmd
 import (
 	"os"
 
+	cc "github.com/ivanpirog/coloredcobra"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,16 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	cc.Init(&cc.Config{
+		RootCmd:         rootCmd,
+		Headings:        cc.Blue, // + cc.Underline,
+		Commands:        cc.HiMagenta + cc.Bold,
+		Flags:           cc.HiMagenta, // + cc.Bold,
+		FlagsDataType:   cc.Italic,
+		NoExtraNewlines: true,
+		//Example:         cc.Italic,
+		//ExecName:        cc.Bold,
+	})
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
