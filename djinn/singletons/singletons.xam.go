@@ -1,9 +1,11 @@
 package singletons
 
 import (
+	"bufio"
 	"djinn/xam"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/biogo/hts/sam"
 )
@@ -24,7 +26,7 @@ func getCount(infile string, threads int) map[string]int16 {
 	return set
 }
 
-func FilterSingletonsXam(infile, singletons string, asSam bool, threads int) error {
+func FilterSingletonsXam(infile, singletons, barcodecount string, asSam bool, threads int) error {
 	// guard against draining stdin when getting barcode counts
 	var f *os.File
 	if infile == "-" {
@@ -36,7 +38,22 @@ func FilterSingletonsXam(infile, singletons string, asSam bool, threads int) err
 	}
 
 	bcCounts := getCount(infile, threads)
-
+	// write barcode counts if requested
+	if barcodecount != "" {
+		f, err := os.Create(barcodecount)
+		if err != nil {
+			return err
+		}
+		writer := bufio.NewWriter(f)
+		for key, val := range bcCounts {
+			writer.WriteString(key)
+			writer.WriteByte('\t')
+			writer.WriteString(strconv.Itoa(int(val)))
+			writer.WriteByte('\n')
+		}
+		writer.Flush()
+		f.Close()
+	}
 	// ── open reader ───────────────────────────────────────────────────────────
 	readThread := 1
 	writeThread := 1
@@ -74,7 +91,7 @@ func FilterSingletonsXam(infile, singletons string, asSam bool, threads int) err
 		if !hasBX || !vxVal {
 			continue
 		}
-		if bcCounts[bxVal] > 2 {
+		if bcCounts[bxVal] >= 2 {
 			writeChan <- rec
 		} else if singletonChan != nil {
 			singletonChan <- rec

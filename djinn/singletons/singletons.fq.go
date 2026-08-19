@@ -1,12 +1,16 @@
 package singletons
 
 import (
+	"bufio"
 	"djinn/fastq"
 	"fmt"
 	"io"
 	"maps"
+	"os"
+	"strconv"
 
 	"github.com/shenwei356/bio/seqio/fastx"
+	"github.com/shenwei356/xopen"
 )
 
 func getFqCount(infiles []string) (map[string]int16, error) {
@@ -77,20 +81,82 @@ func getFqCount(infiles []string) (map[string]int16, error) {
 	return set, nil
 }
 
-func FilterSingletons(infiles []string, singletons string) error {
+func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount string) error {
 	// guard against draining stdin when getting barcode counts
-	bcCounts, err := getFqCount(infiles)
+	bcCounts, err := getFqCount(fqs)
 	if err != nil {
 		return err
 	}
-	// ── open reader ───────────────────────────────────────────────────────────
+	if barcodecount != "" {
+		f, err := os.Create(barcodecount)
+		if err != nil {
+			return err
+		}
+		writer := bufio.NewWriter(f)
+		for key, val := range bcCounts {
+			writer.WriteString(key)
+			writer.WriteByte('\t')
+			writer.WriteString(strconv.Itoa(int(val)))
+			writer.WriteByte('\n')
+		}
+		writer.Flush()
+		f.Close()
+	}
+	keepSingle := singletonprefix != ""
 
-	// ── open writer ───────────────────────────────────────────────────────────
+	for idx, i := range fqs { // iterate over files
+		// determine what kind of linked-read tech it is
+		processBC, err := fastq.CheckFastqFormat(fqs[0])
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+		// ---- FQ reader -------------------------
+		fqReader, err := fastx.NewDefaultReader(i)
+		if err != nil {
+			return fmt.Errorf("opening %s: %w", i, err)
+		}
 
-	// ── loop record channel ──────────────────────────────────────────────
+		// ---- FQ writer -------------------------
+		outfq, err := xopen.Wopen(prefix + ".R" + strconv.Itoa(idx+1) + ".fq.gz")
+		if err != nil {
+			return err
+		}
 
-	// if bcCounts[bxVal] > 2 {
-	// write record
-	// }
+		var outfqSingle *xopen.Writer
+		if keepSingle {
+			outfqSingle, err = xopen.Wopen(singletonprefix + ".R" + strconv.Itoa(idx+1) + ".fq.gz")
+			if err != nil {
+				return err
+			}
+		}
+		var bc string
+		var valid bool
+
+		for { // iterate through records
+			rec, err := fqReader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+
+			bc, valid = processBC(rec)
+			if bc == "" || !valid {
+				continue
+			}
+			if bcCounts[bc] >= 2 {
+				rec.FormatToWriter(outfq, 0)
+			} else if keepSingle {
+				rec.FormatToWriter(outfqSingle, 0)
+			}
+		}
+		fqReader.Close()
+		outfq.Close()
+		if keepSingle {
+			outfqSingle.Close()
+		}
+	}
+
 	return nil
 }

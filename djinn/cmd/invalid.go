@@ -10,12 +10,10 @@ import (
 )
 
 var invalidXamCmd = &cobra.Command{
-	Use:     "filter-invalid [options] file.bam",
-	Short:   "Remove reads with invalid barcodes",
-	Example: "filter-invalid -t 10 curratum.bam > curratum.valid.bam",
-	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
-		"inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats. Writes to stdout.",
+	Use:                   "rm-invalid [options] file.bam",
+	Short:                 "Remove records with invalid barcodes",
+	Example:               "rm-invalid -t 10 curratum.bam > curratum.valid.bam",
+	Long:                  "Inputs must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -23,13 +21,23 @@ var invalidXamCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		//TODO not exact args, needs min/max
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
 		if err := filecheck(args[0]); err != nil {
 			return err
 		}
+		inv, err := cmd.Flags().GetString("invalid")
+		if err != nil {
+			return err
+		}
+		if inv != "" {
+			err = ensureWritableDir(inv)
+			if err != nil {
+				return err
+			}
+		}
+
 		if len(args) == 2 {
 			if err := filecheck(args[1]); err != nil {
 				return err
@@ -55,18 +63,14 @@ var invalidXamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = ensureWritableDir(inv)
-		if err != nil {
-			return err
-		}
 		return invalid.FilterInvalidXam(args[0], inv, sam, threads)
 	},
 }
 
 var invalidFqCmd = &cobra.Command{
-	Use:     "filter-invalid <-i> PREFIX file.R1.fq file.R2.fq",
+	Use:     "rm-invalid <-i> PREFIX file.R1.fq file.R2.fq",
 	Short:   "Remove reads with invalid barcodes",
-	Example: "filter-invalid -i invalid/omykiss omykiss.R1.fq omykiss.R2.fq",
+	Example: "rm-invalid -i invalid/omykiss omykiss.valid omykiss.R1.fq omykiss.R2.fq",
 	Long: "Inputs must be one or two FASTQ files (R1 and R2, can be gzipped). " +
 		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats.",
@@ -90,6 +94,14 @@ var invalidFqCmd = &cobra.Command{
 		if inv == args[0] {
 			return fmt.Errorf("File prefix for invalid and valid output cannot be the same.")
 		}
+		err = ensureWritableDir(args[0])
+		if err != nil {
+			return err
+		}
+		err = ensureWritableDir(inv)
+		if err != nil {
+			return err
+		}
 		for _, i := range args[1:] {
 			if err := filecheck(i); err != nil {
 				return err
@@ -99,14 +111,6 @@ var invalidFqCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		inv, err := cmd.Flags().GetString("invalid")
-		if err != nil {
-			return err
-		}
-		err = ensureWritableDir(args[0])
-		if err != nil {
-			return err
-		}
-		err = ensureWritableDir(inv)
 		if err != nil {
 			return err
 		}

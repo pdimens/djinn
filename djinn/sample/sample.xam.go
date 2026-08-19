@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func Sample(infile string, downsample float64, seed, threads int, invalid, asSam bool) error {
+func SampleXam(infile string, downsample float64, seed, threads int, invalid, asSam bool) error {
 	// --- Get barcode map --------------------------
 	infile = xam.FileOrStdin(infile)
 	set := make(map[string]struct{}, 7_000_000)

@@ -56,12 +56,10 @@ var extractXamCmd = &cobra.Command{
 }
 
 var extractFqCmd = &cobra.Command{
-	Use:     "extract <-i> file.fq",
-	Short:   "Extract all unique barcodes",
-	Example: "extract bombus.R1.fq bombus.R2.fq > bombus.bc",
-	Long: "Inputs must be any number of FASTQ files (R1 and R2, can be gzipped). " +
-		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats. Writes to stdout.",
+	Use:                   "extract <-i> file.fq",
+	Short:                 "Extract all unique barcodes",
+	Example:               "extract bombus.R1.fq bombus.R2.fq > bombus.bc",
+	Long:                  "Inputs must be any number of FASTQ files (R1 and R2, can be gzipped). Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {

@@ -11,12 +11,10 @@ import (
 
 // preCmd represents the preprocess command
 var countXamCmd = &cobra.Command{
-	Use:     "count [options] file.bam",
-	Short:   "Count barcode occurance",
-	Example: "count -t 4 curratum.bam > curratum.bc",
-	Long: "Inputs must be one SAM/BAM file or two FASTQ files (R1 and R2, can be gzipped). Both FASTQ and SAM/BAM " +
-		"inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
-		"(@seq_id:barcode) formats.  Writes to stdout.",
+	Use:                   "count [options] file.bam",
+	Short:                 "Count barcode occurance",
+	Example:               "count -t 4 curratum.bam > curratum.bc",
+	Long:                  "Inputs must be one or two FASTQ files (R1 and R2, can be gzipped). Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -60,7 +58,7 @@ var countFqCmd = &cobra.Command{
 	Use:     "count [options] file.bam",
 	Short:   "Count barcode occurance",
 	Example: "count -t 4 curratum.bam > curratum.bc",
-	Long: "Inputs must one or two FASTQ files (R1 and R2, can be gzipped). Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
+	Long: "Inputs must one or two FASTQ files (R1 and R2, can be gzipped).Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
