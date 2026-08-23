@@ -47,7 +47,7 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 | [ ] | [x] | ncbi              | 
 | [x] | [x] | sample            |               
 | [ ] | [x] | sort              |             
-| [ ] | [ ] | standardize       | 
+| [ ] | [x] | standardize       | 
 | [ ] | [ ] | concat            |
 | [ ] |     | spoof-hic         |               
-|     | [ ] | assign-mi         |
+|     | [ ] | deconvolute       |

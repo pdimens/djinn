@@ -3,8 +3,8 @@ package fastq
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 
+	regexp "github.com/coregx/coregex"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 

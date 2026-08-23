@@ -1,17 +1,19 @@
 module djinn
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/biogo/hts v1.4.5
+	github.com/coregx/coregex v0.12.23
+	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/klauspost/pgzip v1.2.6
 	github.com/shenwei356/bio v0.15.0
 	github.com/shenwei356/xopen v0.4.0
 	github.com/spf13/cobra v1.10.2
-	github.com/ivanpirog/coloredcobra v1.0.1
 )
 
 require (
+	github.com/coregx/ahocorasick v0.3.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20260801111138-45c5fff54b41 // indirect
 	github.com/fatih/color v1.19.0 // indirect

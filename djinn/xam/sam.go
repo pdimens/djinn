@@ -1,10 +1,10 @@
 package xam
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/biogo/hts/sam"
+	regexp "github.com/coregx/coregex"
 )
 
 // Regex for invalid haplotagging, stlfr, tellseq barcodes

@@ -1,10 +1,7 @@
 package standardize
 
-import (
-	"djinn/xam"
-)
+import "djinn/xam"
 
-// TODO need a mechanism for barcode conversion
 func Standardize(infile string, threads int, asSam bool) error {
 	infile = xam.FileOrStdin(infile)
 	readThread := 1
