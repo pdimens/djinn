@@ -47,7 +47,7 @@ type Nucleotides struct {
 
 // NewTellseq creates a tellseq barcode generator producing nucleotide barcodes of length 18
 // over the ATCG alphabet (4^n total combinations).
-func NewTellseq() (*Nucleotides, error) {
+func NewTellseq() *Nucleotides {
 	var invalid NucBarcode
 	for i := range 18 {
 		invalid.Data[i] = 'N'
@@ -55,12 +55,12 @@ func NewTellseq() (*Nucleotides, error) {
 	invalid.Len = 18
 
 	next, stop := iter.Pull(nucSeq(18))
-	return &Nucleotides{n: 18, invalid: invalid, next: next, stop: stop}, nil
+	return &Nucleotides{n: 18, invalid: invalid, next: next, stop: stop}
 }
 
 // NewTenX creates a 10X barcode generator producing nucleotide barcodes of length 16
 // over the ATCG alphabet (4^16 total combinations).
-func NewTenX() (*Nucleotides, error) {
+func NewTenX() *Nucleotides {
 	var invalid NucBarcode
 	for i := range 16 {
 		invalid.Data[i] = 'N'
@@ -68,14 +68,14 @@ func NewTenX() (*Nucleotides, error) {
 	invalid.Len = 16
 
 	next, stop := iter.Pull(nucSeq(16))
-	return &Nucleotides{n: 16, invalid: invalid, next: next, stop: stop}, nil
+	return &Nucleotides{n: 16, invalid: invalid, next: next, stop: stop}
 }
 
 // NewGeneric creates a nucleotide barcode generator producing barcodes of length n
 // over the ATCG alphabet (4^n total combinations).
 func NewGeneric(n int) (*Nucleotides, error) {
 	if n <= 0 || n > nucMaxLen {
-		return nil, fmt.Errorf("barcodes: tellseq n must be between 1 and %d, got %d", nucMaxLen, n)
+		return nil, fmt.Errorf("barcodes: barcode n must be between 1 and %d, got %d", nucMaxLen, n)
 	}
 
 	var invalid NucBarcode
@@ -91,3 +91,13 @@ func NewGeneric(n int) (*Nucleotides, error) {
 func (t *Nucleotides) Next() (NucBarcode, bool) { return t.next() }
 func (t *Nucleotides) Invalid() NucBarcode      { return t.invalid }
 func (t *Nucleotides) Close()                   { t.stop() }
+
+func (t *Nucleotides) NextInto(dst []byte) (int, bool) {
+	bc, ok := t.next()
+	if !ok {
+		return 0, false
+	}
+	return copy(dst, bc.Bytes()), true
+}
+func (t *Nucleotides) InvalidInto(dst []byte) int { return copy(dst, t.invalid.Bytes()) }
+func (t *Nucleotides) MaxLen() int                { return t.n }

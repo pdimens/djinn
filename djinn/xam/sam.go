@@ -60,12 +60,11 @@ func BoolToSInt(vx bool) string {
 	}
 }
 
-// Search for an return a linked read barcode, whether a barcode
-// was found (bool), and the value of the VX tag (bool). First searches for a BX tag,
-// and if that isn't found, searches the record ID for a tellseq/stlfr style barcode.
-// If nothing was found, returns ("", false, false). If a barcode was identified and
+// Search for an return a linked read barcode, ("" if not found) and the value of the VX tag (bool).
+// First searches for a BX tag, and if that isn't found, searches the record ID for a tellseq/stlfr style barcode.
+// If nothing was found, returns ("", false). If a barcode was identified and
 // a VX tag wasnt, the VX will be inferred from the barcode.
-func FindBarcode(rec *sam.Record) (string, bool, bool) {
+func FindBarcode(rec *sam.Record) (string, bool) {
 	bxVal, hasBX := GetStringTag(rec, "BX")
 	vxVal, hasVX := GetVX(rec)
 	if !hasBX {
@@ -83,10 +82,10 @@ func FindBarcode(rec *sam.Record) (string, bool, bool) {
 			}
 		}
 	}
-	if !hasVX && hasBX {
+	if !hasVX && bxVal != "" {
 		vxVal = IsValid(bxVal)
 	}
-	return bxVal, hasBX, vxVal
+	return bxVal, vxVal
 }
 
 // SetBX sets a string aux tag on a record

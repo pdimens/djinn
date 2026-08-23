@@ -18,8 +18,8 @@ func getCount(infile string, threads int) map[string]int16 {
 
 	// ── loop record channel ──────────────────────────────────────────────
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if hasBX && vxVal {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal != "" && vxVal {
 			set[bxVal]++
 		}
 	}
@@ -87,8 +87,8 @@ func FilterSingletonsXam(infile, singletons, barcodecount string, asSam bool, th
 	// ── loop record channel ──────────────────────────────────────────────
 
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if !hasBX || !vxVal {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if (bxVal == "") || !vxVal {
 			continue
 		}
 		if bcCounts[bxVal] >= 2 {

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+// check if the file exists and the directory is writable, return an
+// error if not, otherwise nil
 func filecheck(filename string) error {
 	//var err error
 	if err := fileExists(filename); err != nil {

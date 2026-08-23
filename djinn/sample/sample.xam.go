@@ -27,8 +27,8 @@ func SampleXam(infile string, downsample float64, seed, threads int, invalid, as
 
 	// ── loop record channel to get barcodes ───────────────────────────────────
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if !hasBX {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal == "" {
 			continue
 		}
 		if !vxVal && !invalid {
@@ -97,8 +97,8 @@ func SampleXam(infile string, downsample float64, seed, threads int, invalid, as
 
 	// ── loop record channel to get barcodes ───────────────────────────────────
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if !hasBX {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal == "" {
 			continue
 		}
 		if !vxVal && !invalid {

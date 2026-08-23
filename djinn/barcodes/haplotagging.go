@@ -46,12 +46,12 @@ func (h *Haplotagging) Next() ([12]byte, bool) { return h.next() }
 func (h *Haplotagging) Invalid() [12]byte      { return h.invalid }
 func (h *Haplotagging) Close()                 { h.stop() }
 
-/*
-h := haplotag.New()
-defer h.Close()
-bc, ok := h.Next()
-if !ok {
-	return fmt.Errorf("exceeded max haplotagging barcodes")
+func (h *Haplotagging) NextInto(dst []byte) (int, bool) {
+	b, ok := h.next()
+	if !ok {
+		return 0, false
+	}
+	return copy(dst, b[:]), true
 }
-tag := bc[:] // safe, bc is a fresh local array each call
-*/
+func (h *Haplotagging) InvalidInto(dst []byte) int { return copy(dst, h.invalid[:]) }
+func (h *Haplotagging) MaxLen() int                { return 12 }

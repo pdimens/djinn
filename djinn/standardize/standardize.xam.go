@@ -27,8 +27,8 @@ func Standardize(infile string, threads int, asSam bool) error {
 	// ── loop record channel ──────────────────────────────────────────────
 
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if hasBX {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal != "" {
 			xam.SetBX(rec, bxVal)
 			xam.SetVX(rec, vxVal)
 		}

@@ -21,8 +21,8 @@ func CountXam(infile string, invalid bool, threads int) error {
 
 	// ── loop record channel ──────────────────────────────────────────────
 	for rec := range recChan {
-		bxVal, hasBX, vxVal := xam.FindBarcode(rec)
-		if !hasBX {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal == "" {
 			continue
 		}
 		if !vxVal && !invalid {
