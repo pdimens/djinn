@@ -8,7 +8,8 @@ type Generator interface {
 	// and returns bytes written and whether a barcode was produced.
 	NextInto(dst []byte) (n int, ok bool)
 	// InvalidInto writes the sentinel barcode into dst, returns bytes written.
-	InvalidInto(dst []byte) int
+	//	InvalidInto(dst []byte) int
+	GetInvalid() []byte
 	MaxLen() int
 	Close()
 }

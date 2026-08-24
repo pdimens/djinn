@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	regexp "github.com/coregx/coregex"
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -21,6 +22,7 @@ var StdVx = regexp.MustCompile(`VX:i:([01])(?:\s|$)`)
 var IlluminaOld = regexp.MustCompile(`/[12](?:\s|$)`)
 var IlluminaNew = regexp.MustCompile(`[12]:[YN]:\d+:[A-Za-z0-9]+(?:\s|$)`)
 
+/*
 func FindBarcode(rec *fastx.Record) string {
 	var bxVal []byte
 	bxMatch := BxBarcode.FindSubmatch(rec.Desc)
@@ -41,6 +43,7 @@ func FindBarcode(rec *fastx.Record) string {
 	}
 	return string(bxVal)
 }
+*/
 
 // Detect the linked-read technology type from the first 100 records of the FASTQ file.
 // Returns the function to be used to detect barcodes and process reads in all records within the main loop.
@@ -48,13 +51,13 @@ func CheckFastqFormat(fq string) (func(rec *fastx.Record) (string, bool), error)
 	var rec *fastx.Record
 	var h, t, s int
 	var totalReads int
+	seq.ValidateSeq = false
 
-	fqReader, err := fastx.NewDefaultReader(fq)
+	fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", fq, err)
 	}
 	defer fqReader.Close()
-
 	for i := range 100 {
 		rec, err = fqReader.Read()
 		if err != nil {

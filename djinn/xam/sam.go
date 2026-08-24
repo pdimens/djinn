@@ -1,6 +1,7 @@
 package xam
 
 import (
+	"encoding/binary"
 	"strings"
 
 	"github.com/biogo/hts/sam"
@@ -28,7 +29,7 @@ func IsValid(barcode string) bool {
 	if strings.HasPrefix(barcode, "0_") || strings.HasSuffix(barcode, "_0") || strings.Contains(barcode, "_0_") {
 		return false
 	}
-	for _, p := range [...]string{"A00", "B00", "C00", "D00"} {
+	for _, p := range [4]string{"A00", "B00", "C00", "D00"} {
 		if strings.Contains(barcode, p) {
 			return false
 		}
@@ -89,13 +90,29 @@ func FindBarcode(rec *sam.Record) (string, bool) {
 }
 
 // SetBX sets a string aux tag on a record
-func SetBX(rec *sam.Record, val string) {
-	aux := make(sam.Aux, 3+len(val)+1)
-	aux[0] = 'B'
-	aux[1] = 'X'
-	aux[2] = 'Z'
-	copy(aux[3:], val)
-	aux[len(aux)-1] = 0 // null terminator
+func SetBxString(rec *sam.Record, val *string) {
+	//aux := make(sam.Aux, 3+len(val)+1)
+	aux := make(sam.Aux, 3+len(*val))
+	aux[0], aux[1], aux[2] = 'B', 'X', 'Z'
+	copy(aux[3:], *val)
+	// aux[len(aux)-1] = 0 // null terminator
+
+	for i, a := range rec.AuxFields {
+		if a.Tag() == BxTag {
+			rec.AuxFields[i] = aux
+			return
+		}
+	}
+	rec.AuxFields = append(rec.AuxFields, aux)
+}
+
+// SetBX sets a string aux tag on a record
+func SetBxByte(rec *sam.Record, val *[]byte) {
+	//aux := make(sam.Aux, 3+len(val)+1)
+	aux := make(sam.Aux, 3+len(*val))
+	aux[0], aux[1], aux[2] = 'B', 'X', 'Z'
+	copy(aux[3:], *val)
+	// aux[len(aux)-1] = 0 // null terminator
 
 	for i, a := range rec.AuxFields {
 		if a.Tag() == BxTag {
@@ -127,6 +144,27 @@ func GetVX(rec *sam.Record) (bool, bool) {
 
 // SetVX sets an integer (0/1) auxiliary tag on a record.
 func SetVX(rec *sam.Record, isValid bool) {
+	var v int32
+	if isValid {
+		v = 1
+	}
+	buf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buf, uint32(v))
+
+	for _, a := range rec.AuxFields {
+		if a.Tag() == VxTag {
+			copy(a[3:7], buf)
+			return
+		}
+	}
+	aux := sam.Aux{'V', 'X', 'i', 0, 0, 0, 0}
+	copy(aux[3:7], buf)
+	rec.AuxFields = append(rec.AuxFields, aux)
+}
+
+/*
+
+func SetVX(rec *sam.Record, isValid bool) {
 	b := byte(0)
 	if isValid {
 		b = 1
@@ -140,6 +178,7 @@ func SetVX(rec *sam.Record, isValid bool) {
 	}
 	rec.AuxFields = append(rec.AuxFields, sam.Aux{'V', 'X', 'c', b})
 }
+*/
 
 // Return the value of the string tag `tag` (XX:Z) for a sam.Record
 func GetStringTag(r *sam.Record, tag string) (string, bool) {

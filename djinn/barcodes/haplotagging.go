@@ -43,9 +43,13 @@ func NewHaplotagging() *Haplotagging {
 }
 
 func (h *Haplotagging) Next() ([12]byte, bool) { return h.next() }
-func (h *Haplotagging) Invalid() [12]byte      { return h.invalid }
-func (h *Haplotagging) Close()                 { h.stop() }
 
+// func (h *Haplotagging) Invalid() [12]byte      { return h.invalid }
+func (h *Haplotagging) Close() { h.stop() }
+
+// func (h *Haplotagging) InvalidInto(dst []byte) int { return copy(dst, h.invalid[:]) }
+func (h *Haplotagging) GetInvalid() []byte { return h.invalid[:12] }
+func (h *Haplotagging) MaxLen() int        { return 12 }
 func (h *Haplotagging) NextInto(dst []byte) (int, bool) {
 	b, ok := h.next()
 	if !ok {
@@ -53,5 +57,3 @@ func (h *Haplotagging) NextInto(dst []byte) (int, bool) {
 	}
 	return copy(dst, b[:]), true
 }
-func (h *Haplotagging) InvalidInto(dst []byte) int { return copy(dst, h.invalid[:]) }
-func (h *Haplotagging) MaxLen() int                { return 12 }

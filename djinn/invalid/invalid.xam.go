@@ -57,7 +57,6 @@ func FilterInvalidXam(infile, invalid string, asSam bool, threads int) error {
 	}
 
 	// ── loop record channel ──────────────────────────────────────────────
-
 	for rec := range recChan {
 		bxVal, vxVal := xam.FindBarcode(rec)
 		if (bxVal != "") && vxVal {

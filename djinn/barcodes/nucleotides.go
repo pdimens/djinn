@@ -89,9 +89,13 @@ func NewGeneric(n int) (*Nucleotides, error) {
 }
 
 func (t *Nucleotides) Next() (NucBarcode, bool) { return t.next() }
-func (t *Nucleotides) Invalid() NucBarcode      { return t.invalid }
-func (t *Nucleotides) Close()                   { t.stop() }
 
+// func (t *Nucleotides) Invalid() NucBarcode      { return t.invalid }
+func (t *Nucleotides) Close()             { t.stop() }
+func (t *Nucleotides) GetInvalid() []byte { return t.invalid.Data[:t.n] }
+
+// func (t *Nucleotides) InvalidInto(dst []byte) int { return copy(dst, t.invalid.Bytes()) }
+func (t *Nucleotides) MaxLen() int { return t.n }
 func (t *Nucleotides) NextInto(dst []byte) (int, bool) {
 	bc, ok := t.next()
 	if !ok {
@@ -99,5 +103,3 @@ func (t *Nucleotides) NextInto(dst []byte) (int, bool) {
 	}
 	return copy(dst, bc.Bytes()), true
 }
-func (t *Nucleotides) InvalidInto(dst []byte) int { return copy(dst, t.invalid.Bytes()) }
-func (t *Nucleotides) MaxLen() int                { return t.n }

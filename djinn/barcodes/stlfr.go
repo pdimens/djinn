@@ -51,8 +51,9 @@ func NewStlfr() *Stlfr {
 }
 
 func (s *Stlfr) Next() (Barcode, bool) { return s.next() }
-func (s *Stlfr) Invalid() Barcode      { return s.invalid }
-func (s *Stlfr) Close()                { s.stop() }
+
+// func (s *Stlfr) Invalid() Barcode      { return s.invalid }
+func (s *Stlfr) Close() { s.stop() }
 
 func (s *Stlfr) NextInto(dst []byte) (int, bool) {
 	bc, ok := s.next()
@@ -62,6 +63,7 @@ func (s *Stlfr) NextInto(dst []byte) (int, bool) {
 	return copy(dst, bc.Bytes()), true
 }
 func (s *Stlfr) InvalidInto(dst []byte) int { return copy(dst, s.invalid.Bytes()) }
+func (s *Stlfr) GetInvalid() []byte         { return s.invalid.Data[:s.invalid.Len] }
 func (s *Stlfr) MaxLen() int                { return stlfrMaxLen }
 
 /*

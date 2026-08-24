@@ -29,10 +29,9 @@ func Standardize(infile string, threads int, asSam bool) error {
 	for rec := range recChan {
 		bxVal, vxVal := xam.FindBarcode(rec)
 		if bxVal != "" {
-			xam.SetBX(rec, bxVal)
+			xam.SetBxString(rec, &bxVal)
 			xam.SetVX(rec, vxVal)
 		}
-		//fmt.Println(bxVal, vxVal)
 		// push updated record into writer channel
 		outChan <- rec
 	}

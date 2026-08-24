@@ -1,12 +1,14 @@
 package convert
 
 import (
+	"bufio"
 	"djinn/barcodes"
 	"djinn/xam"
 	"fmt"
+	"os"
 )
 
-func ConvertXam(infile, convTo string, threads int, asSam bool) error {
+func ConvertXam(infile, convTo, bcMap string, threads int, asSam bool) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var bcs barcodes.Generator
 
@@ -51,20 +53,18 @@ func ConvertXam(infile, convTo string, threads int, asSam bool) error {
 	var n int
 	var ok bool
 	seen := make(map[string][]byte, 4_000_000)
-
+	invalidBarcode := bcs.GetInvalid()
 	for rec := range recChan {
 		bxVal, vxVal := xam.FindBarcode(rec)
 		if bxVal == "" || !vxVal {
-			//TODO WRITE INVALID BARCODE
-			bcs.InvalidInto(bcBuf)
-			println("INVALID", string(bcBuf))
+			xam.SetBxByte(rec, &invalidBarcode)
+			writeChan <- rec
 			continue
 		}
 
 		if converted, ok := seen[bxVal]; ok {
-			// already seen — converted is the existing mapped value, no alloc happened for this lookup
-			//TODO ADD OR REPLACE EXISTING BX:Z TAG WITH NEW BARCODE
-			println(bxVal, string(converted))
+			xam.SetBxByte(rec, &converted)
+			writeChan <- rec
 			continue
 		}
 
@@ -75,12 +75,30 @@ func ConvertXam(infile, convTo string, threads int, asSam bool) error {
 		}
 		converted := make([]byte, n) // must copy: buf gets reused next iteration
 		copy(converted, bcBuf[:n])
-
 		seen[bxVal] = converted
-		println(bxVal, string(converted))
+
+		xam.SetBxByte(rec, &converted)
+		writeChan <- rec
 	}
 	close(writeChan)
 	<-writeDone
+
+	// ------ write barcodes to map ------------------------
+	f, err := os.Create(bcMap)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	defer writer.Flush()
+
+	for key, val := range seen {
+		writer.WriteString(key)
+		writer.WriteByte('\t')
+		writer.Write(val)
+		writer.WriteByte('\n')
+	}
 
 	return nil
 }

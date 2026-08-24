@@ -58,7 +58,7 @@ var convertXamCmd = &cobra.Command{
 		if mapfile == "" {
 			return fmt.Errorf("conversion map file must be provided via --map/-m")
 		}
-		if err := filecheck(mapfile); err != nil {
+		if err := ensureWritableDir(mapfile); err != nil {
 			return err
 		}
 		return nil
@@ -77,7 +77,9 @@ var convertXamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return convert.ConvertXam(args[1], strings.ToLower(args[0]), threads, sam)
+		mapfile, err := cmd.Flags().GetString("map")
+
+		return convert.ConvertXam(args[1], strings.ToLower(args[0]), mapfile, threads, sam)
 	},
 }
 
