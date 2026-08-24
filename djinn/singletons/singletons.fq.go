@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
@@ -18,6 +19,7 @@ func getFqCount(infiles []string) (map[string]int16, error) {
 	var emptymap map[string]int16            // for returning empty thing on error
 	var bc string
 	var valid bool
+	seq.ValidateSeq = false
 
 	// determine what kind of linked-read tech it is
 	processBC, err := fastq.CheckFastqFormat(infiles[0])
@@ -26,7 +28,7 @@ func getFqCount(infiles []string) (map[string]int16, error) {
 	}
 
 	// R1
-	fqReader, err := fastx.NewDefaultReader(infiles[0])
+	fqReader, err := fastx.NewReader(seq.DNA, infiles[0], "")
 	if err != nil {
 		return emptymap, fmt.Errorf("opening %s: %w", infiles[0], err)
 	}
@@ -111,7 +113,7 @@ func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount stri
 			return fmt.Errorf("%w", err)
 		}
 		// ---- FQ reader -------------------------
-		fqReader, err := fastx.NewDefaultReader(i)
+		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", i, err)
 		}

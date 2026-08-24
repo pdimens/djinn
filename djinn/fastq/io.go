@@ -61,7 +61,7 @@ func (fw *FastqWriter) Close() error {
 // per-record copy is needed.
 func (fw *FastqWriter) WriteRecord(name string, auxFields sam.AuxFields, seq []byte, qual []uint8) error {
 	w := errWriter{buf: fw.buf}
-	w.writeString("@")
+	w.writeByte('@')
 	w.writeString(name)
 	w.writeString(fw.dir)
 	for i, aux := range auxFields {

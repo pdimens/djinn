@@ -6,12 +6,14 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
 
 func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 	keepInvalid := invalidprefix != ""
+	seq.ValidateSeq = false
 
 	for idx, i := range fqs { // iterate over files
 		// determine what kind of linked-read tech it is
@@ -20,7 +22,7 @@ func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 			return fmt.Errorf("%w", err)
 		}
 		// ---- FQ reader -------------------------
-		fqReader, err := fastx.NewDefaultReader(i)
+		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", i, err)
 		}

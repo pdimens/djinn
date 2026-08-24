@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
@@ -20,13 +21,14 @@ import (
 func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInvalid bool) error {
 	// --- Get barcode map --------------------------
 	set := make(map[string]struct{}, 7_000_000)
+	seq.ValidateSeq = false
 
 	processBC, err := fastq.CheckFastqFormat(fqs[0])
 
 	var bc string
 	var valid bool
 	for _, fq := range fqs {
-		fqReader, err := fastx.NewDefaultReader(fq)
+		fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", fq, err)
 		}

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -18,7 +19,7 @@ func CountFQ(fqs []string, invalid bool) error {
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
-
+	seq.ValidateSeq = false
 	// ── open barcode writer ───────────────────────────────────────────────────────────
 	writer := bufio.NewWriter(os.Stdout)
 	defer writer.Flush()
@@ -29,7 +30,7 @@ func CountFQ(fqs []string, invalid bool) error {
 	var valid bool
 
 	// R1
-	fqReader, err := fastx.NewDefaultReader(fqs[0])
+	fqReader, err := fastx.NewReader(seq.DNA, fqs[0], "")
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", fqs[0], err)
 	}

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -16,7 +17,7 @@ func ExtractFQ(fqs []string, invalid bool) error {
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
-
+	seq.ValidateSeq = false
 	// ── open barcode writer ───────────────────────────────────────────────────────────
 	writer := bufio.NewWriter(os.Stdout)
 	defer writer.Flush()
@@ -27,7 +28,7 @@ func ExtractFQ(fqs []string, invalid bool) error {
 	var valid bool
 
 	for _, fq := range fqs {
-		fqReader, err := fastx.NewDefaultReader(fq)
+		fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", fq, err)
 		}
