@@ -1,25 +1,15 @@
-package convert
+package fastq
 
 import (
 	"bytes"
-	"fmt"
 
-	regexp "github.com/coregx/coregex"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
-var MissingBarcode []byte
-var Invalid = regexp.MustCompile("(?:N|[ABCD]00|^0_|_0_|_0$)")
-var Tellseq = regexp.MustCompile(`:([ATCGN]+)(\s|$)`)
-var Stlfr = regexp.MustCompile(`#([0-9]+_[0-9]+_[0-9]+)(\s|$)`)
-var StdBx = regexp.MustCompile(`BX:Z:(\S+)(?:\s|$)`)
-var StdVx = regexp.MustCompile(`VX:i:([01])(?:\s|$)`)
-var IlluminaOld = regexp.MustCompile(`/[12](?:\s|$)`)
-var IlluminaNew = regexp.MustCompile(`[12]:[YN]:\d+:[A-Za-z0-9]+(?:\s|$)`)
-var vxVal = []byte{'1'}
-var BXTAG = []byte{'B', 'X', ':', 'Z', ':'}
-var VXTAG = []byte{'V', 'X', ':', 'i', ':'}
-var tabSep = []byte{'\t'}
+const TabSep = '\t'
+const Newline = '\n'
+const PlusSign = '+'
+const FastqAt = '@'
 
 // Finds the BX and VX tags and removes the BX and VX tags
 // along with the CASAVA /1 or 1:N:0:ATAG identifier. Returns
@@ -188,54 +178,4 @@ func Stlfr2Std(rec *fastx.Record) bool {
 	rec.ID = append(rec.ID[:bloc[0]], rec.ID[bloc[1]:]...)
 
 	return valid
-}
-
-// Detect the linked-read technology type from the first 100 records of the FASTQ file.
-// Returns the function to be used to detect barcodes and process reads in all records within the main loop.
-func CheckFastqFormat(fq string) (func(rec *fastx.Record) bool, error) {
-	var rec *fastx.Record
-	var h, t, s int
-	var totalReads int
-
-	fqReader, err := fastx.NewDefaultReader(fq)
-	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", fq, err)
-	}
-	defer fqReader.Close()
-
-	for i := range 100 {
-		rec, err = fqReader.Read()
-		if err != nil {
-			return nil, fmt.Errorf("reading %v, record %v: %w", fq, i, err)
-		}
-		// is there a BX tag in the comments/description?
-		if StdBx.Match(rec.Desc) {
-			h += 1
-		}
-		// if not, look for tellseq
-		if Tellseq.Match(rec.ID) {
-			t += 1
-		}
-		// if not, look for stlfr
-		if Stlfr.Match(rec.ID) {
-			s += 1
-		}
-		totalReads += 1
-	}
-	// if more than one style found, return an error
-	// otherwise, set global missing barcode for that chemistry and parsing/standardizing function
-	if (h + s + t) > totalReads {
-		return nil, fmt.Errorf("more than one linked-read technology format identified. Input data must use a single format. Reads types identified: Haplotagging - %d | stLFR - %d | TELLseq - %d.", h, s, t)
-	} else if h > 0 {
-		MissingBarcode = []byte("VX:i:0\tBX:Z:A00C00B00D00")
-		return HaplotagBX, nil
-	} else if s > 0 {
-		MissingBarcode = []byte("VX:i:0\tBX:Z:0_0_0")
-		return Stlfr2Std, nil
-	} else if t > 0 {
-		MissingBarcode = []byte("VX:i:0\tBX:Z:NNNNNNNNNNNNNNNNNN")
-		return Tellseq2Std, nil
-	} else {
-		return nil, fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fq)
-	}
 }

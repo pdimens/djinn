@@ -8,10 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var VERSION string = "3.0"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "djinn",
-	Version: "3.0",
+	Version: VERSION,
 	Short:   "Convert between linked-read formats and barcode styles",
 	Long:    "Use the subcommands (e.g. `djinn ...`) to explore the options for FASTQ and SAM files.",
 }
