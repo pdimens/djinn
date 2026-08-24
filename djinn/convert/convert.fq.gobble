@@ -1,0 +1,129 @@
+package convert
+
+import (
+	"bufio"
+	"bytes"
+	"djinn/barcodes"
+	"djinn/fastq"
+	"djinn/xam"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
+
+	"github.com/shenwei356/bio/seq"
+	"github.com/shenwei356/bio/seqio/fastx"
+	"github.com/shenwei356/xopen"
+)
+
+func ConvertFq(fqs []string, convTo, prefix string, threads int) error {
+	// ── init inventory and generator ──────────────────────────────────────────
+	var bcs barcodes.Generator
+	var fmtConverter func(rec *fastq.CoreFq, writer *bytes.Buffer)
+
+	switch convTo {
+	case "haplotagging":
+		bcs = barcodes.NewHaplotagging()
+		fmtConverter = fastq.ToHaplotagging
+	case "stlfr":
+		bcs = barcodes.NewStlfr()
+		fmtConverter = fastq.ToStlfr
+	case "tellseq":
+		bcs = barcodes.NewTellseq()
+		fmtConverter = fastq.ToTellseq
+	case "10x":
+		bcs = barcodes.NewTenX()
+		fmtConverter = fastq.ToTenX
+	default:
+		return fmt.Errorf("unknown barcode type %q", convTo)
+	}
+	defer bcs.Close()
+
+	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
+
+	// ── open reader ───────────────────────────────────────────────────────────
+	for idx, i := range fqs { // iterate over files
+		// determine what kind of linked-read tech it is
+		processBC, err := fastq.CheckFastqFormat(fqs[0])
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+		// ---- FQ reader -------------------------
+		fqReader, err := fastx.NewReader(seq.DNA, i, "")
+		if err != nil {
+			return fmt.Errorf("opening %s: %w", i, err)
+		}
+
+		// ---- FQ writer -------------------------
+		outfq, err := xopen.Wopen(prefix + ".R" + strconv.Itoa(idx+1) + ".fq.gz")
+		if err != nil {
+			return err
+		}
+
+		for { // iterate through records
+			rec, err := fqReader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+
+		}
+		fqReader.Close()
+		outfq.Close()
+	}
+
+	// ── loop record channel ──────────────────────────────────────────────
+	var n int
+	var ok bool
+	seen := make(map[string][]byte, 4_000_000)
+	invalidBarcode := bcs.GetInvalid()
+	for rec := range recChan {
+		bxVal, vxVal := xam.FindBarcode(rec)
+		if bxVal == "" || !vxVal {
+			xam.SetBxByte(rec, &invalidBarcode)
+			writeChan <- rec
+			continue
+		}
+
+		if converted, ok := seen[bxVal]; ok {
+			xam.SetBxByte(rec, &converted)
+			writeChan <- rec
+			continue
+		}
+
+		// not seen — generate the next conversion barcode
+		n, ok = bcs.NextInto(bcBuf)
+		if !ok {
+			return fmt.Errorf("Barcodes exhausted before conversion finished. The data provided has more unique barcodes than %q barcodes can support.", convTo)
+		}
+		converted := make([]byte, n) // must copy: buf gets reused next iteration
+		copy(converted, bcBuf[:n])
+		seen[bxVal] = converted
+
+		xam.SetBxByte(rec, &converted)
+		writeChan <- rec
+	}
+	close(writeChan)
+	<-writeDone
+
+	// ------ write barcodes to map ------------------------
+	f, err := os.Create(bcMap)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	defer writer.Flush()
+
+	for key, val := range seen {
+		writer.WriteString(key)
+		writer.WriteByte('\t')
+		writer.Write(val)
+		writer.WriteByte('\n')
+	}
+
+	return nil
+}
