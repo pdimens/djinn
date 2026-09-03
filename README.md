@@ -39,7 +39,7 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 
 | fastq | sam | function |
 |:-----:|:-----:|:-----|
-| [ ] | [ ] | convert           |     
+| [ ] | [x] | convert           |     
 | [x] | [x] | count             |     
 | [x] | [x] | extract           |              
 | [x] | [x] | filter-invalid    |            
