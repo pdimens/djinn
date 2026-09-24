@@ -64,10 +64,8 @@ func (fw *FastqWriter) WriteRecord(name string, auxFields sam.AuxFields, seq []b
 	w.writeByte('@')
 	w.writeString(name)
 	w.writeString(fw.dir)
-	for i, aux := range auxFields {
-		if i > 0 {
-			w.writeByte('\t')
-		}
+	for _, aux := range auxFields {
+		w.writeByte('\t')
 		w.write(aux)
 	}
 	w.writeByte('\n')

@@ -2,7 +2,9 @@ package fastq
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -24,6 +26,9 @@ func CheckFastqFormat(fq string) (func(rec *fastx.Record) (string, bool), error)
 	for i := range 100 {
 		rec, err = fqReader.Read()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
 			return nil, fmt.Errorf("reading %v, record %v: %w", fq, i, err)
 		}
 		// is there a BX tag in the comments/description?
@@ -42,7 +47,17 @@ func CheckFastqFormat(fq string) (func(rec *fastx.Record) (string, bool), error)
 	}
 	// if more than one style found, return an error
 	// otherwise, set global missing barcode for that chemistry and parsing/standardizing function
-	if (h + s + t) > totalReads {
+	formatsFound := 0
+	if h > 0 {
+		formatsFound++
+	}
+	if s > 0 {
+		formatsFound++
+	}
+	if t > 0 {
+		formatsFound++
+	}
+	if formatsFound > 1 {
 		return nil, fmt.Errorf("more than one linked-read technology format identified. Input data must use a single format. Reads types identified: Haplotagging - %d | stLFR - %d | TELLseq - %d.", h, s, t)
 	} else if h > 0 {
 		MissingBarcode = []byte("VX:i:0\tBX:Z:A00C00B00D00")
