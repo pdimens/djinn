@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -130,17 +131,21 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 }
 
 // TestHaplotag2Corefq_KnownLimitations documents the current, incomplete
-// behavior of Haplotag2Corefq: it hardcodes Barcode to "AT" regardless of
-// the input record (it doesn't actually parse a barcode out of rec), and it
-// slices rec.Desc[:2] with no length check, which panics for any record
-// whose Desc is shorter than 2 bytes. This function is not wired up to any
-// caller yet elsewhere in the repo; these tests exist to pin down and flag
-// its current (buggy/stub) behavior rather than to validate it as correct.
+// behavior of Haplotag2Corefq: (1) it hardcodes Barcode to "AT" regardless
+// of the input record — it doesn't actually parse a barcode out of rec —
+// and (2) it slices rec.Desc[:2] with no length check, which panics for any
+// record whose Desc is shorter than 2 bytes. It also unconditionally
+// dereferences rec.Seq, so a Record without a populated Seq (as produced by
+// some code paths, or in a minimal test fixture) panics too. This function
+// is not wired up to any caller yet elsewhere in the repo; these tests
+// exist to pin down and flag its current (buggy/stub) behavior rather than
+// to validate it as correct.
 func TestHaplotag2Corefq_KnownLimitations(t *testing.T) {
 	desc := []byte("XY some description")
 	rec := &fastx.Record{
 		ID:   []byte("read1"),
 		Desc: desc,
+		Seq:  &seq.Seq{Seq: []byte("ACGT"), Qual: []byte("IIII")},
 	}
 	core := Haplotag2Corefq(rec)
 
@@ -159,7 +164,21 @@ func TestHaplotag2Corefq_KnownLimitations(t *testing.T) {
 				t.Errorf("expected Haplotag2Corefq to panic on a Desc shorter than 2 bytes (known bug, not fixed)")
 			}
 		}()
-		shortRec := &fastx.Record{ID: []byte("read1"), Desc: []byte("X")}
+		shortRec := &fastx.Record{
+			ID:   []byte("read1"),
+			Desc: []byte("X"),
+			Seq:  &seq.Seq{Seq: []byte("ACGT"), Qual: []byte("IIII")},
+		}
 		_ = Haplotag2Corefq(shortRec)
+	})
+
+	t.Run("panics on nil Seq", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("expected Haplotag2Corefq to panic when rec.Seq is nil (known bug, not fixed)")
+			}
+		}()
+		nilSeqRec := &fastx.Record{ID: []byte("read1"), Desc: desc}
+		_ = Haplotag2Corefq(nilSeqRec)
 	})
 }

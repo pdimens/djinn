@@ -92,5 +92,6 @@ func init() {
 
 	//---Command line arguments-------------
 	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
+	countXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }

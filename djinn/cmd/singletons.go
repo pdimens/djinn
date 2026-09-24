@@ -33,9 +33,10 @@ var unlinkedXamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = ensureWritableDir(singles)
-		if err != nil {
-			return err
+		if singles != "" {
+			if err := ensureWritableDir(singles); err != nil {
+				return err
+			}
 		}
 		bcCount, err := cmd.Flags().GetString("bc-count")
 		if err != nil {

@@ -181,19 +181,10 @@ func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool)
 		}
 	}()
 
-	if outPath != "-" {
-		out, err := os.Create(outPath)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if cerr := out.Close(); err == nil {
-				err = cerr
-			}
-		}()
-	}
 	// --- Create writer channel --------------------------
-	writeChan, writeDone := xam.NewXamWriterChan("-", hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
+	// outPath is passed through verbatim ("-" means stdout); NewXamWriterChan
+	// owns opening/creating the destination file itself.
+	writeChan, writeDone := xam.NewXamWriterChan(outPath, hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
 
 	h := &mergeHeap{}
 	for i, br := range readers {

@@ -23,8 +23,11 @@ func filecheck(filename string) error {
 // check if file exists. Returns a true if it does, otherwise false.
 func fileExists(filename string) error {
 	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("\033[33;1m%s\033[0m does not exist", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("\033[33;1m%s\033[0m does not exist", filename)
+		}
+		return err
 	}
 	if info.IsDir() {
 		return fmt.Errorf("\033[33;1m%s\033[0m is a directory", filename)
