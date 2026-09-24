@@ -10,9 +10,9 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-func getCount(infile string, threads int) map[string]int16 {
+func getCount(infile string, threads int) map[string]int {
 	infile = xam.FileOrStdin(infile)
-	set := make(map[string]int16, 7_000_000)
+	set := make(map[string]int, 7_000_000)
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
 
@@ -30,10 +30,18 @@ func FilterSingletonsXam(infile, singletons, barcodecount string, asSam bool, th
 	// guard against draining stdin when getting barcode counts
 	var f *os.File
 	if infile == "-" {
-		f, _ = os.CreateTemp("", "xam-spool-*.bam")
-		io.Copy(f, os.Stdin)
-		f.Seek(0, io.SeekStart)
+		var err error
+		f, err = os.CreateTemp("", "xam-spool-*.bam")
+		if err != nil {
+			return err
+		}
 		defer os.Remove(f.Name())
+		if _, err := io.Copy(f, os.Stdin); err != nil {
+			return err
+		}
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return err
+		}
 		infile = f.Name()
 	}
 

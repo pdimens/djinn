@@ -8,7 +8,6 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"path"
 	"slices"
 	"strconv"
 	"time"
@@ -24,6 +23,9 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 	seq.ValidateSeq = false
 
 	processBC, err := fastq.CheckFastqFormat(fqs[0])
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
 	var bc string
 	var valid bool
@@ -89,7 +91,7 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 		nBcToKeep = int(downsample)
 	}
 
-	bcFile, err := os.Create(path.Base(prefix) + ".bc")
+	bcFile, err := os.Create(prefix + ".bc")
 	if err != nil {
 		return err
 	}
