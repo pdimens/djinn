@@ -66,7 +66,10 @@ func (fw *FastqWriter) WriteRecord(name string, auxFields sam.AuxFields, seq []b
 	w.writeString(fw.dir)
 	for _, aux := range auxFields {
 		w.writeByte('\t')
-		w.write(aux)
+		// aux is the raw binary-encoded field (2-byte tag + type + value,
+		// no separators); the FASTQ header is text, so it needs the
+		// "TAG:TYPE:VALUE" rendering, not the packed bytes.
+		w.writeString(aux.String())
 	}
 	w.writeByte('\n')
 	w.write(seq)
