@@ -151,14 +151,21 @@ func SetVX(rec *sam.Record, isValid bool) {
 	buf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(buf, uint32(v))
 
-	for _, a := range rec.AuxFields {
+	aux := sam.Aux{'V', 'X', 'i', 0, 0, 0, 0}
+	copy(aux[3:7], buf)
+
+	for i, a := range rec.AuxFields {
 		if a.Tag() == VxTag {
-			copy(a[3:7], buf)
+			// Replace the whole field rather than copying into the
+			// existing byte range: an aux field parsed from SAM text
+			// (e.g. "VX:i:1") may have been encoded by the library as
+			// a narrower type ('c'/'C'/'s'/'S', 1-2 bytes) instead of
+			// the 4-byte 'i' this function assumes, and copy(a[3:7], buf)
+			// would panic with an out-of-range slice on such a field.
+			rec.AuxFields[i] = aux
 			return
 		}
 	}
-	aux := sam.Aux{'V', 'X', 'i', 0, 0, 0, 0}
-	copy(aux[3:7], buf)
 	rec.AuxFields = append(rec.AuxFields, aux)
 }
 
@@ -198,8 +205,23 @@ func GetIntTag(r *sam.Record, tag string) (int, bool) {
 	t := sam.Tag{tag[0], tag[1]}
 	for _, aux := range r.AuxFields {
 		if aux.Tag() == t {
-			if s, ok := aux.Value().(int); ok {
-				return s, true
+			// sam.Aux.Value() never returns a plain "int" for integer-kind
+			// tags: depending on the field's stored width it returns
+			// int8/uint8/int16/uint16/int32/uint32, so a bare .(int)
+			// assertion never succeeds and this always reported "not found".
+			switch v := aux.Value().(type) {
+			case int8:
+				return int(v), true
+			case uint8:
+				return int(v), true
+			case int16:
+				return int(v), true
+			case uint16:
+				return int(v), true
+			case int32:
+				return int(v), true
+			case uint32:
+				return int(v), true
 			}
 		}
 	}

@@ -12,7 +12,8 @@ func Extract(infile string, invalid bool, threads int) error {
 	set := make(map[string]struct{}, 7_000_000)
 
 	// ── open reader ───────────────────────────────────────────────────────────
-	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
+	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
+	defer br.Close()
 
 	// ── open writer ───────────────────────────────────────────────────────────
 	writer := bufio.NewWriter(os.Stdout)

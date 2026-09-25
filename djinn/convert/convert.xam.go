@@ -38,6 +38,7 @@ func ConvertXam(infile, convTo, bcMap string, threads int, asSam bool) error {
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
+	defer br.Close()
 
 	// ── update PG line in header ───────────────────────────────────────────────
 	hdr := br.Header()

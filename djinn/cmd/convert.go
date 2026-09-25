@@ -78,6 +78,9 @@ var convertXamCmd = &cobra.Command{
 			return err
 		}
 		mapfile, err := cmd.Flags().GetString("map")
+		if err != nil {
+			return err
+		}
 
 		return convert.ConvertXam(args[1], strings.ToLower(args[0]), mapfile, threads, sam)
 	},

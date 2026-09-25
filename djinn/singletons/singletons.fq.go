@@ -14,9 +14,9 @@ import (
 	"github.com/shenwei356/xopen"
 )
 
-func getFqCount(infiles []string) (map[string]int16, error) {
-	set := make(map[string]int16, 7_000_000) // barcode container
-	var emptymap map[string]int16            // for returning empty thing on error
+func getFqCount(infiles []string) (map[string]int, error) {
+	set := make(map[string]int, 7_000_000) // barcode container
+	var emptymap map[string]int            // for returning empty thing on error
 	var bc string
 	var valid bool
 	seq.ValidateSeq = false
@@ -52,7 +52,7 @@ func getFqCount(infiles []string) (map[string]int16, error) {
 
 	// R2
 	if len(infiles) > 1 {
-		setR2 := make(map[string]int16, 500_000) // R2 barcode container
+		setR2 := make(map[string]int, 500_000) // R2 barcode container
 
 		fqReader, err = fastx.NewDefaultReader(infiles[1])
 		if err != nil {

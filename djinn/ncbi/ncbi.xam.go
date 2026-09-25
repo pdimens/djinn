@@ -19,7 +19,8 @@ func NCBI(infile, prefix string, threads int) error {
 		writeThread = threads - readThread
 	}
 	// ── open reader ───────────────────────────────────────────────────────────
-	recChan, _ := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
+	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
+	defer br.Close()
 
 	// ── FASTQ writers ──────────────────────────────────────────────
 	threadsPerWriter := max(writeThread/2, 1)
