@@ -9,13 +9,10 @@ import (
 )
 
 func TestToHaplotagging(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGT")
-	qual := []byte("IIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGT"),
+		Qual:    []byte("IIII"),
 		CASAVA:  []byte("1"),
 		Barcode: []byte("A01C02B03D04"),
 	}
@@ -29,13 +26,10 @@ func TestToHaplotagging(t *testing.T) {
 }
 
 func TestToTellseq_SingleByteCASAVA(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGT")
-	qual := []byte("IIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGT"),
+		Qual:    []byte("IIII"),
 		CASAVA:  []byte("2"),
 		Barcode: []byte("ATCGATCG"),
 	}
@@ -49,13 +43,10 @@ func TestToTellseq_SingleByteCASAVA(t *testing.T) {
 }
 
 func TestToTellseq_FullCASAVA(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGT")
-	qual := []byte("IIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGT"),
+		Qual:    []byte("IIII"),
 		CASAVA:  []byte("1:N:0:ATAG"),
 		Barcode: []byte("ATCGATCG"),
 	}
@@ -69,13 +60,10 @@ func TestToTellseq_FullCASAVA(t *testing.T) {
 }
 
 func TestToStlfr(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGT")
-	qual := []byte("IIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGT"),
+		Qual:    []byte("IIII"),
 		CASAVA:  []byte("1"),
 		Barcode: []byte("123_456_789"),
 	}
@@ -89,13 +77,10 @@ func TestToStlfr(t *testing.T) {
 }
 
 func TestToTenX_R1PrependsBarcodeAndFillerQual(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGTACGT")
-	qual := []byte("IIIIIIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGTACGT"),
+		Qual:    []byte("IIIIIIII"),
 		CASAVA:  []byte("1"),
 		Barcode: []byte("ATCGATCGATCGATCG"), // 16bp 10x barcode
 	}
@@ -111,13 +96,10 @@ func TestToTenX_R1PrependsBarcodeAndFillerQual(t *testing.T) {
 }
 
 func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
-	id := []byte("read1")
-	seq := []byte("ACGTACGT")
-	qual := []byte("IIIIIIII")
 	rec := CoreFq{
-		ID:      &id,
-		Seq:     &seq,
-		Qual:    &qual,
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGTACGT"),
+		Qual:    []byte("IIIIIIII"),
 		CASAVA:  []byte("2"),
 		Barcode: []byte("ATCGATCGATCGATCG"),
 	}
@@ -130,55 +112,185 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 	}
 }
 
-// TestHaplotag2Corefq_KnownLimitations documents the current, incomplete
-// behavior of Haplotag2Corefq: (1) it hardcodes Barcode to "AT" regardless
-// of the input record — it doesn't actually parse a barcode out of rec —
-// and (2) it slices rec.Desc[:2] with no length check, which panics for any
-// record whose Desc is shorter than 2 bytes. It also unconditionally
-// dereferences rec.Seq, so a Record without a populated Seq (as produced by
-// some code paths, or in a minimal test fixture) panics too. This function
-// is not wired up to any caller yet elsewhere in the repo; these tests
-// exist to pin down and flag its current (buggy/stub) behavior rather than
-// to validate it as correct.
-func TestHaplotag2Corefq_KnownLimitations(t *testing.T) {
-	desc := []byte("XY some description")
-	rec := &fastx.Record{
-		ID:   []byte("read1"),
-		Desc: desc,
-		Seq:  &seq.Seq{Seq: []byte("ACGT"), Qual: []byte("IIII")},
-	}
-	core := Haplotag2Corefq(rec)
+// ---- constructors --------------------------------------------------
 
-	if got, want := string(core.CASAVA), "XY"; got != want {
-		t.Errorf("CASAVA = %q, want %q (first 2 bytes of Desc)", got, want)
+func mkRecord(id, desc, seq_, qual string) *fastx.Record {
+	return &fastx.Record{
+		ID:   []byte(id),
+		Desc: []byte(desc),
+		Seq:  &seq.Seq{Seq: []byte(seq_), Qual: []byte(qual)},
 	}
-	// This is the bug: Barcode is always "AT" no matter what the record
-	// actually contains.
-	if got, want := string(core.Barcode), "AT"; got != want {
-		t.Errorf("Barcode = %q, want %q (hardcoded stub value)", got, want)
-	}
+}
 
-	t.Run("panics on short Desc", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("expected Haplotag2Corefq to panic on a Desc shorter than 2 bytes (known bug, not fixed)")
-			}
-		}()
-		shortRec := &fastx.Record{
-			ID:   []byte("read1"),
-			Desc: []byte("X"),
-			Seq:  &seq.Seq{Seq: []byte("ACGT"), Qual: []byte("IIII")},
+func TestHaplotag2Corefq(t *testing.T) {
+	t.Run("BX and new-style CASAVA", func(t *testing.T) {
+		rec := mkRecord("read1", "1:N:0:ATCG BX:Z:A01C02B03D04", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
 		}
-		_ = Haplotag2Corefq(shortRec)
+		if got, want := string(core.ID), "read1"; got != want {
+			t.Errorf("ID = %q, want %q", got, want)
+		}
+		if got, want := string(core.CASAVA), "1:N:0:ATCG"; got != want {
+			t.Errorf("CASAVA = %q, want %q", got, want)
+		}
+		if got, want := string(core.Barcode), "A01C02B03D04"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true for a clean barcode")
+		}
+		if got, want := string(core.Comments), ""; got != want {
+			t.Errorf("Comments = %q, want %q (BX and CASAVA both removed)", got, want)
+		}
+		if got, want := string(core.Seq), "ACGT"; got != want {
+			t.Errorf("Seq = %q, want %q", got, want)
+		}
 	})
 
-	t.Run("panics on nil Seq", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("expected Haplotag2Corefq to panic when rec.Seq is nil (known bug, not fixed)")
-			}
-		}()
-		nilSeqRec := &fastx.Record{ID: []byte("read1"), Desc: desc}
-		_ = Haplotag2Corefq(nilSeqRec)
+	t.Run("old-style CASAVA suffix on ID", func(t *testing.T) {
+		rec := mkRecord("read1/2", "BX:Z:A01C02B03D04", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.ID), "read1"; got != want {
+			t.Errorf("ID = %q, want %q", got, want)
+		}
+		if got, want := string(core.CASAVA), "2"; got != want {
+			t.Errorf("CASAVA = %q, want %q", got, want)
+		}
 	})
+
+	t.Run("invalid barcode (contains N)", func(t *testing.T) {
+		rec := mkRecord("read1", "BX:Z:A01C02BNND04", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if core.Valid {
+			t.Error("expected Valid=false for a barcode containing N")
+		}
+	})
+
+	t.Run("other aux fields survive in Comments", func(t *testing.T) {
+		rec := mkRecord("read1", "XX:i:5 BX:Z:A01C02B03D04 YY:Z:foo", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.Comments), "XX:i:5 YY:Z:foo"; got != want {
+			t.Errorf("Comments = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("no BX tag", func(t *testing.T) {
+		rec := mkRecord("read1", "some other text", "ACGT", "IIII")
+		_, ok := Haplotag2Corefq(rec)
+		if ok {
+			t.Error("expected ok=false when no BX:Z: tag is present")
+		}
+	})
+}
+
+func TestTellseq2Corefq(t *testing.T) {
+	t.Run("barcode and old-style CASAVA", func(t *testing.T) {
+		rec := mkRecord("read1:ATCGATCG/1", "", "ACGT", "IIII")
+		core, ok := Tellseq2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.ID), "read1"; got != want {
+			t.Errorf("ID = %q, want %q", got, want)
+		}
+		if got, want := string(core.Barcode), "ATCGATCG"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if got, want := string(core.CASAVA), "1"; got != want {
+			t.Errorf("CASAVA = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true")
+		}
+	})
+
+	t.Run("no barcode", func(t *testing.T) {
+		rec := mkRecord("read1", "", "ACGT", "IIII")
+		_, ok := Tellseq2Corefq(rec)
+		if ok {
+			t.Error("expected ok=false when ID has no :ACGTN+ suffix")
+		}
+	})
+
+	t.Run("invalid barcode", func(t *testing.T) {
+		rec := mkRecord("read1:ATCGNNCG", "", "ACGT", "IIII")
+		core, ok := Tellseq2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if core.Valid {
+			t.Error("expected Valid=false for a barcode containing N")
+		}
+	})
+}
+
+func TestStlfr2Corefq(t *testing.T) {
+	t.Run("barcode and new-style CASAVA", func(t *testing.T) {
+		rec := mkRecord("read1#123_456_789", "2:N:0:ATCG", "ACGT", "IIII")
+		core, ok := Stlfr2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.ID), "read1"; got != want {
+			t.Errorf("ID = %q, want %q", got, want)
+		}
+		if got, want := string(core.Barcode), "123_456_789"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if got, want := string(core.CASAVA), "2:N:0:ATCG"; got != want {
+			t.Errorf("CASAVA = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true")
+		}
+	})
+
+	t.Run("invalid barcode (zero index)", func(t *testing.T) {
+		rec := mkRecord("read1#123_0_789", "", "ACGT", "IIII")
+		core, ok := Stlfr2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if core.Valid {
+			t.Error("expected Valid=false for a barcode with a zero index")
+		}
+	})
+
+	t.Run("no barcode", func(t *testing.T) {
+		rec := mkRecord("read1", "", "ACGT", "IIII")
+		_, ok := Stlfr2Corefq(rec)
+		if ok {
+			t.Error("expected ok=false when ID has no #n_n_n suffix")
+		}
+	})
+}
+
+// aliasing regression: constructors must not corrupt Desc/ID by reusing
+// their backing array across the splice of an earlier-extracted substring.
+func TestCorefqConstructors_NoAliasingCorruption(t *testing.T) {
+	rec := mkRecord("readAAAA:ATCGATCGATCGATCG", "1:N:0:ATCGATCGATCG", "ACGT", "IIII")
+	core, ok := Tellseq2Corefq(rec)
+	if !ok {
+		t.Fatal("expected ok=true")
+	}
+	// force a reallocation-triggering append to make sure Barcode/CASAVA
+	// were independent copies, not still-aliased views into rec.ID/rec.Desc
+	rec.ID = append(rec.ID, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X')
+	if got, want := string(core.Barcode), "ATCGATCGATCGATCG"; got != want {
+		t.Errorf("Barcode corrupted after mutating rec.ID: got %q, want %q", got, want)
+	}
+	if got, want := string(core.CASAVA), "1:N:0:ATCGATCGATCG"; got != want {
+		t.Errorf("CASAVA corrupted: got %q, want %q", got, want)
+	}
 }
