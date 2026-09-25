@@ -45,7 +45,7 @@ var ncbiXam2FqCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return ncbi.NCBI(args[1], args[0], threads)
+		return ncbi.NcbiXam(args[1], args[0], threads)
 	},
 }
 
