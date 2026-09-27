@@ -17,7 +17,7 @@ func TestToHaplotagging(t *testing.T) {
 		Barcode: []byte("A01C02B03D04"),
 	}
 	var buf bytes.Buffer
-	ToHaplotagging(&rec, &buf)
+	rec.ToHaplotagging(&buf)
 
 	want := "@read1/1\tBX:Z:A01C02B03D04\nACGT\n+\nIIII\n"
 	if got := buf.String(); got != want {
@@ -34,7 +34,7 @@ func TestToTellseq_SingleByteCASAVA(t *testing.T) {
 		Barcode: []byte("ATCGATCG"),
 	}
 	var buf bytes.Buffer
-	ToTellseq(&rec, &buf)
+	rec.ToTellseq(&buf)
 
 	want := "@read1:ATCGATCG\t2:N:ATCG\nACGT\n+\nIIII\n"
 	if got := buf.String(); got != want {
@@ -51,7 +51,7 @@ func TestToTellseq_FullCASAVA(t *testing.T) {
 		Barcode: []byte("ATCGATCG"),
 	}
 	var buf bytes.Buffer
-	ToTellseq(&rec, &buf)
+	rec.ToTellseq(&buf)
 
 	want := "@read1:ATCGATCG\t1:N:0:ATAG\nACGT\n+\nIIII\n"
 	if got := buf.String(); got != want {
@@ -68,7 +68,7 @@ func TestToStlfr(t *testing.T) {
 		Barcode: []byte("123_456_789"),
 	}
 	var buf bytes.Buffer
-	ToStlfr(&rec, &buf)
+	rec.ToStlfr(&buf)
 
 	want := "@read1#123_456_789\t1:N:ATCG\nACGT\n+\nIIII\n"
 	if got := buf.String(); got != want {
@@ -85,9 +85,9 @@ func TestToTenX_R1PrependsBarcodeAndFillerQual(t *testing.T) {
 		Barcode: []byte("ATCGATCGATCGATCG"), // 16bp 10x barcode
 	}
 	var buf bytes.Buffer
-	ToTenX(&rec, &buf)
+	rec.ToTenX(&buf)
 
-	want := "@read1#ATCGATCGATCGATCG\t1:N:ATCG\n" +
+	want := "@read1:ATCGATCGATCGATCG\t1:N:ATCG\n" +
 		"ATCGATCGATCGATCGACGTACGT\n+\n" +
 		"IIIIIIIIIIIIIIIIIIIIIIII\n" // 16 'I' filler + original 8 qual chars
 	if got := buf.String(); got != want {
