@@ -53,7 +53,9 @@ type CoreFq struct {
 // record at tens-of-millions-of-records scale, so it avoids the engine
 // overhead entirely.
 
-func isSpace(b byte) bool { return b == ' ' || b == '\t' }
+func isSpace(b byte) bool {
+	return b == ' ' || b == '\t'
+}
 
 func isBase(b byte) bool {
 	switch b {
@@ -63,9 +65,11 @@ func isBase(b byte) bool {
 	return false
 }
 
-func isDigit(b byte) bool { return b >= '0' && b <= '9' }
+func isDigit(b byte) bool {
+	return b >= '0' && b <= '9'
+}
 
-func isAlnum(b byte) bool {
+func isAlphaNumeric(b byte) bool {
 	return b >= 'A' && b <= 'Z' || b >= 'a' && b <= 'z' || isDigit(b)
 }
 
@@ -140,7 +144,7 @@ func isIlluminaNewField(f []byte) bool {
 		return false
 	}
 	for ; i < len(f); i++ {
-		if !isAlnum(f[i]) {
+		if !isAlphaNumeric(f[i]) {
 			return false
 		}
 	}
@@ -196,17 +200,23 @@ func splitCASAVA(id, desc []byte) (newID, newDesc, casava []byte) {
 }
 
 // ----- haplotagging --------------------------------------------------
-
 // Haplotag2Corefq parses a haplotagging-format record — barcode inline as a
 // "BX:Z:<bc>" tag in the description — into a CoreFq. ok is false when no
-// BX:Z: tag is present, in which case the returned CoreFq is the zero
-// value.
+// BX:Z: tag is present
 func Haplotag2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 	id, desc, casava := splitCASAVA(rec.ID, rec.Desc)
 
 	valStart, valEnd, fs, fe, found := findField(desc, BXTAG)
 	if !found {
-		return CoreFq{}, false
+		return CoreFq{
+			ID:       id,
+			Seq:      rec.Seq.Seq,
+			Qual:     rec.Seq.Qual,
+			CASAVA:   casava,
+			Barcode:  nil,
+			Valid:    false,
+			Comments: desc,
+		}, false
 	}
 	bc := append([]byte(nil), desc[valStart:valEnd]...)
 	desc = spliceField(desc, fs, fe)
@@ -243,13 +253,21 @@ func findTellseqBarcode(id []byte) (start, end, colon int, ok bool) {
 
 // Tellseq2Corefq parses a TELLseq-format record — barcode inline at the end
 // of the ID as ":<bases>" — into a CoreFq. ok is false when no such suffix
-// is present, in which case the returned CoreFq is the zero value.
+// is present
 func Tellseq2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 	id, desc, casava := splitCASAVA(rec.ID, rec.Desc)
 
 	start, end, colon, found := findTellseqBarcode(id)
 	if !found {
-		return CoreFq{}, false
+		return CoreFq{
+			ID:       id,
+			Seq:      rec.Seq.Seq,
+			Qual:     rec.Seq.Qual,
+			CASAVA:   casava,
+			Barcode:  nil,
+			Valid:    false,
+			Comments: desc,
+		}, false
 	}
 	bc := append([]byte(nil), id[start:end]...)
 	id = append(id[:colon], id[end:]...)
@@ -270,7 +288,8 @@ func Tellseq2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 // isStlfrBody reports whether b matches "[0-9]+_[0-9]+_[0-9]+" exactly.
 func isStlfrBody(b []byte) bool {
 	parts, start, digits := 0, 0, false
-	for i := 0; i <= len(b); i++ {
+	//for i := 0; i <= len(b); i++ {
+	for i := range b {
 		if i == len(b) || b[i] == '_' {
 			if !digits || i == start {
 				return false
@@ -291,7 +310,7 @@ func isStlfrBody(b []byte) bool {
 // findStlfrBarcode locates a "#<n>_<n>_<n>" suffix in id, mirroring
 // Stlfr.FindSubmatchIndex applied to id.
 func findStlfrBarcode(id []byte) (start, end, hash int, ok bool) {
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		if id[i] != '#' {
 			continue
 		}
@@ -304,13 +323,21 @@ func findStlfrBarcode(id []byte) (start, end, hash int, ok bool) {
 
 // Stlfr2Corefq parses an stLFR-format record — barcode inline at the end of
 // the ID as "#n_n_n" — into a CoreFq. ok is false when no such suffix is
-// present, in which case the returned CoreFq is the zero value.
+// present
 func Stlfr2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 	id, desc, casava := splitCASAVA(rec.ID, rec.Desc)
 
 	start, end, hash, found := findStlfrBarcode(id)
 	if !found {
-		return CoreFq{}, false
+		return CoreFq{
+			ID:       id,
+			Seq:      rec.Seq.Seq,
+			Qual:     rec.Seq.Qual,
+			CASAVA:   casava,
+			Barcode:  nil,
+			Valid:    false,
+			Comments: desc,
+		}, false
 	}
 	bc := append([]byte(nil), id[start:end]...)
 	id = append(id[:hash], id[end:]...)
@@ -329,11 +356,9 @@ func Stlfr2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 // ---- Conversions -------------------------------------------------
 //
 // These assume rec.CASAVA is non-empty (as every constructor above
-// populates it when a marker is present); a record with no CASAVA marker
-// at all is a pre-existing gap in this format, not one introduced here.
-
+// populates it when a marker is present).
 // Convert the fastq record to haplotagging format and write it the write buffer
-func ToHaplotagging(rec *CoreFq, writer *bytes.Buffer) {
+func (rec *CoreFq) ToHaplotagging(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte('/')
@@ -353,14 +378,15 @@ func ToHaplotagging(rec *CoreFq, writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to tellseq format and write it the write buffer
-func ToTellseq(rec *CoreFq, writer *bytes.Buffer) {
+func (rec *CoreFq) ToTellseq(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte(':')
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
-	// only use the first byte of CASAVA, which will either be 1 or 2
-	if n := len(rec.CASAVA); n == 1 {
+	if len(rec.CASAVA) == 1 {
+		// then the CASAVA is a single byte, like from /1 or /2
+		// only use the first byte
 		writer.Write([]byte{rec.CASAVA[0], ':', 'N', ':', 'A', 'T', 'C', 'G'})
 	} else {
 		writer.Write(rec.CASAVA)
@@ -375,14 +401,15 @@ func ToTellseq(rec *CoreFq, writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to haplotagging format and write it the write buffer
-func ToStlfr(rec *CoreFq, writer *bytes.Buffer) {
+func (rec *CoreFq) ToStlfr(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte('#')
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
-	// only use the first byte of CASAVA, which will either be 1 or 2
 	if n := len(rec.CASAVA); n == 1 {
+		// then the CASAVA is a single byte, like from /1 or /2
+		// only use the first byte
 		writer.Write([]byte{rec.CASAVA[0], ':', 'N', ':', 'A', 'T', 'C', 'G'})
 	} else {
 		writer.Write(rec.CASAVA)
@@ -397,10 +424,10 @@ func ToStlfr(rec *CoreFq, writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to 10X format and write it the write buffer
-func ToTenX(rec *CoreFq, writer *bytes.Buffer) {
+func (rec *CoreFq) ToTenX(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte('#')
+	writer.WriteByte(':')
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
 	// only use the first byte of CASAVA, which will either be 1 or 2
