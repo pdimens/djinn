@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"djinn/barcodes"
 	"djinn/fastq"
-	"djinn/xam"
 	"fmt"
 	"io"
 	"os"
@@ -19,21 +18,22 @@ import (
 func ConvertFq(fqs []string, convTo, prefix string, threads int) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var bcs barcodes.Generator
-	var fmtConverter func(rec *fastq.CoreFq, writer *bytes.Buffer)
+	var converter func(*fastq.CoreFq, *bytes.Buffer)
+	//var fmtConverter func(rec *fastq.CoreFq, writer *bytes.Buffer)
 
 	switch convTo {
 	case "haplotagging":
 		bcs = barcodes.NewHaplotagging()
-		fmtConverter = fastq.ToHaplotagging
+		converter = (*fastq.CoreFq).ToHaplotagging
 	case "stlfr":
 		bcs = barcodes.NewStlfr()
-		fmtConverter = fastq.ToStlfr
+		converter = (*fastq.CoreFq).ToStlfr
 	case "tellseq":
 		bcs = barcodes.NewTellseq()
-		fmtConverter = fastq.ToTellseq
+		converter = (*fastq.CoreFq).ToTellseq
 	case "10x":
 		bcs = barcodes.NewTenX()
-		fmtConverter = fastq.ToTenX
+		converter = (*fastq.CoreFq).ToTenX
 	default:
 		return fmt.Errorf("unknown barcode type %q", convTo)
 	}
@@ -44,7 +44,7 @@ func ConvertFq(fqs []string, convTo, prefix string, threads int) error {
 	// ── open reader ───────────────────────────────────────────────────────────
 	for idx, i := range fqs { // iterate over files
 		// determine what kind of linked-read tech it is
-		processBC, err := fastq.CheckFastqFormat(fqs[0])
+		lrFormat, err := fastq.CheckLRFormat(fqs[0])
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -74,42 +74,10 @@ func ConvertFq(fqs []string, convTo, prefix string, threads int) error {
 		outfq.Close()
 	}
 
-	// ── loop record channel ──────────────────────────────────────────────
-	var n int
-	var ok bool
 	seen := make(map[string][]byte, 4_000_000)
-	invalidBarcode := bcs.GetInvalid()
-	for rec := range recChan {
-		bxVal, vxVal := xam.FindBarcode(rec)
-		if bxVal == "" || !vxVal {
-			xam.SetBxByte(rec, &invalidBarcode)
-			writeChan <- rec
-			continue
-		}
-
-		if converted, ok := seen[bxVal]; ok {
-			xam.SetBxByte(rec, &converted)
-			writeChan <- rec
-			continue
-		}
-
-		// not seen — generate the next conversion barcode
-		n, ok = bcs.NextInto(bcBuf)
-		if !ok {
-			return fmt.Errorf("Barcodes exhausted before conversion finished. The data provided has more unique barcodes than %q barcodes can support.", convTo)
-		}
-		converted := make([]byte, n) // must copy: buf gets reused next iteration
-		copy(converted, bcBuf[:n])
-		seen[bxVal] = converted
-
-		xam.SetBxByte(rec, &converted)
-		writeChan <- rec
-	}
-	close(writeChan)
-	<-writeDone
 
 	// ------ write barcodes to map ------------------------
-	f, err := os.Create(bcMap)
+	f, err := os.Create(prefix + ".bc.map")
 	if err != nil {
 		return err
 	}
