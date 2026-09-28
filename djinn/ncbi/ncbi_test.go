@@ -50,7 +50,7 @@ func TestNCBIRoutesReadsByFlag(t *testing.T) {
 		"pair1\t141\t*\t0\t0\t*\t*\t0\t0\tTGCATGCATG\tIIIIIIIIII\n"
 	writeNcbiSam(t, in, samText)
 
-	if err := NCBI(in, prefix, 1); err != nil {
+	if err := NcbiXam(in, prefix, 1); err != nil {
 		t.Fatalf("NCBI: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func TestNCBIEmptyInput(t *testing.T) {
 	prefix := filepath.Join(dir, "out")
 	writeNcbiSam(t, in, ncbiSamHeader)
 
-	if err := NCBI(in, prefix, 1); err != nil {
+	if err := NcbiXam(in, prefix, 1); err != nil {
 		t.Fatalf("NCBI: %v", err)
 	}
 
@@ -117,7 +117,7 @@ func TestNCBIUnpairedReadRoutedToR2(t *testing.T) {
 		"single1\t4\t*\t0\t0\t*\t*\t0\t0\tACGTACGTAC\tIIIIIIIIII\n"
 	writeNcbiSam(t, in, samText)
 
-	if err := NCBI(in, prefix, 1); err != nil {
+	if err := NcbiXam(in, prefix, 1); err != nil {
 		t.Fatalf("NCBI: %v", err)
 	}
 

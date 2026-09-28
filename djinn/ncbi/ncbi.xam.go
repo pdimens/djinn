@@ -8,7 +8,7 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-func NCBI(infile, prefix string, threads int) error {
+func NcbiXam(infile, prefix string, threads int) error {
 	r1Path := prefix + ".R1.fq.gz"
 	r2Path := prefix + ".R2.fq.gz"
 
