@@ -36,23 +36,11 @@ var sampleXamCmd = &cobra.Command{
 				return err
 			}
 		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, err := cmd.Flags().GetInt("threads")
+		_, err := cmd.Flags().GetBool("sam")
 		if err != nil {
 			return err
 		}
-		maxCores := runtime.NumCPU()
-		// clamp between 1 and max system threads
-		threads = min(maxCores, max(threads, 1))
-		runtime.GOMAXPROCS(threads)
-
-		sam, err := cmd.Flags().GetBool("sam")
-		if err != nil {
-			return err
-		}
-		invalid, err := cmd.Flags().GetBool("invalid")
+		_, err = cmd.Flags().GetBool("invalid")
 		if err != nil {
 			return err
 		}
@@ -61,13 +49,23 @@ var sampleXamCmd = &cobra.Command{
 			return err
 		}
 		if downsample <= 0.0 {
-			//cmd.Usage()
 			return fmt.Errorf("downsample value must be > 0")
 		}
-		seed, err := cmd.Flags().GetInt("seed")
+		_, err = cmd.Flags().GetInt("seed")
 		if err != nil {
 			return err
 		}
+
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
+
+		sam, _ := cmd.Flags().GetBool("sam")
+		invalid, _ := cmd.Flags().GetBool("invalid")
+		downsample, _ := cmd.Flags().GetFloat64("downsample")
+		seed, _ := cmd.Flags().GetInt("seed")
 		if seed < 0 && seed != -1 {
 			fmt.Println("Notice: a negative seed value does not set a random seed, thus is not reproducible")
 		}
@@ -101,10 +99,7 @@ var sampleFqCmd = &cobra.Command{
 				return err
 			}
 		}
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		invalid, err := cmd.Flags().GetBool("invalid")
+		_, err := cmd.Flags().GetBool("invalid")
 		if err != nil {
 			return err
 		}
@@ -116,10 +111,16 @@ var sampleFqCmd = &cobra.Command{
 			//cmd.Usage()
 			return fmt.Errorf("downsample value must be > 0")
 		}
-		seed, err := cmd.Flags().GetInt("seed")
+		_, err = cmd.Flags().GetInt("seed")
 		if err != nil {
 			return err
 		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		invalid, _ := cmd.Flags().GetBool("invalid")
+		downsample, _ := cmd.Flags().GetFloat64("downsample")
+		seed, _ := cmd.Flags().GetInt("seed")
 		if seed < 0 && seed != -1 {
 			fmt.Println("Notice: a negative seed value does not set a random seed, thus is not reproducible")
 		}

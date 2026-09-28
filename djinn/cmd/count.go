@@ -37,14 +37,8 @@ var countXamCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, err := cmd.Flags().GetInt("threads")
-		if err != nil {
-			return err
-		}
-		maxCores := runtime.NumCPU()
-		// clamp between 1 and max system threads
-		threads = min(maxCores, max(threads, 1))
-		runtime.GOMAXPROCS(threads)
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 
 		invalid, err := cmd.Flags().GetBool("invalid")
 		if err != nil {
@@ -54,6 +48,7 @@ var countXamCmd = &cobra.Command{
 	},
 }
 
+// TODO: Docstring is all wrong
 var countFqCmd = &cobra.Command{
 	Use:     "count [options] file.bam",
 	Short:   "Count barcode occurance",
@@ -93,5 +88,6 @@ func init() {
 	//---Command line arguments-------------
 	countXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 	countXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+
 	countFqCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes")
 }

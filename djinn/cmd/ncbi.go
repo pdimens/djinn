@@ -29,22 +29,15 @@ var ncbiXam2FqCmd = &cobra.Command{
 		if err := filecheck(args[1]); err != nil {
 			return err
 		}
+		err := ensureWritableDir(args[0])
+		if err != nil {
+			return err
+		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, err := cmd.Flags().GetInt("threads")
-		if err != nil {
-			return err
-		}
-		maxCores := runtime.NumCPU()
-		// clamp between 1 and max system threads
-		threads = min(maxCores, max(threads, 1))
-		runtime.GOMAXPROCS(threads)
-		//TODO ensure prefix is writable
-		//err = ensureWritableDir(cmd.ar)
-		if err != nil {
-			return err
-		}
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 		return ncbi.NcbiXam(args[1], args[0], threads)
 	},
 }

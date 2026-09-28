@@ -34,26 +34,24 @@ var sortXamCmd = &cobra.Command{
 				return err
 			}
 		}
+		_, err := cmd.Flags().GetString("tmp-prefix")
+		if err != nil {
+			return err
+		}
+		_, err = cmd.Flags().GetBool("sam")
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, err := cmd.Flags().GetInt("threads")
-		if err != nil {
-			return err
-		}
-		maxCores := runtime.NumCPU()
-		// clamp between 1 and max system threads
-		threads = min(maxCores, max(threads, 1))
-		runtime.GOMAXPROCS(threads)
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
 
-		tmpDir, err := cmd.Flags().GetString("tmp-prefix")
-		if err != nil {
-			return err
-		}
-		asSam, err := cmd.Flags().GetBool("sam")
-		if err != nil {
-			return err
-		}
+		tmpDir, _ := cmd.Flags().GetString("tmp-prefix")
+		asSam, _ := cmd.Flags().GetBool("sam")
+
 		return sort.SortByBX(args[0], "-", tmpDir, threads, asSam)
 	},
 }

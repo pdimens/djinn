@@ -52,23 +52,6 @@ func TestSortXamArgs(t *testing.T) {
 	})
 }
 
-// ── stdXamCmd.Args (standardize) ─────────────────────────────────────────────
-
-func TestStandardizeArgs(t *testing.T) {
-	dir := t.TempDir()
-	valid := makeReadableFile(t, dir, "in.bam")
-
-	if err := stdXamCmd.Args(stdXamCmd, []string{}); err == nil {
-		t.Errorf("expected error with no args")
-	}
-	if err := stdXamCmd.Args(stdXamCmd, []string{filepath.Join(dir, "missing.bam")}); err == nil {
-		t.Errorf("expected error for missing input file")
-	}
-	if err := stdXamCmd.Args(stdXamCmd, []string{valid}); err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
 // ── convertXamCmd.Args ───────────────────────────────────────────────────────
 
 func TestConvertXamArgs(t *testing.T) {

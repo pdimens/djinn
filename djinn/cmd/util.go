@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 )
 
 // check if the file exists and the directory is writable, return an
@@ -35,6 +36,7 @@ func fileExists(filename string) error {
 	return nil
 }
 
+// check if the input file has read permissions
 func fileReadable(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -52,6 +54,7 @@ func checkIfExecInPath(e string) bool {
 	return err == nil
 }
 
+// Check if the input path has write permissions
 func ensureWritableDir(path string) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -63,4 +66,11 @@ func ensureWritableDir(path string) error {
 	}
 	f.Close()
 	return os.Remove(f.Name())
+}
+
+// Parse the thread count provided to `threads` at the CLI and clamp it between 1 and the system max
+func safethreads(threads int) int {
+	maxCores := runtime.NumCPU()
+	// clamp between 1 and max system threads
+	return min(maxCores, max(threads, 1))
 }
