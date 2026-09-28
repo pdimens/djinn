@@ -104,7 +104,7 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 		Barcode: []byte("ATCGATCGATCGATCG"),
 	}
 	var buf bytes.Buffer
-	ToTenX(&rec, &buf)
+	rec.ToTenX(&buf)
 
 	want := "@read1#ATCGATCGATCGATCG\t2:N:ATCG\nACGTACGT\n+\nIIIIIIII\n"
 	if got := buf.String(); got != want {

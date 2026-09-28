@@ -6,10 +6,15 @@ import (
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
+const FwSlash = '/'
 const TabSep = '\t'
 const Newline = '\n'
 const PlusSign = '+'
 const FastqAt = '@'
+const Colon = ':'
+
+var BxTagConst = []byte{'B', 'X', ':', 'Z', ':'}
+var VxTagConst = []byte{'V', 'X', ':', 'i', ':'}
 
 // Finds the BX and VX tags and removes the BX and VX tags
 // along with the CASAVA /1 or 1:N:0:ATAG identifier. Returns

@@ -10,9 +10,6 @@ import (
 	"github.com/klauspost/pgzip"
 )
 
-// "github.com/shenwei356/bio/seq"
-// "github.com/shenwei356/bio/seqio/fastx"
-// "github.com/shenwei356/xopen"
 type FastqWriter struct {
 	f   *os.File
 	gz  *pgzip.Writer

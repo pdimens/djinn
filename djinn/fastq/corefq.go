@@ -44,6 +44,8 @@ type CoreFq struct {
 	Comments []byte // remaining description text (SAM-style aux tokens) once CASAVA/Barcode are removed
 }
 
+var CasavaConst = []byte{':', 'N', ':', 'A', 'T', 'C', 'G'}
+
 // ----- shared scanning helpers -------------------------------------------
 //
 // These replace regexp.FindSubmatchIndex-based matching (IlluminaNew,
@@ -354,19 +356,17 @@ func Stlfr2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 }
 
 // ---- Conversions -------------------------------------------------
-//
-// These assume rec.CASAVA is non-empty (as every constructor above
-// populates it when a marker is present).
-// Convert the fastq record to haplotagging format and write it the write buffer
+
+// Convert the fastq record to haplotagging format and write to the write buffer
 func (rec *CoreFq) ToHaplotagging(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte('/')
+	writer.WriteByte(FwSlash)
 	// only use the first byte of CASAVA, which will either be 1 or 2
 	writer.WriteByte(rec.CASAVA[0])
 	writer.WriteByte(TabSep)
 	//TODO ONLY WRITE SAM-COMPLIANT COMMENTS
-	writer.Write([]byte{'B', 'X', ':', 'Z', ':'})
+	writer.Write(BxTagConst)
 	writer.Write(rec.Barcode)
 	writer.WriteByte(Newline)
 	writer.Write(rec.Seq)
@@ -377,17 +377,45 @@ func (rec *CoreFq) ToHaplotagging(writer *bytes.Buffer) {
 	writer.WriteByte(Newline)
 }
 
-// Convert the fastq record to tellseq format and write it the write buffer
+// Convert the fastq record to standard format and write to the write buffer
+func (rec *CoreFq) ToStandard(writer *bytes.Buffer) {
+	writer.WriteByte(FastqAt)
+	writer.Write(rec.ID)
+	writer.WriteByte(FwSlash)
+	// only use the first byte of CASAVA, which will either be 1 or 2
+	writer.WriteByte(rec.CASAVA[0])
+	writer.WriteByte(TabSep)
+	//TODO ONLY WRITE SAM-COMPLIANT COMMENTS
+	writer.Write(BxTagConst)
+	writer.Write(rec.Barcode)
+	writer.WriteByte(TabSep)
+	writer.Write(VxTagConst)
+	if rec.Valid {
+		writer.WriteByte(1)
+	} else {
+		writer.WriteByte(0)
+	}
+	writer.WriteByte(Newline)
+	writer.Write(rec.Seq)
+	writer.WriteByte(Newline)
+	writer.WriteByte(PlusSign)
+	writer.WriteByte(Newline)
+	writer.Write(rec.Qual)
+	writer.WriteByte(Newline)
+}
+
+// Convert the fastq record to tellseq format and write to the write buffer
 func (rec *CoreFq) ToTellseq(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte(':')
+	writer.WriteByte(Colon)
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
 	if len(rec.CASAVA) == 1 {
 		// then the CASAVA is a single byte, like from /1 or /2
 		// only use the first byte
-		writer.Write([]byte{rec.CASAVA[0], ':', 'N', ':', 'A', 'T', 'C', 'G'})
+		writer.WriteByte(rec.CASAVA[0])
+		writer.Write(CasavaConst)
 	} else {
 		writer.Write(rec.CASAVA)
 	}
@@ -410,7 +438,8 @@ func (rec *CoreFq) ToStlfr(writer *bytes.Buffer) {
 	if n := len(rec.CASAVA); n == 1 {
 		// then the CASAVA is a single byte, like from /1 or /2
 		// only use the first byte
-		writer.Write([]byte{rec.CASAVA[0], ':', 'N', ':', 'A', 'T', 'C', 'G'})
+		writer.WriteByte(rec.CASAVA[0])
+		writer.Write(CasavaConst)
 	} else {
 		writer.Write(rec.CASAVA)
 	}
@@ -423,16 +452,17 @@ func (rec *CoreFq) ToStlfr(writer *bytes.Buffer) {
 	writer.WriteByte(Newline)
 }
 
-// Convert the fastq record to 10X format and write it the write buffer
+// Convert the fastq record to 10X format and write to the write buffer
 func (rec *CoreFq) ToTenX(writer *bytes.Buffer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte(':')
+	writer.WriteByte(Colon)
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
 	// only use the first byte of CASAVA, which will either be 1 or 2
 	if n := len(rec.CASAVA); n == 1 {
-		writer.Write([]byte{rec.CASAVA[0], ':', 'N', ':', 'A', 'T', 'C', 'G'})
+		writer.WriteByte(rec.CASAVA[0])
+		writer.Write(CasavaConst)
 	} else {
 		writer.Write(rec.CASAVA)
 	}
