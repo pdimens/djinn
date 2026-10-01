@@ -1,6 +1,7 @@
 package fastq
 
 import (
+	"bufio"
 	"bytes"
 	"testing"
 
@@ -16,11 +17,11 @@ func TestToHaplotagging(t *testing.T) {
 		CASAVA:  []byte("1"),
 		Barcode: []byte("A01C02B03D04"),
 	}
-	var buf bytes.Buffer
+	var buf bufio.Writer
 	rec.ToHaplotagging(&buf)
 
 	want := "@read1/1\tBX:Z:A01C02B03D04\nACGT\n+\nIIII\n"
-	if got := buf.String(); got != want {
+	if got := buf.String; got != want {
 		t.Errorf("ToHaplotagging output = %q, want %q", got, want)
 	}
 }

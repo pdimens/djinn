@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -11,7 +12,7 @@ import (
 
 // Scan a fastq file and return the type of reading parser it needs, i.e., a haplotagging one,
 // tellseq, stlfr, 10x
-func CoreFqParser(fq, bclist string) (func(rec *fastx.Record) (core CoreFq, ok bool), error) {
+func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), error) {
 	var rec *fastx.Record
 	var h, t, s int
 	var totalReads int
@@ -60,17 +61,15 @@ func CoreFqParser(fq, bclist string) (func(rec *fastx.Record) (core CoreFq, ok b
 	}
 	switch {
 	case h > 0:
+		fmt.Fprintln(os.Stderr, "Format detected: Haplotagging")
 		return Haplotag2Corefq, nil
 	case s > 0:
+		fmt.Fprintln(os.Stderr, "Format detected: stLFR")
 		return Stlfr2Corefq, nil
 	case t > 0:
+		fmt.Fprintln(os.Stderr, "Format detected: TELL-seq")
 		return Tellseq2Corefq, nil
 	default:
-		//TODO  OPTION FOR 10X
-		if bclist == "" {
-			return nil, fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fq)
-		}
 		return nil, nil
 	}
 }
-

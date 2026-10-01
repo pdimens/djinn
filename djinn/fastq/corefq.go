@@ -202,7 +202,7 @@ func splitCASAVA(id, desc []byte) (newID, newDesc, casava []byte) {
 // ---- Conversions -------------------------------------------------
 
 // Convert the fastq record to haplotagging format and write to the write buffer
-func (rec *CoreFq) ToHaplotagging(writer *bytes.Buffer) {
+func (rec *CoreFq) ToHaplotagging(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte(FwSlash)
@@ -222,7 +222,7 @@ func (rec *CoreFq) ToHaplotagging(writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to standard format and write to the write buffer
-func (rec *CoreFq) ToStandard(writer *bytes.Buffer) {
+func (rec *CoreFq) ToStandard(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte(FwSlash)
@@ -249,7 +249,7 @@ func (rec *CoreFq) ToStandard(writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to tellseq format and write to the write buffer
-func (rec *CoreFq) ToTellseq(writer *bytes.Buffer) {
+func (rec *CoreFq) ToTellseq(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte(Colon)
@@ -273,7 +273,7 @@ func (rec *CoreFq) ToTellseq(writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to haplotagging format and write it the write buffer
-func (rec *CoreFq) ToStlfr(writer *bytes.Buffer) {
+func (rec *CoreFq) ToStlfr(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte('#')
@@ -297,7 +297,7 @@ func (rec *CoreFq) ToStlfr(writer *bytes.Buffer) {
 }
 
 // Convert the fastq record to 10X format and write to the write buffer
-func (rec *CoreFq) ToTenX(writer *bytes.Buffer) {
+func (rec *CoreFq) ToTenX(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
 	writer.WriteByte(Colon)

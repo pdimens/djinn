@@ -81,9 +81,80 @@ var convertXamCmd = &cobra.Command{
 	},
 }
 
+var convertFqCmd = &cobra.Command{
+	Use:     "convert [options] toFormat file.R1.fq.gz file.R2.fq.gz",
+	Short:   "Convert between linked-read FASTQ file and barcode formats",
+	Example: "convert -t 3 10x gcurratum.bam > gcurratum.10x.bam",
+	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x).
+
+| toFormat     | barcode format | example            |
+------------------------------------------------------
+| 10x          | 16 nucleotides | GGTTGACATTAAGACA   |
+| haplotagging | AxxCxxBxxDxx   | A01C93B56D11       |
+| stlfr        | 1_2_3          | 541_9_312          |
+| tellseq      | 18 nucleotides | GGCAAATATCGAGAAGTC |
+| standard     | same as input  | GGCAAATATCGAGAAGTC |
+`,
+	DisableFlagsInUseLine: true,
+	SilenceUsage:          true,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			fmt.Printf("%s", cmd.UsageString())
+			return fmt.Errorf("please provide a target format and input SAM/BAM file")
+		}
+		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
+			return err
+		}
+		if err := filecheck(args[1]); err != nil {
+			return err
+		}
+		var err error
+		switch strings.ToLower(args[0]) {
+		case "haplotagging", "tellseq", "stlfr", "10x", "standard":
+		default:
+			return fmt.Errorf("toFormat must be one of: standard, haplotagging, stlfr, tellseq, 10x")
+		}
+		mapfile, err := cmd.Flags().GetString("map")
+		if err != nil {
+			return err
+		}
+		// only raise error for missing map file if conversion not 'standard'
+		if strings.ToLower(args[0]) != "standard" {
+			if mapfile == "" {
+				return fmt.Errorf("conversion map file must be provided via --map/-m")
+			}
+			if err := ensureWritableDir(mapfile); err != nil {
+				return err
+			}
+		}
+		_, err = cmd.Flags().GetInt("threads")
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		threads, _ := cmd.Flags().GetInt("threads")
+		runtime.GOMAXPROCS(safethreads(threads))
+
+		mapfile, _ := cmd.Flags().GetString("map")
+		sam, err := cmd.Flags().GetBool("sam")
+		if err != nil {
+			return err
+		}
+
+		switch strings.ToLower(args[0]) {
+		case "standard":
+			return convert.Standardize(args[1], threads, sam)
+		default:
+			return convert.ConvertXam(args[1], strings.ToLower(args[0]), mapfile, threads, sam)
+		}
+	},
+}
+
 func init() {
 	samCmd.AddCommand(convertXamCmd)
-	//fqCmd.AddCommand(convertFqCmd)
+	fqCmd.AddCommand(convertFqCmd)
 
 	//---Command line arguments-------------
 	convertXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
