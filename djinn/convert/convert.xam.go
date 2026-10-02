@@ -11,6 +11,7 @@ import (
 func ConvertXam(infile, convTo, bcMap string, threads int, asSam bool) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var bcs barcodes.Generator
+	var err error
 
 	switch convTo {
 	case "haplotagging":
@@ -20,7 +21,10 @@ func ConvertXam(infile, convTo, bcMap string, threads int, asSam bool) error {
 	case "tellseq":
 		bcs = barcodes.NewTellseq()
 	case "10x":
-		bcs = barcodes.NewTenX()
+		bcs, err = barcodes.NewTenXList()
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unknown barcode type %q", convTo)
 	}

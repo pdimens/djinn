@@ -37,7 +37,8 @@ type TenXList struct {
 }
 
 // NewTenXList opens a fresh stream over the embedded 10X barcode whitelist.
-// Call Close when done to release the decoder.
+// Call Close when done to release the decoder. Expected to be used like
+// NewHaplotagging()/NewStlfr()/NewTenX()
 func NewTenXList() (*TenXList, error) {
 	dec, err := zstd.NewReader(bytes.NewReader(tenXZst))
 	if err != nil {
@@ -66,7 +67,8 @@ func (t *TenXList) Close()             { t.dec.Close() }
 // out of a read's sequence (see fastq.TenX2Corefq's bc_map parameter) --
 // a different access pattern than TenXList's sequential NextInto: this one
 // needs the whole whitelist resident as a set for O(1) lookups, rather
-// than handing out barcodes one at a time.
+// than handing out barcodes one at a time. Expected to be used for reading IN
+// 10X data and parsing the first 16 bases.
 func LoadTenXSet() (map[string]struct{}, error) {
 	dec, err := zstd.NewReader(bytes.NewReader(tenXZst))
 	if err != nil {
