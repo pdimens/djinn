@@ -93,12 +93,14 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string, threads int) error {
 				rec.Barcode = convertedBC
 			} else {
 				// barcode not yet observed, generate new barcode, add it to map
-				_, ok = bcs.NextInto(bcBuf)
+				n, ok := bcs.NextInto(bcBuf)
 				if !ok {
-					return fmt.Errorf("Too many unique barcodes for the conversion technology requested-- unable to generate more barcodes.")
+					return fmt.Errorf("too many unique barcodes for the conversion technology requested — unable to generate more barcodes.")
 				}
-				seen[string(rec.Barcode)] = bcBuf
-				rec.Barcode = bcBuf
+				// independent copy; bcBuf gets reused/overwritten next iteration
+				newBC := append([]byte(nil), bcBuf[:n]...)
+				seen[string(rec.Barcode)] = newBC
+				rec.Barcode = newBC
 			}
 			// write to output buffer
 			converter(&rec, outfq.Writer)
