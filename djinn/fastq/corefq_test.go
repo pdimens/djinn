@@ -17,11 +17,13 @@ func TestToHaplotagging(t *testing.T) {
 		CASAVA:  []byte("1"),
 		Barcode: []byte("A01C02B03D04"),
 	}
-	var buf bufio.Writer
-	rec.ToHaplotagging(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToHaplotagging(w)
+	w.Flush()
 
 	want := "@read1/1\tBX:Z:A01C02B03D04\nACGT\n+\nIIII\n"
-	if got := buf.String; got != want {
+	if got := out.String(); got != want {
 		t.Errorf("ToHaplotagging output = %q, want %q", got, want)
 	}
 }
@@ -34,11 +36,13 @@ func TestToTellseq_SingleByteCASAVA(t *testing.T) {
 		CASAVA:  []byte("2"),
 		Barcode: []byte("ATCGATCG"),
 	}
-	var buf bytes.Buffer
-	rec.ToTellseq(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToTellseq(w)
+	w.Flush()
 
 	want := "@read1:ATCGATCG\t2:N:ATCG\nACGT\n+\nIIII\n"
-	if got := buf.String(); got != want {
+	if got := out.String(); got != want {
 		t.Errorf("ToTellseq output = %q, want %q", got, want)
 	}
 }
@@ -51,11 +55,13 @@ func TestToTellseq_FullCASAVA(t *testing.T) {
 		CASAVA:  []byte("1:N:0:ATAG"),
 		Barcode: []byte("ATCGATCG"),
 	}
-	var buf bytes.Buffer
-	rec.ToTellseq(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToTellseq(w)
+	w.Flush()
 
 	want := "@read1:ATCGATCG\t1:N:0:ATAG\nACGT\n+\nIIII\n"
-	if got := buf.String(); got != want {
+	if got := out.String(); got != want {
 		t.Errorf("ToTellseq output = %q, want %q", got, want)
 	}
 }
@@ -68,11 +74,13 @@ func TestToStlfr(t *testing.T) {
 		CASAVA:  []byte("1"),
 		Barcode: []byte("123_456_789"),
 	}
-	var buf bytes.Buffer
-	rec.ToStlfr(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToStlfr(w)
+	w.Flush()
 
 	want := "@read1#123_456_789\t1:N:ATCG\nACGT\n+\nIIII\n"
-	if got := buf.String(); got != want {
+	if got := out.String(); got != want {
 		t.Errorf("ToStlfr output = %q, want %q", got, want)
 	}
 }
@@ -85,13 +93,15 @@ func TestToTenX_R1PrependsBarcodeAndFillerQual(t *testing.T) {
 		CASAVA:  []byte("1"),
 		Barcode: []byte("ATCGATCGATCGATCG"), // 16bp 10x barcode
 	}
-	var buf bytes.Buffer
-	rec.ToTenX(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToTenX(w)
+	w.Flush()
 
 	want := "@read1:ATCGATCGATCGATCG\t1:N:ATCG\n" +
 		"ATCGATCGATCGATCGACGTACGT\n+\n" +
 		"IIIIIIIIIIIIIIIIIIIIIIII\n" // 16 'I' filler + original 8 qual chars
-	if got := buf.String(); got != want {
+	if got := out.String(); got != want {
 		t.Errorf("ToTenX (R1) output = %q, want %q", got, want)
 	}
 }
@@ -104,11 +114,13 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 		CASAVA:  []byte("2"),
 		Barcode: []byte("ATCGATCGATCGATCG"),
 	}
-	var buf bytes.Buffer
-	rec.ToTenX(&buf)
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToTenX(w)
+	w.Flush()
 
-	want := "@read1#ATCGATCGATCGATCG\t2:N:ATCG\nACGTACGT\n+\nIIIIIIII\n"
-	if got := buf.String(); got != want {
+	want := "@read1:ATCGATCGATCGATCG\t2:N:ATCG\nACGTACGT\n+\nIIIIIIII\n"
+	if got := out.String(); got != want {
 		t.Errorf("ToTenX (R2) output = %q, want %q", got, want)
 	}
 }
