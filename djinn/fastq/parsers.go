@@ -12,7 +12,7 @@ import (
 
 // Scan a fastq file and return the type of reading parser it needs, i.e., a haplotagging one,
 // tellseq, stlfr, 10x
-func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), error) {
+func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), string, error) {
 	var rec *fastx.Record
 	var h, t, s int
 	var totalReads int
@@ -20,7 +20,7 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), er
 
 	fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", fq, err)
+		return nil, "", fmt.Errorf("opening %s: %w", fq, err)
 	}
 	defer fqReader.Close()
 	for i := range 100 {
@@ -29,7 +29,7 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), er
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, fmt.Errorf("reading %v, record %v: %w", fq, i, err)
+			return nil, "", fmt.Errorf("reading %v, record %v: %w", fq, i, err)
 		}
 		// is there a BX tag in the comments/description?
 		if StdBx.Match(rec.Desc) {
@@ -57,19 +57,19 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), er
 		formatsFound++
 	}
 	if formatsFound > 1 {
-		return nil, fmt.Errorf("more than one linked-read technology format identified. Input data must use a single format. Reads types identified: Haplotagging - %d | stLFR - %d | TELLseq - %d.", h, s, t)
+		return nil, "", fmt.Errorf("more than one linked-read technology format identified. Input data must use a single format. Reads types identified: Haplotagging - %d | stLFR - %d | TELLseq - %d.", h, s, t)
 	}
 	switch {
 	case h > 0:
 		fmt.Fprintln(os.Stderr, "Format detected: Haplotagging")
-		return Haplotag2Corefq, nil
+		return Haplotag2Corefq, "haplotagging", nil
 	case s > 0:
 		fmt.Fprintln(os.Stderr, "Format detected: stLFR")
-		return Stlfr2Corefq, nil
+		return Stlfr2Corefq, "stlfr", nil
 	case t > 0:
 		fmt.Fprintln(os.Stderr, "Format detected: TELL-seq")
-		return Tellseq2Corefq, nil
+		return Tellseq2Corefq, "tellseq", nil
 	default:
-		return nil, nil
+		return nil, "", nil
 	}
 }

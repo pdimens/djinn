@@ -1,45 +1,8 @@
 package fastq
 
 import (
-	"bytes"
-
 	"github.com/shenwei356/bio/seqio/fastx"
 )
-
-func isValidNuc(seq []byte) bool {
-	if bytes.IndexByte(seq, 'N') != -1 {
-		return false // Found 'N'
-	}
-	return true
-}
-
-func TenX2Corefq(rec *fastx.Record, bc_map map[string]struct{}) (core CoreFq, ok bool) {
-	id, desc, casava := splitCASAVA(rec.ID, rec.Desc)
-	bc := rec.Seq.Seq[0:16]
-	if _, ok := bc_map[string(bc)]; ok {
-		bc = append([]byte(nil), rec.Seq.Seq[0:16]...)
-		rec.Seq.Seq = append([]byte(nil), rec.Seq.Seq[16:]...)
-		rec.Seq.Qual = append([]byte(nil), rec.Seq.Qual[16:]...)
-		return CoreFq{
-			ID:       id,
-			Seq:      rec.Seq.Seq,
-			Qual:     rec.Seq.Qual,
-			CASAVA:   casava,
-			Barcode:  bc,
-			Valid:    isValidNuc(bc),
-			Comments: desc,
-		}, true
-	}
-	return CoreFq{
-		ID:       id,
-		Seq:      rec.Seq.Seq,
-		Qual:     rec.Seq.Qual,
-		CASAVA:   casava,
-		Barcode:  nil,
-		Valid:    false,
-		Comments: desc,
-	}, false
-}
 
 // ---- tellseq -----------------------------
 
