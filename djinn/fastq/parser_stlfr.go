@@ -5,8 +5,7 @@ import "github.com/shenwei356/bio/seqio/fastx"
 // isStlfrBody reports whether b matches "[0-9]+_[0-9]+_[0-9]+" exactly.
 func isStlfrBody(b []byte) bool {
 	parts, start, digits := 0, 0, false
-	//for i := 0; i <= len(b); i++ {
-	for i := range b {
+	for i := 0; i <= len(b); i++ {
 		if i == len(b) || b[i] == '_' {
 			if !digits || i == start {
 				return false
