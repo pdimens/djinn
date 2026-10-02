@@ -46,7 +46,11 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string, threads int) error {
 		bcs = barcodes.NewTellseq()
 		converter = (*fastq.CoreFq).ToTellseq
 	case "10x":
-		bcs = barcodes.NewTenX()
+		tenX, err := barcodes.NewTenXList()
+		if err != nil {
+			return err
+		}
+		bcs = tenX
 		converter = (*fastq.CoreFq).ToTenX
 	default:
 		return fmt.Errorf("unknown barcode type %q", convTo)
