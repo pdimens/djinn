@@ -38,6 +38,65 @@ func writeHaplotaggingFixture(t *testing.T, path string, nRecords, nBarcodes int
 	return barcodes
 }
 
+// writePairedHaplotaggingFixtures writes matching R1/R2 haplotagging FASTQ
+// files: record i in each file shares the same base read name (CASAVA
+// marker and BX:Z: tag strip off independently per file), so that after
+// conversion, a correct implementation must produce record i's R1 and R2
+// outputs with the same (stripped) ID at whatever shared position they
+// land in, for every i.
+func writePairedHaplotaggingFixtures(t *testing.T, r1Path, r2Path string, nRecords, nBarcodes int) {
+	t.Helper()
+	barcodes := make([]string, nBarcodes)
+	for i := range barcodes {
+		barcodes[i] = fmt.Sprintf("A%02dC%02dB%02dD%02d", (i%96)+1, ((i*7)%96)+1, ((i*13)%96)+1, ((i*19)%96)+1)
+	}
+
+	write := func(path string, casava byte) {
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("creating fixture: %v", err)
+		}
+		defer f.Close()
+		w := bufio.NewWriter(f)
+		defer w.Flush()
+		for i := 0; i < nRecords; i++ {
+			bc := barcodes[i%nBarcodes]
+			fmt.Fprintf(w, "@pair%06d %c:N:0:ATCG\tBX:Z:%s\n", i, casava, bc)
+			fmt.Fprintf(w, "ACGTACGTACGTACGT\n+\nIIIIIIIIIIIIIIII\n")
+		}
+	}
+	write(r1Path, '1')
+	write(r2Path, '2')
+}
+
+// readFastqIDs parses a converted tellseq-format FASTQ ("@<id>:<barcode>")
+// and returns the base read ID (barcode stripped) of every record, in
+// file order.
+func readFastqIDs(t *testing.T, path string) []string {
+	t.Helper()
+	r, err := fastx.NewReader(seq.DNA, path, "")
+	if err != nil {
+		t.Fatalf("opening %s: %v", path, err)
+	}
+	defer r.Close()
+
+	var out []string
+	for {
+		rec, err := r.Read()
+		if err != nil {
+			break
+		}
+		id := string(rec.ID)
+		for i := len(id) - 1; i >= 0; i-- {
+			if id[i] == ':' {
+				out = append(out, id[:i])
+				break
+			}
+		}
+	}
+	return out
+}
+
 // readFastqBarcodes parses a converted tellseq-format FASTQ and returns
 // the inline barcode of every record, in file order.
 func readFastqBarcodes(t *testing.T, path string) []string {
@@ -192,4 +251,52 @@ func TestConvertFqParallel_UnknownFormat(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for an unknown target format")
 	}
+}
+
+// This is the test that actually exercises the chunk-pairing dispatcher:
+// with enough records to span many chunks and enough workers that chunk
+// pairs can plausibly complete out of their original order, R1 and R2
+// output must still agree record-for-record at every shared position.
+// Without the single-dispatcher design (e.g. if two independent worker
+// pools pulled from R1's and R2's ChunkChan separately), this is exactly
+// the test that would catch the resulting misalignment.
+func TestConvertFqParallel_PairedOutputStaysAligned(t *testing.T) {
+	dir := t.TempDir()
+	r1In := filepath.Join(dir, "r1.fq")
+	r2In := filepath.Join(dir, "r2.fq")
+	const nRecords = 12000 // 6 chunks at convertFqChunkSize=2000
+	const nBarcodes = 37
+	writePairedHaplotaggingFixtures(t, r1In, r2In, nRecords, nBarcodes)
+
+	prefix := filepath.Join(dir, "out")
+	if err := ConvertFqParallel([]string{r1In, r2In}, "tellseq", prefix, "", 8); err != nil {
+		t.Fatalf("ConvertFqParallel: %v", err)
+	}
+
+	r1IDs := readFastqIDs(t, prefix+".R1.fq.gz")
+	r2IDs := readFastqIDs(t, prefix+".R2.fq.gz")
+
+	if len(r1IDs) != nRecords || len(r2IDs) != nRecords {
+		t.Fatalf("got %d R1 records and %d R2 records, want %d each", len(r1IDs), len(r2IDs), nRecords)
+	}
+	for i := range r1IDs {
+		if r1IDs[i] != r2IDs[i] {
+			t.Fatalf("position %d misaligned: R1 ID %q != R2 ID %q", i, r1IDs[i], r2IDs[i])
+		}
+	}
+
+	// Confirm the fixture actually got reordered relative to input at
+	// least somewhere -- otherwise this test wouldn't be exercising
+	// anything the single-file case doesn't already cover. (Not a
+	// correctness requirement, just a sanity check that this test has
+	// teeth: enough chunks/workers that completion order isn't trivially
+	// already-sequential.)
+	reordered := false
+	for i, id := range r1IDs {
+		if id != fmt.Sprintf("pair%06d", i) {
+			reordered = true
+			break
+		}
+	}
+	t.Logf("output reordered relative to input: %v", reordered)
 }
