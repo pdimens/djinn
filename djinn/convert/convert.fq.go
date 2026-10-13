@@ -15,7 +15,7 @@ import (
 	"github.com/shenwei356/xopen"
 )
 
-func ConvertFq(fqs []string, convTo, prefix, bcmap string, threads int) error {
+func ConvertFq(fqs []string, convTo, prefix, bcmap string) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var err error
 	var bcs barcodes.Generator
@@ -32,8 +32,7 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string, threads int) error {
 			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode file must be provided to identify inline barcodes.", fqs[0])
 		} else {
 			// SWAP TO THE 10X CONVERTER and return
-			//fmt.Fprintln(os.Stderr, "Format detected: 10X")
-			return ConvertFrom10X(fqs, convTo, prefix, bcmap, threads)
+			return ConvertFrom10X(fqs, convTo, prefix, bcmap)
 		}
 	}
 
@@ -140,7 +139,7 @@ func ConvertFq(fqs []string, convTo, prefix, bcmap string, threads int) error {
 	return nil
 }
 
-func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string, threads int) error {
+func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var err error
 	var bcs barcodes.Generator
@@ -164,7 +163,7 @@ func ConvertFrom10X(fqs []string, convTo, prefix, bcmap string, threads int) err
 
 	seen := make(map[string][]byte, 4_000_000)
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
-	bclist, err := barcodes.LoadTenXSet()
+	bclist, err := barcodes.LoadTenXFromFile(bcmap)
 	if err != nil {
 		return err
 	}

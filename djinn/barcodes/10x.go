@@ -5,6 +5,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"os"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -86,6 +87,29 @@ func LoadTenXSet() (map[string]struct{}, error) {
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("barcodes: reading embedded 10X whitelist: %w", err)
+	}
+	return set, nil
+}
+
+// Read a 10X style barcode whitelist file into a map. Expects one barcode
+// per line, does not check for correctness.
+func LoadTenXFromFile(whitelist string) (map[string]struct{}, error) {
+	dec, err := os.Open(whitelist)
+	if err != nil {
+		return nil, fmt.Errorf("failed opening 10X whitelist: %w", err)
+	}
+	defer dec.Close()
+
+	set := make(map[string]struct{}, 5_000_000)
+	scanner := bufio.NewScanner(dec)
+	for scanner.Scan() {
+		// map keys always copy on insert (Go strings are immutable and a
+		// []byte->string conversion here copies), so aliasing
+		// scanner.Bytes() past this call is a non-issue.
+		set[scanner.Text()] = struct{}{}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed reading 10X whitelist: %w", err)
 	}
 	return set, nil
 }

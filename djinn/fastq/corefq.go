@@ -42,7 +42,7 @@ type CoreFq struct {
 	Comments []byte // remaining description text (SAM-style aux tokens) once CASAVA/Barcode are removed
 }
 
-var CasavaConst = []byte{':', 'N', ':', 'A', 'T', 'C', 'G'}
+var CasavaConst = []byte{':', 'N', ':', '1', '8', ':', 'A', 'T', 'C', 'G'}
 
 // ----- shared scanning helpers -------------------------------------------
 //

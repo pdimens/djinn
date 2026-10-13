@@ -82,12 +82,12 @@ var convertXamCmd = &cobra.Command{
 }
 
 var convertFqCmd = &cobra.Command{
-	Use:     "convert [options] toFormat file.R1.fq.gz file.R2.fq.gz",
-	Short:   "Convert between linked-read FASTQ file and barcode formats",
-	Example: "convert -t 3 10x gcurratum.bam > gcurratum.10x.bam",
-	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x).
+	Use:     "convert [options] outFormat prefix file.R1.fq.gz file.R2.fq.gz",
+	Short:   "Convert between linked-read FASTQ/barcode formats",
+	Example: "convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R1.fq.gz",
+	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
 
-| toFormat     | barcode format | example            |
+| outFormat    | barcode format | example            |
 ------------------------------------------------------
 | 10x          | 16 nucleotides | GGTTGACATTAAGACA   |
 | haplotagging | AxxCxxBxxDxx   | A01C93B56D11       |
@@ -102,10 +102,13 @@ var convertFqCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide a target format and input SAM/BAM file")
 		}
-		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
+		if err := cobra.ExactArgs(4)(cmd, args); err != nil {
 			return err
 		}
-		if err := filecheck(args[1]); err != nil {
+		if err := filecheck(args[2]); err != nil {
+			return err
+		}
+		if err := filecheck(args[3]); err != nil {
 			return err
 		}
 		var err error
@@ -114,40 +117,28 @@ var convertFqCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("toFormat must be one of: standard, haplotagging, stlfr, tellseq, 10x")
 		}
-		mapfile, err := cmd.Flags().GetString("map")
+		mapfile, err := cmd.Flags().GetString("bc-map")
 		if err != nil {
 			return err
 		}
-		// only raise error for missing map file if conversion not 'standard'
-		if strings.ToLower(args[0]) != "standard" {
-			if mapfile == "" {
-				return fmt.Errorf("conversion map file must be provided via --map/-m")
-			}
-			if err := ensureWritableDir(mapfile); err != nil {
-				return err
-			}
-		}
-		_, err = cmd.Flags().GetInt("threads")
-		if err != nil {
+		if mapfile != "" && filecheck(mapfile) != nil {
 			return err
 		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		threads, _ := cmd.Flags().GetInt("threads")
-		runtime.GOMAXPROCS(safethreads(threads))
-
-		mapfile, _ := cmd.Flags().GetString("map")
-		sam, err := cmd.Flags().GetBool("sam")
-		if err != nil {
-			return err
-		}
+		mapfile, _ := cmd.Flags().GetString("bc-map")
 
 		switch strings.ToLower(args[0]) {
 		case "standard":
-			return convert.Standardize(args[1], threads, sam)
+			return convert.StandardizeFq(args[2:], args[1], mapfile)
 		default:
-			return convert.ConvertXam(args[1], strings.ToLower(args[0]), mapfile, threads, sam)
+			return convert.ConvertFq(
+				args[2:],
+				strings.ToLower(args[0]),
+				args[1],
+				mapfile,
+			)
 		}
 	},
 }
@@ -161,7 +152,5 @@ func init() {
 	convertXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	convertXamCmd.Flags().StringP("map", "m", "", "Write barcode conversion map to this file (required if not 'standard')")
 
-	//convertFqCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to files with this prefix (optional)")
-	//convertFqCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")
-
+	convertFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
 }

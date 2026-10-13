@@ -39,15 +39,15 @@ This is **extremely experimental** and it converts a paired-end linked-read fast
 
 | fastq | sam | function |
 |:-----:|:-----:|:-----|
-| [ ] | [x] | convert           |     
+| [x] | [x] | convert           |     
 | [x] | [x] | count             |     
 | [x] | [x] | extract           |              
 | [x] | [x] | filter-invalid    |            
 | [x] | [x] | filter-singletons |   
-| [ ] | [x] | ncbi              | 
+| [x] | [x] | ncbi              | 
 | [x] | [x] | sample            |               
 | [ ] | [x] | sort              |             
-| [ ] | [x] | standardize       | 
+| [x] | [x] | standardize       | 
 | [ ] | [ ] | concat            |
 | [ ] |     | spoof-hic         |               
 |     | [ ] | deconvolute       |
