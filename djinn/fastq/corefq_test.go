@@ -41,7 +41,7 @@ func TestToTellseq_SingleByteCASAVA(t *testing.T) {
 	rec.ToTellseq(w)
 	w.Flush()
 
-	want := "@read1:ATCGATCG\t2:N:ATCG\nACGT\n+\nIIII\n"
+	want := "@read1:ATCGATCG\t2:N:18:ATCG\nACGT\n+\nIIII\n"
 	if got := out.String(); got != want {
 		t.Errorf("ToTellseq output = %q, want %q", got, want)
 	}
@@ -79,7 +79,7 @@ func TestToStlfr(t *testing.T) {
 	rec.ToStlfr(w)
 	w.Flush()
 
-	want := "@read1#123_456_789\t1:N:ATCG\nACGT\n+\nIIII\n"
+	want := "@read1#123_456_789\t1:N:18:ATCG\nACGT\n+\nIIII\n"
 	if got := out.String(); got != want {
 		t.Errorf("ToStlfr output = %q, want %q", got, want)
 	}
@@ -98,7 +98,7 @@ func TestToTenX_R1PrependsBarcodeAndFillerQual(t *testing.T) {
 	rec.ToTenX(w)
 	w.Flush()
 
-	want := "@read1:ATCGATCGATCGATCG\t1:N:ATCG\n" +
+	want := "@read1:ATCGATCGATCGATCG\t1:N:18:ATCG\n" +
 		"ATCGATCGATCGATCGACGTACGT\n+\n" +
 		"IIIIIIIIIIIIIIIIIIIIIIII\n" // 16 'I' filler + original 8 qual chars
 	if got := out.String(); got != want {
@@ -119,7 +119,7 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 	rec.ToTenX(w)
 	w.Flush()
 
-	want := "@read1:ATCGATCGATCGATCG\t2:N:ATCG\nACGTACGT\n+\nIIIIIIII\n"
+	want := "@read1:ATCGATCGATCGATCG\t2:N:18:ATCG\nACGTACGT\n+\nIIIIIIII\n"
 	if got := out.String(); got != want {
 		t.Errorf("ToTenX (R2) output = %q, want %q", got, want)
 	}

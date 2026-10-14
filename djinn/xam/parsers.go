@@ -2,7 +2,7 @@ package xam
 
 import (
 	"bufio"
-	"djinn/barcodes"
+	"fmt"
 	"os"
 
 	"github.com/biogo/hts/bam"
@@ -28,9 +28,8 @@ func isHaplotaggingBarcode(bc string) bool {
 
 // isNucleotideBarcode reports whether bc consists solely of DNA bases
 // (including the ambiguity code N) -- the shape shared by both TELLseq
-// and 10X barcodes once standardized into a BX:Z tag. Distinguishing the
-// two requires checking against the 10X whitelist; see
-// DetectBarcodeFormat.
+// and 10X barcodes once standardized into a BX:Z tag. The two are told
+// apart purely by length (10X: 16, TELLseq: 18); see DetectBarcodeFormat.
 func isNucleotideBarcode(bc string) bool {
 	if bc == "" {
 		return false
@@ -97,19 +96,19 @@ func openAlignmentReader(file string) (r AlignmentReader, fh *os.File, isBAM boo
 
 // DetectBarcodeFormat scans up to the first 100 records of file (SAM or
 // BAM, "-" for stdin) and reports which linked-read barcode format they
-// use: "haplotagging", "stlfr", "tellseq", "10x", or "error" when the
+// use: "haplotagging", "stlfr", "genetic-<LEN>", or "error" when the
 // format can't be determined -- no recognizable barcode on any sampled
 // record, the file can't be opened/read, or more than one format was
 // identified (input is expected to be consistently one format,
 // mirroring fastq.CoreFqParser's own rule).
 //
-// Unlike fastq.CoreFqParser, this can and does report "10x": a SAM/BAM
-// barcode is always stored as a BX:Z tag regardless of its original
-// source technology, so TELLseq and 10X -- both plain nucleotide
-// strings once standardized -- are otherwise indistinguishable by shape
-// alone. They're told apart by checking against the embedded 10X
-// whitelist (barcodes.LoadTenXSet), loaded only if a nucleotide-shaped
-// barcode is actually seen in the sample.
+// A SAM/BAM barcode is always stored as a BX:Z tag regardless of its
+// original source technology, so TELLseq and 10X -- both plain
+// nucleotide strings once standardized -- are otherwise
+// indistinguishable by shape alone. Rather than resolving that via the
+// (expensive to load) 10X whitelist, nucleotide-shaped barcodes are
+// reported as "genetic-<LEN>" (e.g. "genetic-16" for 10X, "genetic-18"
+// for TELLseq) and left for the caller to interpret.
 func DetectBarcodeFormat(file string) string {
 	r, fh, isBAM, err := openAlignmentReader(file)
 	if err != nil {
@@ -121,7 +120,7 @@ func DetectBarcodeFormat(file string) string {
 	}
 
 	var haplotagging, stlfr int
-	var nucBarcodes []string
+	nucLens := make(map[int]int)
 	for i := 0; i < 100; i++ {
 		rec, err := r.Read()
 		if err != nil {
@@ -137,42 +136,31 @@ func DetectBarcodeFormat(file string) string {
 		case isStlfrBody(bc):
 			stlfr++
 		case isNucleotideBarcode(bc):
-			nucBarcodes = append(nucBarcodes, bc)
-		}
-	}
-
-	var tenx, tellseq int
-	if len(nucBarcodes) > 0 {
-		set, err := barcodes.LoadTenXSet()
-		if err != nil {
-			return "error"
-		}
-		for _, bc := range nucBarcodes {
-			if _, ok := set[bc]; ok {
-				tenx++
-			} else {
-				tellseq++
-			}
+			nucLens[len(bc)]++
 		}
 	}
 
 	formatsFound := 0
-	for _, n := range [4]int{haplotagging, stlfr, tenx, tellseq} {
-		if n > 0 {
-			formatsFound++
-		}
+	if haplotagging > 0 {
+		formatsFound++
 	}
+	if stlfr > 0 {
+		formatsFound++
+	}
+	formatsFound += len(nucLens)
 
-	switch {
-	case formatsFound != 1:
+	if formatsFound != 1 {
 		return "error"
+	}
+	switch {
 	case haplotagging > 0:
 		return "haplotagging"
 	case stlfr > 0:
 		return "stlfr"
-	case tenx > 0:
-		return "10x"
 	default:
-		return "tellseq"
+		for length := range nucLens {
+			return fmt.Sprintf("genetic-%d", length)
+		}
+		return "error" // unreachable: formatsFound==1 guarantees one of the above
 	}
 }

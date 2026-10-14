@@ -1,7 +1,6 @@
 package xam
 
 import (
-	"djinn/barcodes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,25 +31,6 @@ func writeSamRecords(t *testing.T, bxValues []string) string {
 	return path
 }
 
-func realTenXBarcodes(t *testing.T, n int) []string {
-	t.Helper()
-	g, err := barcodes.NewTenXList()
-	if err != nil {
-		t.Fatalf("NewTenXList: %v", err)
-	}
-	defer g.Close()
-	buf := make([]byte, g.MaxLen())
-	out := make([]string, 0, n)
-	for i := 0; i < n; i++ {
-		k, ok := g.NextInto(buf)
-		if !ok {
-			t.Fatalf("expected %d real 10X barcodes from the embedded whitelist", n)
-		}
-		out = append(out, string(buf[:k]))
-	}
-	return out
-}
-
 func TestDetectBarcodeFormat_Haplotagging(t *testing.T) {
 	path := writeSamRecords(t, []string{"A01C02B03D04", "A05C06B07D08", "A09C10B11D12"})
 	if got := DetectBarcodeFormat(path); got != "haplotagging" {
@@ -65,18 +45,27 @@ func TestDetectBarcodeFormat_Stlfr(t *testing.T) {
 	}
 }
 
-func TestDetectBarcodeFormat_Tellseq(t *testing.T) {
-	// A nucleotide-shaped barcode that is not a real 10X whitelist entry.
-	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGAAAC", "ATCGATCGATCGAAAG"})
-	if got := DetectBarcodeFormat(path); got != "tellseq" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "tellseq")
+func TestDetectBarcodeFormat_GeneticTellseqLength(t *testing.T) {
+	// 18bp nucleotide barcodes -- TELLseq length, reported generically.
+	path := writeSamRecords(t, []string{"ATCGATCGATCGATCGAA", "ATCGATCGATCGATCGAC", "ATCGATCGATCGATCGAG"})
+	if got := DetectBarcodeFormat(path); got != "genetic-18" {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "genetic-18")
 	}
 }
 
-func TestDetectBarcodeFormat_TenX(t *testing.T) {
-	path := writeSamRecords(t, realTenXBarcodes(t, 3))
-	if got := DetectBarcodeFormat(path); got != "10x" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "10x")
+func TestDetectBarcodeFormat_GeneticTenXLength(t *testing.T) {
+	// 16bp nucleotide barcodes -- 10X length, reported generically.
+	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGAAAC", "ATCGATCGATCGAAAG"})
+	if got := DetectBarcodeFormat(path); got != "genetic-16" {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "genetic-16")
+	}
+}
+
+func TestDetectBarcodeFormat_MixedNucleotideLengthsIsError(t *testing.T) {
+	// Same shape (pure nucleotide), different lengths -- still ambiguous.
+	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGATCGAA"})
+	if got := DetectBarcodeFormat(path); got != "error" {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "error")
 	}
 }
 
