@@ -28,6 +28,28 @@ func TestToHaplotagging(t *testing.T) {
 	}
 }
 
+func TestToHaplotagging_NoCASAVA(t *testing.T) {
+	// CASAVA may be empty (no "/1" or "N:0:ATCG"-style marker was present
+	// on the source record) -- must omit the suffix rather than index
+	// CASAVA[0] unconditionally, which would panic. Same guard as
+	// TestToStandard's no-CASAVA case.
+	rec := CoreFq{
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGT"),
+		Qual:    []byte("IIII"),
+		Barcode: []byte("A01C02B03D04"),
+	}
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToHaplotagging(w)
+	w.Flush()
+
+	want := "@read1\tBX:Z:A01C02B03D04\nACGT\n+\nIIII\n"
+	if got := out.String(); got != want {
+		t.Errorf("ToHaplotagging output = %q, want %q", got, want)
+	}
+}
+
 func TestToTellseq_SingleByteCASAVA(t *testing.T) {
 	rec := CoreFq{
 		ID:      []byte("read1"),

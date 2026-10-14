@@ -1,12 +1,12 @@
 package sort
 
 import (
-	"container/heap"
+	"bytes"
 	"djinn/xam"
 	"errors"
 	"io"
 	"os"
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/biogo/hts/bam"
@@ -14,11 +14,15 @@ import (
 )
 
 const chunkSize = 500_000 // records per temp file, tune to RAM
+const ioBatchSize = 2000  // records per channel send on the read/write hot paths
 
 // SortByBX streams inPath, spills BX:Z-sorted chunks in parallel, k-way merges into outPath.
 func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 	// ── open reader -------------───────────────────────────────────────────────
-	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, max(2, threads))
+	// Batched: the reader goroutine hands over up to ioBatchSize records per
+	// channel send instead of one, so this hot path pays one channel
+	// send/receive per batch rather than one per record.
+	recChan, br := xam.NewXamReaderChanBatch(infile, xam.ChanCap, xam.IoBuf, max(2, threads), ioBatchSize)
 
 	// ── establish temp dir -------------───────────────────────────────────────────────
 	if tmpDir != "" {
@@ -69,8 +73,8 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 	// producer: read + batch on the calling goroutine
 	var chunk []*sam.Record
 
-	for rec := range recChan {
-		chunk = append(chunk, rec)
+	for batch := range recChan {
+		chunk = append(chunk, batch...)
 		if len(chunk) >= chunkSize {
 			chunks <- chunk
 			chunk = nil
@@ -103,18 +107,54 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 	return mergeChunks(tmpFiles, hdr, outPath, asSam)
 }
 
-// bxOf extracts BX:Z; missing tag sorts last (samtools convention: unset tags trail).
-func bxOf(r *sam.Record) string {
-	if aux, ok := r.Tag([]byte("BX")); ok {
-		return aux.Value().(string)
+// bxTagName is the two-byte SAM tag ID looked up on every record; hoisted to
+// a var so the lookup never allocates a fresh []byte literal per call.
+var bxTagName = []byte("BX")
+
+// missingBXKey sorts after every real BX value (samtools convention: unset
+// tags trail). 0xff can't appear in a real BX:Z value (SAM aux text is
+// printable ASCII), so this can't collide with a real key.
+var missingBXKey = []byte{0xff, 0xff, 0xff, 0xff}
+
+// bxKeyOf returns r's BX:Z value as a zero-copy view into the record's own
+// AuxFields backing array -- no string conversion, no interface boxing.
+// sam.Aux.Value() would do both (string(a[3:]) allocates and copies, and
+// the interface{} return boxes it again); since all every caller here does
+// with the result is bytes.Compare it, there's nothing to buy by going
+// through either step.
+//
+// Call this once per record, not once per comparison: Record.Tag does a
+// linear scan of AuxFields, so calling it from inside a sort/heap
+// comparator -- as this package used to -- means every record gets
+// rescanned and reboxed on every comparison it takes part in (O(n log n)
+// times during the sort, O(n log k) more times during the merge), not
+// once. Both sortAndSpill and mergeChunks below compute each record's key
+// exactly once and carry it alongside the record from then on.
+func bxKeyOf(r *sam.Record) []byte {
+	if aux, ok := r.Tag(bxTagName); ok {
+		return aux[3:] // raw 'Z'-type value bytes, same slice Value() would copy from
 	}
-	return "\xff\xff\xff\xff"
+	return missingBXKey
+}
+
+// keyedRecord pairs a record with its precomputed sort key.
+type keyedRecord struct {
+	key []byte
+	rec *sam.Record
 }
 
 // sortAndSpill sorts one chunk by BX:Z and writes it to a fresh temp BAM. Each
 // call owns its own slice, so no lock is needed across worker goroutines.
 func sortAndSpill(chunk []*sam.Record, hdr *sam.Header, tmpDir string) (string, error) {
-	sort.Slice(chunk, func(i, j int) bool { return bxOf(chunk[i]) < bxOf(chunk[j]) })
+	keyed := make([]keyedRecord, len(chunk))
+	for i, r := range chunk {
+		keyed[i] = keyedRecord{key: bxKeyOf(r), rec: r}
+	}
+	// slices.SortFunc on a concrete []keyedRecord avoids sort.Slice's
+	// reflection-based swap, and the comparator is now a plain
+	// bytes.Compare against an already-computed key -- no further tag
+	// lookups.
+	slices.SortFunc(keyed, func(a, b keyedRecord) int { return bytes.Compare(a.key, b.key) })
 
 	f, err := os.CreateTemp(tmpDir, ".bxsort-*.bam")
 	if err != nil {
@@ -126,8 +166,8 @@ func sortAndSpill(chunk []*sam.Record, hdr *sam.Header, tmpDir string) (string, 
 	if err != nil {
 		return "", err
 	}
-	for _, r := range chunk {
-		if err := bw.Write(r); err != nil {
+	for _, kr := range keyed {
+		if err := bw.Write(kr.rec); err != nil {
 			bw.Close()
 			return "", err
 		}
@@ -138,22 +178,62 @@ func sortAndSpill(chunk []*sam.Record, hdr *sam.Header, tmpDir string) (string, 
 	return f.Name(), nil
 }
 
+// mergeItem is one entry in the k-way merge heap: a record, its
+// precomputed sort key, and which temp file it came from.
 type mergeItem struct {
 	rec *sam.Record
+	key []byte
 	src int
 }
+
+// mergeHeap is a hand-rolled binary min-heap over a concrete []mergeItem.
+// container/heap's Push/Pop take an `any`, so every record crossing it
+// would be boxed into an interface and type-asserted back out; with up to
+// a few hundred thousand records flowing through this heap per merge,
+// that's a lot of avoidable allocation+assertion for no benefit, since the
+// element type here is fixed and known at compile time.
 type mergeHeap []mergeItem
 
-func (h mergeHeap) Len() int           { return len(h) }
-func (h mergeHeap) Less(i, j int) bool { return bxOf(h[i].rec) < bxOf(h[j].rec) }
-func (h mergeHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *mergeHeap) Push(x any)        { *h = append(*h, x.(mergeItem)) }
-func (h *mergeHeap) Pop() any {
+func (h *mergeHeap) push(it mergeItem) {
+	*h = append(*h, it)
+	i := len(*h) - 1
+	for i > 0 {
+		parent := (i - 1) / 2
+		if bytes.Compare((*h)[i].key, (*h)[parent].key) >= 0 {
+			break
+		}
+		(*h)[i], (*h)[parent] = (*h)[parent], (*h)[i]
+		i = parent
+	}
+}
+
+func (h *mergeHeap) pop() mergeItem {
 	old := *h
-	n := len(old)
-	it := old[n-1]
-	*h = old[:n-1]
-	return it
+	n := len(old) - 1
+	top := old[0]
+	old[0] = old[n]
+	*h = old[:n]
+	h.siftDown(0)
+	return top
+}
+
+func (h *mergeHeap) siftDown(i int) {
+	n := len(*h)
+	for {
+		left := 2*i + 1
+		if left >= n {
+			return
+		}
+		smallest := left
+		if right := left + 1; right < n && bytes.Compare((*h)[right].key, (*h)[left].key) < 0 {
+			smallest = right
+		}
+		if bytes.Compare((*h)[smallest].key, (*h)[i].key) >= 0 {
+			return
+		}
+		(*h)[i], (*h)[smallest] = (*h)[smallest], (*h)[i]
+		i = smallest
+	}
 }
 
 // mergeChunks does a single-threaded k-way merge of already-sorted temp
@@ -182,30 +262,39 @@ func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool)
 	}()
 
 	// --- Create writer channel --------------------------
-	// outPath is passed through verbatim ("-" means stdout); NewXamWriterChan
-	// owns opening/creating the destination file itself.
-	writeChan, writeDone := xam.NewXamWriterChan(outPath, hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
+	// outPath is passed through verbatim ("-" means stdout); NewXamWriterChanBatch
+	// owns opening/creating the destination file itself. Batched: records popped
+	// off the heap are accumulated into a slice and sent ioBatchSize at a time,
+	// rather than one channel send per record.
+	writeChan, writeDone := xam.NewXamWriterChanBatch(outPath, hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
 
 	h := &mergeHeap{}
 	for i, br := range readers {
 		rec, rerr := br.Read()
 		if rerr == nil {
-			*h = append(*h, mergeItem{rec, i})
+			h.push(mergeItem{rec: rec, key: bxKeyOf(rec), src: i})
 		} else if !errors.Is(rerr, io.EOF) {
 			return rerr
 		}
 	}
-	heap.Init(h)
 
-	for h.Len() > 0 {
-		top := heap.Pop(h).(mergeItem)
-		writeChan <- top.rec
+	batch := make([]*sam.Record, 0, ioBatchSize)
+	for len(*h) > 0 {
+		top := h.pop()
+		batch = append(batch, top.rec)
+		if len(batch) >= ioBatchSize {
+			writeChan <- batch
+			batch = make([]*sam.Record, 0, ioBatchSize)
+		}
 		rec, rerr := readers[top.src].Read()
 		if rerr == nil {
-			heap.Push(h, mergeItem{rec, top.src})
+			h.push(mergeItem{rec: rec, key: bxKeyOf(rec), src: top.src})
 		} else if !errors.Is(rerr, io.EOF) {
 			return rerr
 		}
+	}
+	if len(batch) > 0 {
+		writeChan <- batch
 	}
 	close(writeChan)
 	<-writeDone

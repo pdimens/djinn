@@ -216,9 +216,14 @@ func splitCASAVA(id, desc []byte) (newID, newDesc, casava []byte) {
 func (rec *CoreFq) ToHaplotagging(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte(FwSlash)
-	// only use the first byte of CASAVA, which will either be 1 or 2
-	writer.WriteByte(rec.CASAVA[0])
+	// CASAVA may be empty (no "/1" or "N:0:ATCG"-style marker was present
+	// on the source record) -- omit the suffix rather than index
+	// CASAVA[0] unconditionally, which would panic on exactly that input.
+	// Same guard as ToStandard.
+	if len(rec.CASAVA) > 0 {
+		writer.WriteByte(FwSlash)
+		writer.WriteByte(rec.CASAVA[0])
+	}
 	writer.WriteByte(TabSep)
 	//TODO ONLY WRITE SAM-COMPLIANT COMMENTS
 	writer.Write(BxTagConst)

@@ -1,7 +1,9 @@
 package sort
 
 import (
+	"bytes"
 	"io"
+	mathrand "math/rand"
 	"os"
 	"sort"
 	"testing"
@@ -79,14 +81,14 @@ func readBamBX(t *testing.T, path string) []string {
 		if err != nil {
 			t.Fatalf("br.Read: %v", err)
 		}
-		out = append(out, bxOf(rec))
+		out = append(out, string(bxKeyOf(rec)))
 	}
 	return out
 }
 
-// ── bxOf ─────────────────────────────────────────────────────────────────────
+// ── bxKeyOf ──────────────────────────────────────────────────────────────────
 
-func TestBxOf(t *testing.T) {
+func TestBxKeyOf(t *testing.T) {
 	cases := []struct {
 		name string
 		bx   string
@@ -98,20 +100,20 @@ func TestBxOf(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			rec := newTestRecord(t, "read1", c.bx)
-			got := bxOf(rec)
+			got := string(bxKeyOf(rec))
 			if got != c.want {
-				t.Errorf("bxOf() = %q, want %q", got, c.want)
+				t.Errorf("bxKeyOf() = %q, want %q", got, c.want)
 			}
 		})
 	}
 }
 
-func TestBxOfOrdering(t *testing.T) {
+func TestBxKeyOfOrdering(t *testing.T) {
 	// A record with no BX tag must sort after any record with a real BX
 	// value (samtools convention: unset tags trail).
 	withBX := newTestRecord(t, "r1", "AAAA")
 	withoutBX := newTestRecord(t, "r2", "")
-	if !(bxOf(withBX) < bxOf(withoutBX)) {
+	if !(bytes.Compare(bxKeyOf(withBX), bxKeyOf(withoutBX)) < 0) {
 		t.Errorf("expected record with BX to sort before record without BX")
 	}
 }
@@ -165,32 +167,44 @@ func TestSortAndSpillEmptyChunk(t *testing.T) {
 
 // ── mergeHeap ────────────────────────────────────────────────────────────────
 
+func mkMergeItem(t *testing.T, name, bx string, src int) mergeItem {
+	t.Helper()
+	rec := newTestRecord(t, name, bx)
+	return mergeItem{rec: rec, key: bxKeyOf(rec), src: src}
+}
+
 func TestMergeHeapOrdering(t *testing.T) {
-	h := mergeHeap{
-		{rec: newTestRecord(t, "a", "BBBB"), src: 0},
-		{rec: newTestRecord(t, "b", "AAAA"), src: 1},
-		{rec: newTestRecord(t, "c", "CCCC"), src: 2},
+	// Pushing out of order must pop back out in ascending BX order.
+	h := &mergeHeap{}
+	h.push(mkMergeItem(t, "a", "BBBB", 0))
+	h.push(mkMergeItem(t, "b", "AAAA", 1))
+	h.push(mkMergeItem(t, "c", "CCCC", 2))
+
+	var got []string
+	for len(*h) > 0 {
+		got = append(got, string(h.pop().key))
 	}
-	if !h.Less(1, 0) {
-		t.Errorf("expected item with lower BX (AAAA) to be Less than item with BBBB")
-	}
-	if h.Less(0, 1) {
-		t.Errorf("BBBB should not be Less than AAAA")
+	want := []string{"AAAA", "BBBB", "CCCC"}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("pop order = %v, want %v", got, want)
+			break
+		}
 	}
 }
 
 func TestMergeHeapPushPop(t *testing.T) {
 	h := &mergeHeap{}
-	h.Push(mergeItem{rec: newTestRecord(t, "x", "AAAA"), src: 0})
-	if h.Len() != 1 {
-		t.Fatalf("Len() = %d, want 1", h.Len())
+	h.push(mkMergeItem(t, "x", "AAAA", 0))
+	if len(*h) != 1 {
+		t.Fatalf("len = %d, want 1", len(*h))
 	}
-	popped := h.Pop().(mergeItem)
-	if bxOf(popped.rec) != "AAAA" {
-		t.Errorf("Pop() returned wrong item")
+	popped := h.pop()
+	if string(popped.key) != "AAAA" {
+		t.Errorf("pop() returned wrong item")
 	}
-	if h.Len() != 0 {
-		t.Errorf("Len() after Pop = %d, want 0", h.Len())
+	if len(*h) != 0 {
+		t.Errorf("len after pop = %d, want 0", len(*h))
 	}
 }
 
@@ -290,5 +304,33 @@ func TestSortByBXEmptyInput(t *testing.T) {
 	got := readBamBX(t, outPath)
 	if len(got) != 0 {
 		t.Errorf("expected 0 records, got %d", len(got))
+	}
+}
+
+// ── fuzz-ish correctness check for the hand-rolled heap ────────────────────
+
+func TestMergeHeapRandomizedOrdering(t *testing.T) {
+	r := mathrand.New(mathrand.NewSource(1))
+	const n = 2000
+	h := &mergeHeap{}
+	var keys []string
+	for i := 0; i < n; i++ {
+		bx := make([]byte, 8)
+		for j := range bx {
+			bx[j] = byte('A' + r.Intn(26))
+		}
+		keys = append(keys, string(bx))
+		h.push(mkMergeItem(t, "r", string(bx), i))
+	}
+	sort.Strings(keys)
+
+	for i := 0; i < n; i++ {
+		got := string(h.pop().key)
+		if got != keys[i] {
+			t.Fatalf("pop %d = %q, want %q", i, got, keys[i])
+		}
+	}
+	if len(*h) != 0 {
+		t.Errorf("heap not empty after popping all items: %d left", len(*h))
 	}
 }
