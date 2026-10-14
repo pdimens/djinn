@@ -280,7 +280,7 @@ func TestCountXamHasThreadsFlag(t *testing.T) {
 
 // ── sampleXamCmd / sampleFqCmd downsample validation (in RunE) ─────────────
 
-func TestSampleXamRunERejectsNonPositiveDownsample(t *testing.T) {
+func TestSampleXamArgsRejectsNonPositiveDownsample(t *testing.T) {
 	dir := t.TempDir()
 	valid := makeReadableFile(t, dir, "in.bam")
 	reset := func() {
@@ -289,22 +289,33 @@ func TestSampleXamRunERejectsNonPositiveDownsample(t *testing.T) {
 	}
 	defer reset()
 
+	// The downsample <= 0 check lives in Args, not RunE -- cobra always
+	// runs Args before RunE, but calling RunE directly (as this test
+	// used to) skips Args entirely and ends up actually invoking
+	// sample.SampleXam on the fake input, which doesn't itself validate
+	// downsample and goes on to touch the filesystem for no reason this
+	// test cares about.
 	setStringFlag(t, sampleXamCmd.Flags(), "downsample", "0")
-	err := sampleXamCmd.RunE(sampleXamCmd, []string{valid})
-	if err == nil {
+	if err := sampleXamCmd.Args(sampleXamCmd, []string{valid}); err == nil {
 		t.Fatalf("expected error for downsample <= 0")
 	}
 }
 
-func TestSampleFqRunERejectsNonPositiveDownsample(t *testing.T) {
+func TestSampleFqArgsRejectsNonPositiveDownsample(t *testing.T) {
+	dir := t.TempDir()
+	// Args checks that r1/r2 exist before it checks downsample; use real
+	// (if fake-content) files so the downsample check is what actually
+	// gets exercised here, not a file-not-found error for an unrelated
+	// reason -- see TestSampleXamArgsRejectsNonPositiveDownsample.
+	r1 := makeReadableFile(t, dir, "r1.fq")
+	r2 := makeReadableFile(t, dir, "r2.fq")
 	reset := func() {
 		sampleFqCmd.Flags().Set("downsample", "0")
 	}
 	defer reset()
 
 	setStringFlag(t, sampleFqCmd.Flags(), "downsample", "-5")
-	err := sampleFqCmd.RunE(sampleFqCmd, []string{"prefix", "r1.fq", "r2.fq"})
-	if err == nil {
+	if err := sampleFqCmd.Args(sampleFqCmd, []string{"prefix", r1, r2}); err == nil {
 		t.Fatalf("expected error for negative downsample value")
 	}
 }

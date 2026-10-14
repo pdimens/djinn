@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"path"
 	"slices"
 	"time"
 )
@@ -64,7 +63,10 @@ func SampleXam(infile string, downsample float64, seed, threads int, invalid, as
 	r.Shuffle(nBC, func(i, j int) { keys[i], keys[j] = keys[j], keys[i] })
 
 	var nBcToKeep = int(downsample)
-	bcFile, err := os.Create(path.Base(infile) + ".bc")
+	// write alongside infile, not into the process's cwd: path.Base(infile)
+	// dropped infile's directory entirely, writing wherever the command
+	// happened to be run from.
+	bcFile, err := os.Create(infile + ".bc")
 	if err != nil {
 		return err
 	}
