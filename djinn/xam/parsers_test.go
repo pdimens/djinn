@@ -45,19 +45,19 @@ func TestDetectBarcodeFormat_Stlfr(t *testing.T) {
 	}
 }
 
-func TestDetectBarcodeFormat_GeneticTellseqLength(t *testing.T) {
+func TestDetectBarcodeFormat_GenericTellseqLength(t *testing.T) {
 	// 18bp nucleotide barcodes -- TELLseq length, reported generically.
 	path := writeSamRecords(t, []string{"ATCGATCGATCGATCGAA", "ATCGATCGATCGATCGAC", "ATCGATCGATCGATCGAG"})
-	if got := DetectBarcodeFormat(path); got != "genetic-18" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "genetic-18")
+	if got := DetectBarcodeFormat(path); got != "generic-18" {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "generic-18")
 	}
 }
 
-func TestDetectBarcodeFormat_GeneticTenXLength(t *testing.T) {
+func TestDetectBarcodeFormat_GenericTenXLength(t *testing.T) {
 	// 16bp nucleotide barcodes -- 10X length, reported generically.
 	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGAAAC", "ATCGATCGATCGAAAG"})
-	if got := DetectBarcodeFormat(path); got != "genetic-16" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "genetic-16")
+	if got := DetectBarcodeFormat(path); got != "generic-16" {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "generic-16")
 	}
 }
 

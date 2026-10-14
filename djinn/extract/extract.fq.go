@@ -13,9 +13,12 @@ import (
 
 func ExtractFQ(fqs []string, invalid bool) error {
 	// determine what kind of linked-read tech it is
-	processBC, err := fastq.CheckFastqFormat(fqs[0])
+	coreParser, _, err := fastq.CoreFqParser(fqs[0])
 	if err != nil {
 		return fmt.Errorf("%w", err)
+	}
+	if coreParser == nil {
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
 	}
 	seq.ValidateSeq = false
 	// ── open barcode writer ───────────────────────────────────────────────────────────
@@ -26,7 +29,7 @@ func ExtractFQ(fqs []string, invalid bool) error {
 	set := make(map[string]struct{}, 7_000_000) // barcode container
 
 	for _, fq := range fqs {
-		if err := extractFromFastq(fq, invalid, processBC, set, writer); err != nil {
+		if err := extractFromFastq(fq, invalid, coreParser, set, writer); err != nil {
 			return err
 		}
 	}
@@ -37,15 +40,13 @@ func ExtractFQ(fqs []string, invalid bool) error {
 // to writer. It closes its reader before returning, rather than deferring
 // the close to the caller's lifetime (which, across many input files, would
 // keep every prior file handle open until ExtractFQ itself returned).
-func extractFromFastq(fq string, invalid bool, processBC func(*fastx.Record) (string, bool), set map[string]struct{}, writer *bufio.Writer) error {
+func extractFromFastq(fq string, invalid bool, coreParser func(*fastx.Record) (fastq.CoreFq, bool), set map[string]struct{}, writer *bufio.Writer) error {
 	fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", fq, err)
 	}
 	defer fqReader.Close()
 
-	var bc string
-	var valid bool
 	for {
 		// iterate through records
 		rec, err := fqReader.Read()
@@ -56,15 +57,16 @@ func extractFromFastq(fq string, invalid bool, processBC func(*fastx.Record) (st
 			return err
 		}
 
-		bc, valid = processBC(rec)
-		if bc == "" {
+		core, ok := coreParser(rec)
+		if !ok {
 			continue
 		} // no barcode
 
-		if !valid && !invalid {
+		if !core.Valid && !invalid {
 			continue
 		} // is invalid and was not asked to report invalid
 
+		bc := string(core.Barcode)
 		if _, ok := set[bc]; ok {
 			continue
 		} else {

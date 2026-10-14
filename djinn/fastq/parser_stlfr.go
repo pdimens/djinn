@@ -64,7 +64,7 @@ func Stlfr2Corefq(rec *fastx.Record) (core CoreFq, ok bool) {
 		Qual:     rec.Seq.Qual,
 		CASAVA:   casava,
 		Barcode:  bc,
-		Valid:    !Invalid.Match(bc),
+		Valid:    !isInvalidBarcode(bc),
 		Comments: desc,
 	}, true
 }

@@ -96,7 +96,7 @@ func openAlignmentReader(file string) (r AlignmentReader, fh *os.File, isBAM boo
 
 // DetectBarcodeFormat scans up to the first 100 records of file (SAM or
 // BAM, "-" for stdin) and reports which linked-read barcode format they
-// use: "haplotagging", "stlfr", "genetic-<LEN>", or "error" when the
+// use: "haplotagging", "stlfr", "generic-<LEN>", or "error" when the
 // format can't be determined -- no recognizable barcode on any sampled
 // record, the file can't be opened/read, or more than one format was
 // identified (input is expected to be consistently one format,
@@ -107,7 +107,7 @@ func openAlignmentReader(file string) (r AlignmentReader, fh *os.File, isBAM boo
 // nucleotide strings once standardized -- are otherwise
 // indistinguishable by shape alone. Rather than resolving that via the
 // (expensive to load) 10X whitelist, nucleotide-shaped barcodes are
-// reported as "genetic-<LEN>" (e.g. "genetic-16" for 10X, "genetic-18"
+// reported as "generic-<LEN>" (e.g. "generic-16" for 10X, "generic-18"
 // for TELLseq) and left for the caller to interpret.
 func DetectBarcodeFormat(file string) string {
 	r, fh, isBAM, err := openAlignmentReader(file)
@@ -121,7 +121,7 @@ func DetectBarcodeFormat(file string) string {
 
 	var haplotagging, stlfr int
 	nucLens := make(map[int]int)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		rec, err := r.Read()
 		if err != nil {
 			break // EOF or a read error -- classify from whatever was sampled
@@ -159,7 +159,7 @@ func DetectBarcodeFormat(file string) string {
 		return "stlfr"
 	default:
 		for length := range nucLens {
-			return fmt.Sprintf("genetic-%d", length)
+			return fmt.Sprintf("generic-%d", length)
 		}
 		return "error" // unreachable: formatsFound==1 guarantees one of the above
 	}

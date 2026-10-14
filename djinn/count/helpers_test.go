@@ -53,7 +53,7 @@ func writeHapFastq(t *testing.T, path string, reads []hapRead) {
 
 // padHapReads pads reads with harmless, uniquely-barcoded filler records so
 // the file has at least `total` records. This is required because
-// fastq.CheckFastqFormat insists on reading (and succeeding on) the first
+// fastq.CoreFqParser insists on reading (and succeeding on) the first
 // 100 records of the file to sniff the linked-read technology.
 func padHapReads(reads []hapRead, total int) []hapRead {
 	for i := 0; len(reads) < total; i++ {

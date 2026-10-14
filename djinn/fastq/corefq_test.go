@@ -187,6 +187,42 @@ func TestHaplotag2Corefq(t *testing.T) {
 		}
 	})
 
+	t.Run("explicit VX:i:0 overrides a clean-looking barcode", func(t *testing.T) {
+		rec := mkRecord("read1", "BX:Z:A01C02B03D04 VX:i:0", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if core.Valid {
+			t.Error("expected Valid=false: an explicit VX:i:0 must override barcode-text inference")
+		}
+		if got, want := string(core.Comments), ""; got != want {
+			t.Errorf("Comments = %q, want %q (VX tag should be spliced out)", got, want)
+		}
+	})
+
+	t.Run("explicit VX:i:1 overrides an invalid-looking barcode", func(t *testing.T) {
+		rec := mkRecord("read1", "BX:Z:A00C02B03D04 VX:i:1", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true: an explicit VX:i:1 must override barcode-text inference")
+		}
+	})
+
+	t.Run("malformed VX value falls back to barcode-text inference", func(t *testing.T) {
+		rec := mkRecord("read1", "BX:Z:A01C02B03D04 VX:i:5", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true: a malformed VX value should not override, and the barcode text is clean")
+		}
+	})
+
 	t.Run("other aux fields survive in Comments", func(t *testing.T) {
 		rec := mkRecord("read1", "XX:i:5 BX:Z:A01C02B03D04 YY:Z:foo", "ACGT", "IIII")
 		core, ok := Haplotag2Corefq(rec)

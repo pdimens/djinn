@@ -15,9 +15,12 @@ import (
 
 func CountFQ(fqs []string, invalid bool) error {
 	// determine what kind of linked-read tech it is
-	processBC, err := fastq.CheckFastqFormat(fqs[0])
+	coreParser, _, err := fastq.CoreFqParser(fqs[0])
 	if err != nil {
 		return fmt.Errorf("%w", err)
+	}
+	if coreParser == nil {
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
 	}
 	seq.ValidateSeq = false
 	// ── open barcode writer ───────────────────────────────────────────────────────────
@@ -26,8 +29,6 @@ func CountFQ(fqs []string, invalid bool) error {
 
 	// ---- main loop -------------------------
 	set := make(map[string]int, 7_000_000) // barcode container
-	var bc string
-	var valid bool
 
 	// R1
 	fqReader, err := fastx.NewReader(seq.DNA, fqs[0], "")
@@ -45,16 +46,16 @@ func CountFQ(fqs []string, invalid bool) error {
 			return err
 		}
 
-		bc, valid = processBC(rec)
-		if bc == "" {
+		core, ok := coreParser(rec)
+		if !ok {
 			continue
 		} // no barcode
 
-		if !valid && !invalid {
+		if !core.Valid && !invalid {
 			continue
 		} // is invalid and was not asked to report invalid
 
-		set[bc]++
+		set[string(core.Barcode)]++
 	}
 	fqReader.Close()
 
@@ -77,15 +78,16 @@ func CountFQ(fqs []string, invalid bool) error {
 				return err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" {
+			core, ok := coreParser(rec)
+			if !ok {
 				continue
 			} // no barcode
 
-			if !valid && !invalid {
+			if !core.Valid && !invalid {
 				continue
 			} // is invalid and was not asked to report invalid
 
+			bc := string(core.Barcode)
 			// if the barcode already appears in the R1 set, skip
 			if _, ok := set[bc]; ok {
 				continue

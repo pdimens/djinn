@@ -15,12 +15,16 @@ func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 	keepInvalid := invalidprefix != ""
 	seq.ValidateSeq = false
 
+	// determine what kind of linked-read tech it is, once, from the first file
+	coreParser, _, err := fastq.CoreFqParser(fqs[0])
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if coreParser == nil {
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
+	}
+
 	for idx, i := range fqs { // iterate over files
-		// determine what kind of linked-read tech it is
-		processBC, err := fastq.CheckFastqFormat(fqs[0])
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
 		// ---- FQ reader -------------------------
 		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
@@ -40,8 +44,6 @@ func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 				return err
 			}
 		}
-		var bc string
-		var valid bool
 
 		for { // iterate through records
 			rec, err := fqReader.Read()
@@ -52,15 +54,15 @@ func FilterInvalidFQ(fqs []string, prefix, invalidprefix string) error {
 				return err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" || !valid {
+			core, ok := coreParser(rec)
+			if !ok || !core.Valid {
 				if keepInvalid {
-					rec.FormatToWriter(outfqInv, 0)
+					core.ToStandard(outfqInv.Writer)
 				}
 				continue
 			}
 
-			rec.FormatToWriter(outfq, 0)
+			core.ToStandard(outfq.Writer)
 		}
 		fqReader.Close()
 		outfq.Close()

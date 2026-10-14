@@ -4,7 +4,6 @@ go 1.27.1
 
 require (
 	github.com/biogo/hts v1.4.5
-	github.com/coregx/coregex v0.12.25
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/klauspost/compress v1.20.1
 	github.com/klauspost/pgzip v1.2.7
@@ -14,7 +13,6 @@ require (
 )
 
 require (
-	github.com/coregx/ahocorasick v0.3.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20260801111138-45c5fff54b41 // indirect
 	github.com/fatih/color v1.19.0 // indirect

@@ -100,7 +100,7 @@ func TestCountFQ_R1R2Union(t *testing.T) {
 }
 
 func TestCountFQ_FewerThan100Records(t *testing.T) {
-	// fastq.CheckFastqFormat samples up to 100 records to detect the
+	// fastq.CoreFqParser samples up to 100 records to detect the
 	// linked-read technology; a file with fewer records should still be
 	// handled cleanly (format detection proceeds with whatever it read)
 	// rather than failing outright.

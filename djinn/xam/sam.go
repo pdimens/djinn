@@ -101,7 +101,7 @@ func findInlineBarcode(name string) (barcode string, ok bool) {
 	// stLFR: "#<n>_<n>_<n>" at the end of name. Scan every '#' left to
 	// right (mirroring the leftmost-match behavior of the regexp) and
 	// take the first whose remainder matches the full n_n_n shape.
-	for j := 0; j < n; j++ {
+	for j := range n {
 		if name[j] != '#' {
 			continue
 		}

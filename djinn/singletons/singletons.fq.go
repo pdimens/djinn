@@ -17,14 +17,15 @@ import (
 func getFqCount(infiles []string) (map[string]int, error) {
 	set := make(map[string]int, 7_000_000) // barcode container
 	var emptymap map[string]int            // for returning empty thing on error
-	var bc string
-	var valid bool
 	seq.ValidateSeq = false
 
 	// determine what kind of linked-read tech it is
-	processBC, err := fastq.CheckFastqFormat(infiles[0])
+	coreParser, _, err := fastq.CoreFqParser(infiles[0])
 	if err != nil {
 		return emptymap, err
+	}
+	if coreParser == nil {
+		return emptymap, fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", infiles[0])
 	}
 
 	// R1
@@ -42,11 +43,11 @@ func getFqCount(infiles []string) (map[string]int, error) {
 		if err != nil {
 			return emptymap, err
 		}
-		bc, valid = processBC(rec)
-		if bc == "" || !valid {
+		core, ok := coreParser(rec)
+		if !ok || !core.Valid {
 			continue
 		} // no barcode or is invalid
-		set[bc]++
+		set[string(core.Barcode)]++
 	}
 	fqReader.Close()
 
@@ -69,10 +70,11 @@ func getFqCount(infiles []string) (map[string]int, error) {
 				return emptymap, err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" || !valid {
+			core, ok := coreParser(rec)
+			if !ok || !core.Valid {
 				continue
 			} // no barcode or is invalid
+			bc := string(core.Barcode)
 			if _, ok := set[bc]; ok {
 				continue
 			} // if the barcode already appears in the R1 set, skip
@@ -106,12 +108,16 @@ func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount stri
 	}
 	keepSingle := singletonprefix != ""
 
+	// determine what kind of linked-read tech it is, once, from the first file
+	coreParser, _, err := fastq.CoreFqParser(fqs[0])
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if coreParser == nil {
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
+	}
+
 	for idx, i := range fqs { // iterate over files
-		// determine what kind of linked-read tech it is
-		processBC, err := fastq.CheckFastqFormat(fqs[0])
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
 		// ---- FQ reader -------------------------
 		fqReader, err := fastx.NewReader(seq.DNA, i, "")
 		if err != nil {
@@ -131,8 +137,6 @@ func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount stri
 				return err
 			}
 		}
-		var bc string
-		var valid bool
 
 		for { // iterate through records
 			rec, err := fqReader.Read()
@@ -143,14 +147,14 @@ func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount stri
 				return err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" || !valid {
+			core, ok := coreParser(rec)
+			if !ok || !core.Valid {
 				continue
 			}
-			if bcCounts[bc] >= 2 {
-				rec.FormatToWriter(outfq, 0)
+			if bcCounts[string(core.Barcode)] >= 2 {
+				core.ToStandard(outfq.Writer)
 			} else if keepSingle {
-				rec.FormatToWriter(outfqSingle, 0)
+				core.ToStandard(outfqSingle.Writer)
 			}
 		}
 		fqReader.Close()

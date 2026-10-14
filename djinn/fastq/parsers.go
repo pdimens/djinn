@@ -32,15 +32,15 @@ func CoreFqParser(fq string) (func(rec *fastx.Record) (core CoreFq, ok bool), st
 			return nil, "", fmt.Errorf("reading %v, record %v: %w", fq, i, err)
 		}
 		// is there a BX tag in the comments/description?
-		if StdBx.Match(rec.Desc) {
+		if _, _, _, _, found := findField(rec.Desc, BXTAG); found {
 			h += 1
 		}
 		// if not, look for tellseq
-		if Tellseq.Match(rec.ID) {
+		if _, _, _, found := findTellseqBarcode(rec.ID); found {
 			t += 1
 		}
 		// if not, look for stlfr
-		if Stlfr.Match(rec.ID) {
+		if _, _, _, found := findStlfrBarcode(rec.ID); found {
 			s += 1
 		}
 		totalReads += 1

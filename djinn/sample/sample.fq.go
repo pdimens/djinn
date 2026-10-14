@@ -22,13 +22,14 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 	set := make(map[string]struct{}, 7_000_000)
 	seq.ValidateSeq = false
 
-	processBC, err := fastq.CheckFastqFormat(fqs[0])
+	coreParser, _, err := fastq.CoreFqParser(fqs[0])
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
+	if coreParser == nil {
+		return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s", fqs[0])
+	}
 
-	var bc string
-	var valid bool
 	for _, fq := range fqs {
 		fqReader, err := fastx.NewReader(seq.DNA, fq, "")
 		if err != nil {
@@ -44,15 +45,16 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 				return err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" {
+			core, ok := coreParser(rec)
+			if !ok {
 				continue
 			} // no barcode
 
-			if !valid && !keepInvalid {
+			if !core.Valid && !keepInvalid {
 				continue
 			} // is invalid and was not asked to keep invalid
 
+			bc := string(core.Barcode)
 			if _, ok := set[bc]; ok {
 				continue
 			} else {
@@ -120,9 +122,6 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 			return err
 		}
 
-		var bc string
-		var valid bool
-
 		for {
 			// iterate through records
 			rec, err := fqReader.Read()
@@ -133,13 +132,13 @@ func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInv
 				return err
 			}
 
-			bc, valid = processBC(rec)
-			if bc == "" || (!valid && !keepInvalid) {
+			core, ok := coreParser(rec)
+			if !ok || (!core.Valid && !keepInvalid) {
 				continue
 			} // no barcode or is invalid and was not asked to keep invalid
 
-			if _, ok := bcToKeep[bc]; ok {
-				rec.FormatToWriter(outfq, 0)
+			if _, ok := bcToKeep[string(core.Barcode)]; ok {
+				core.ToStandard(outfq.Writer)
 			}
 		}
 		fqReader.Close()

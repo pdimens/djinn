@@ -9,6 +9,17 @@ import (
 	"strconv"
 )
 
+// FASTQ text format primitives used by the ToXxx writers below.
+const FwSlash = '/'
+const TabSep = '\t'
+const Newline = '\n'
+const PlusSign = '+'
+const FastqAt = '@'
+const Colon = ':'
+
+var BxTagConst = []byte{'B', 'X', ':', 'Z', ':'}
+var VxTagConst = []byte{'V', 'X', ':', 'i', ':'}
+
 // CoreFq is a zero-copy, per-record view over the parts of a FASTQ record
 // that matter for linked-read barcode handling: sequence/quality, the
 // paired-end (CASAVA) marker, the isolated barcode, and (for direct BAM
@@ -221,23 +232,38 @@ func (rec *CoreFq) ToHaplotagging(writer *bufio.Writer) {
 	writer.WriteByte(Newline)
 }
 
-// Convert the fastq record to standard format and write to the write buffer
+// Convert the fastq record to standard format and write to the write buffer.
+// This is the generic passthrough writer used by callers that only
+// filter/classify records (count, extract, invalid, sample, singletons)
+// rather than converting between linked-read technologies: output is always
+// the same BX:Z:/VX:i: tag form regardless of the record's original source
+// format.
 func (rec *CoreFq) ToStandard(writer *bufio.Writer) {
 	writer.WriteByte(FastqAt)
 	writer.Write(rec.ID)
-	writer.WriteByte(FwSlash)
-	// only use the first byte of CASAVA, which will either be 1 or 2
-	writer.WriteByte(rec.CASAVA[0])
+	// CASAVA may be empty (no "/1" or "N:0:ATCG"-style marker was present
+	// on the source record) -- omit the suffix rather than index CASAVA[0]
+	// unconditionally, which would panic on exactly that input.
+	if len(rec.CASAVA) > 0 {
+		writer.WriteByte(FwSlash)
+		writer.WriteByte(rec.CASAVA[0])
+	}
 	writer.WriteByte(TabSep)
-	//TODO ONLY WRITE SAM-COMPLIANT COMMENTS
 	writer.Write(BxTagConst)
 	writer.Write(rec.Barcode)
 	writer.WriteByte(TabSep)
 	writer.Write(VxTagConst)
 	if rec.Valid {
-		writer.WriteByte(1)
+		writer.WriteByte('1')
 	} else {
-		writer.WriteByte(0)
+		writer.WriteByte('0')
+	}
+	// Comments holds whatever other SAM-style aux text remained in the
+	// description once CASAVA/the barcode were pulled out of it -- carry
+	// it through rather than silently dropping it.
+	if len(rec.Comments) > 0 {
+		writer.WriteByte(TabSep)
+		writer.Write(rec.Comments)
 	}
 	writer.WriteByte(Newline)
 	writer.Write(rec.Seq)

@@ -138,7 +138,7 @@ func TestSampleFq_MissingFile(t *testing.T) {
 }
 
 func TestSampleFq_FewerThan100Records(t *testing.T) {
-	// fastq.CheckFastqFormat samples up to 100 records to detect the
+	// fastq.CoreFqParser samples up to 100 records to detect the
 	// linked-read technology; a file with fewer records should still be
 	// handled cleanly rather than failing outright.
 	dir := t.TempDir()
