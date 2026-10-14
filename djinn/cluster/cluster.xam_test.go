@@ -1,4 +1,4 @@
-package sort
+package cluster
 
 import (
 	"bytes"

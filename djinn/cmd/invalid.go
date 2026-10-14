@@ -117,7 +117,7 @@ func init() {
 	fqCmd.AddCommand(invalidFqCmd)
 
 	//---Command line arguments-------------
-	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	invalidXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	invalidXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	invalidXamCmd.Flags().StringP("invalid", "i", "", "Write records with invalid barcodes to files with this prefix")
 

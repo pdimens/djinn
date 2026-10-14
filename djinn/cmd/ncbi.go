@@ -87,7 +87,7 @@ func init() {
 	samCmd.AddCommand(ncbiFq2XamCmd)
 
 	//---Command line arguments-------------
-	ncbiXam2FqCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	ncbiXam2FqCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	ncbiXam2FqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	ncbiXam2FqCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file")
 

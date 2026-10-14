@@ -1,4 +1,4 @@
-package fqsort
+package cluster
 
 import (
 	"bufio"
@@ -78,8 +78,8 @@ func readGzFastqIDsAndBX(t *testing.T, path string) (ids, bxs []string) {
 		ids = append(ids, id)
 		bx := ""
 		for _, f := range fields[1:] {
-			if strings.HasPrefix(f, "BX:Z:") {
-				bx = strings.TrimPrefix(f, "BX:Z:")
+			if after, ok := strings.CutPrefix(f, "BX:Z:"); ok {
+				bx = after
 			}
 		}
 		bxs = append(bxs, bx)
@@ -88,6 +88,9 @@ func readGzFastqIDsAndBX(t *testing.T, path string) (ids, bxs []string) {
 			if !s.Scan() {
 				t.Fatalf("truncated FASTQ record after %q", line)
 			}
+		}
+		if s.Err() != nil {
+
 		}
 	}
 	return ids, bxs
@@ -300,7 +303,7 @@ func TestMergeFqChunks_ManySpilledChunks(t *testing.T) {
 	const perChunk = 40
 	var wantBX []string
 	var tmpFiles []string
-	for c := 0; c < numChunks; c++ {
+	for c := range numChunks {
 		chunk := make([]fqPair, perChunk)
 		for i := range chunk {
 			bc := make([]byte, 6)
@@ -308,7 +311,7 @@ func TestMergeFqChunks_ManySpilledChunks(t *testing.T) {
 				bc[j] = byte('A' + r.Intn(26))
 			}
 			chunk[i] = fqPair{
-				id:      []byte(fmt.Sprintf("c%d_r%d", c, i)),
+				id:      fmt.Appendf(nil, "c%d_r%d", c, i),
 				barcode: append([]byte(nil), bc...),
 				valid:   true,
 				seq1:    []byte("ACGT"), qual1: []byte("IIII"),
@@ -316,7 +319,7 @@ func TestMergeFqChunks_ManySpilledChunks(t *testing.T) {
 			}
 			wantBX = append(wantBX, string(bc))
 		}
-		path, err := sortAndSpill(chunk, dir)
+		path, err := fqsortAndSpill(chunk, dir)
 		if err != nil {
 			t.Fatalf("sortAndSpill: %v", err)
 		}

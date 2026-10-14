@@ -133,7 +133,7 @@ func init() {
 	fqCmd.AddCommand(sampleFqCmd)
 
 	//---Command line arguments-------------
-	sampleXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	sampleXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	sampleXamCmd.Flags().BoolP("invalid", "i", false, "Include invalid barcodes in subsampling")
 	sampleXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	sampleXamCmd.Flags().IntP("seed", "s", -1, "Random seed for sampling, must be >= 0")

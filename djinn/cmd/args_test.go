@@ -31,22 +31,22 @@ func TestSortXamArgs(t *testing.T) {
 	valid := makeReadableFile(t, dir, "in.bam")
 
 	t.Run("no args", func(t *testing.T) {
-		if err := sortXamCmd.Args(sortXamCmd, []string{}); err == nil {
+		if err := clusterXamCmd.Args(clusterXamCmd, []string{}); err == nil {
 			t.Errorf("expected error with no args")
 		}
 	})
 	t.Run("too many args", func(t *testing.T) {
-		if err := sortXamCmd.Args(sortXamCmd, []string{valid, valid, valid}); err == nil {
+		if err := clusterXamCmd.Args(clusterXamCmd, []string{valid, valid, valid}); err == nil {
 			t.Errorf("expected error with too many args")
 		}
 	})
 	t.Run("nonexistent input file", func(t *testing.T) {
-		if err := sortXamCmd.Args(sortXamCmd, []string{filepath.Join(dir, "missing.bam")}); err == nil {
+		if err := clusterXamCmd.Args(clusterXamCmd, []string{filepath.Join(dir, "missing.bam")}); err == nil {
 			t.Errorf("expected error for missing input file")
 		}
 	})
 	t.Run("valid input file", func(t *testing.T) {
-		if err := sortXamCmd.Args(sortXamCmd, []string{valid}); err != nil {
+		if err := clusterXamCmd.Args(clusterXamCmd, []string{valid}); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})

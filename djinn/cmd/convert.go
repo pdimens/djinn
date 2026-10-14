@@ -148,7 +148,7 @@ func init() {
 	fqCmd.AddCommand(convertFqCmd)
 
 	//---Command line arguments-------------
-	convertXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	convertXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	convertXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	convertXamCmd.Flags().StringP("map", "m", "", "Write barcode conversion map to this file (required if not 'standard')")
 

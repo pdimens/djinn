@@ -1,4 +1,4 @@
-package sort
+package cluster
 
 import (
 	"bytes"
@@ -12,9 +12,6 @@ import (
 	"github.com/biogo/hts/bam"
 	"github.com/biogo/hts/sam"
 )
-
-const chunkSize = 500_000 // records per temp file, tune to RAM
-const ioBatchSize = 2000  // records per channel send on the read/write hot paths
 
 // SortByBX streams inPath, spills BX:Z-sorted chunks in parallel, k-way merges into outPath.
 func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
@@ -110,11 +107,6 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 // bxTagName is the two-byte SAM tag ID looked up on every record; hoisted to
 // a var so the lookup never allocates a fresh []byte literal per call.
 var bxTagName = []byte("BX")
-
-// missingBXKey sorts after every real BX value (samtools convention: unset
-// tags trail). 0xff can't appear in a real BX:Z value (SAM aux text is
-// printable ASCII), so this can't collide with a real key.
-var missingBXKey = []byte{0xff, 0xff, 0xff, 0xff}
 
 // bxKeyOf returns r's BX:Z value as a zero-copy view into the record's own
 // AuxFields backing array -- no string conversion, no interface boxing.

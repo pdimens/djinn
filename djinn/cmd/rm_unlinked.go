@@ -138,7 +138,7 @@ func init() {
 	fqCmd.AddCommand(unlinkedFqCmd)
 
 	//---Command line arguments-------------
-	unlinkedXamCmd.Flags().BoolP("sam", "S", false, "Output as SAM instead of BAM")
+	unlinkedXamCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")
 	unlinkedXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
 	unlinkedXamCmd.Flags().StringP("singletons", "s", "", "Write valid singleton records to this file (optional)")
 	unlinkedXamCmd.Flags().StringP("bc-count", "b", "", "Write valid barcode counts to this file (optional)")

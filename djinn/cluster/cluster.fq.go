@@ -2,7 +2,7 @@
 // mirroring the sort package's BAM/SAM k-way merge sort: read + pair,
 // sort-and-spill chunks in parallel, then k-way merge the spilled chunks
 // back into barcode order.
-package fqsort
+package cluster
 
 import (
 	"bufio"
@@ -20,15 +20,6 @@ import (
 	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
-
-const chunkSize = 250_000 // read pairs per temp file, tune to RAM
-
-// missingBXKey sorts after every real barcode (same samtools-derived
-// convention as sort.missingBXKey). It's only ever used as a sort key,
-// never written out: a pair with no resolvable barcode keeps a nil
-// fqPair.barcode, so ToStandard emits the same empty "BX:Z:" it would for
-// any other caller that never found one (fastq.Haplotag2Corefq, etc.).
-var missingBXKey = []byte{0xff, 0xff, 0xff, 0xff}
 
 // fqPair is a self-contained (deep-copied) read pair: both mates' FASTQ
 // fields plus the barcode/validity resolved from whichever mate carried
@@ -186,7 +177,7 @@ func SortFqByBX(r1Path, r2Path, outPrefix, tmpDir string, threads int, standardi
 	for range threads {
 		wg.Go(func() {
 			for c := range chunks {
-				path, err := sortAndSpill(c, tmpDir)
+				path, err := fqsortAndSpill(c, tmpDir)
 				if err != nil {
 					select {
 					case errCh <- err:
@@ -313,7 +304,7 @@ func formatConverter(fmtType string, standardize bool) (func(*fastq.CoreFq, *buf
 // writePair/readPair) -- not FASTQ text, since this file is only ever
 // read back by mergeFqChunks and re-parsing FASTQ text would mean paying
 // the barcode/CASAVA extraction cost a second time for no benefit.
-func sortAndSpill(chunk []fqPair, tmpDir string) (string, error) {
+func fqsortAndSpill(chunk []fqPair, tmpDir string) (string, error) {
 	slices.SortFunc(chunk, func(a, b fqPair) int { return bytes.Compare(pairKey(&a), pairKey(&b)) })
 
 	f, err := os.CreateTemp(tmpDir, ".fqsort-*.bin")
