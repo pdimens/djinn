@@ -5,14 +5,7 @@ import (
 	"strings"
 
 	"github.com/biogo/hts/sam"
-	regexp "github.com/coregx/coregex"
 )
-
-// Regex for invalid haplotagging, stlfr, tellseq barcodes
-//var Invalid = regexp.MustCompile("(?:N|[ABCD]00|^0_|_0_|_0$)")
-
-// Regex for valid haplotagging, stlfr, tellseq barcodes
-var StlfTell = regexp.MustCompile(`(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))`)
 
 // VX sam tag
 var VxTag = sam.Tag{'V', 'X'}
@@ -37,10 +30,6 @@ func IsValid(barcode string) bool {
 	return true
 }
 
-//func IsValid(barcode string) bool {
-//	return !Invalid.MatchString(barcode)
-//}
-
 // Convenience function to convert a boolean to integer,
 // where false -> 0 and true -> 1.
 func BoolToInt(vx bool) int {
@@ -61,6 +50,68 @@ func BoolToSInt(vx bool) string {
 	}
 }
 
+// isBase reports whether b is one of the DNA bases used in barcode text
+// (including the ambiguity code N).
+func isBase(b byte) bool {
+	switch b {
+	case 'A', 'C', 'G', 'T', 'N':
+		return true
+	}
+	return false
+}
+
+func isDigit(b byte) bool { return b >= '0' && b <= '9' }
+
+// isStlfrBody reports whether s matches "[0-9]+_[0-9]+_[0-9]+" exactly.
+func isStlfrBody(s string) bool {
+	parts, start, digits := 0, 0, false
+	for i := 0; i <= len(s); i++ {
+		if i == len(s) || s[i] == '_' {
+			if !digits || i == start {
+				return false
+			}
+			parts++
+			start = i + 1
+			digits = false
+			continue
+		}
+		if !isDigit(s[i]) {
+			return false
+		}
+		digits = true
+	}
+	return parts == 3
+}
+
+// findInlineBarcode locates a linked-read barcode inline in name, in
+// either TELLseq (":<bases>" suffix) or stLFR ("#<n>_<n>_<n>" suffix)
+// style, mirroring what the pattern `(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))`
+// matched, but as a pair of native byte scans instead of a regexp.
+func findInlineBarcode(name string) (barcode string, ok bool) {
+	// TELLseq: a run of bases at the very end of name, preceded by ':'.
+	n := len(name)
+	i := n
+	for i > 0 && isBase(name[i-1]) {
+		i--
+	}
+	if i < n && i > 0 && name[i-1] == ':' {
+		return name[i:n], true
+	}
+
+	// stLFR: "#<n>_<n>_<n>" at the end of name. Scan every '#' left to
+	// right (mirroring the leftmost-match behavior of the regexp) and
+	// take the first whose remainder matches the full n_n_n shape.
+	for j := 0; j < n; j++ {
+		if name[j] != '#' {
+			continue
+		}
+		if body := name[j+1:]; isStlfrBody(body) {
+			return body, true
+		}
+	}
+	return "", false
+}
+
 // Search for an return a linked read barcode, ("" if not found) and the value of the VX tag (bool).
 // First searches for a BX tag, and if that isn't found, searches the record ID for a tellseq/stlfr style barcode.
 // If nothing was found, returns ("", false). If a barcode was identified and
@@ -69,19 +120,7 @@ func FindBarcode(rec *sam.Record) (string, bool) {
 	bxVal, hasBX := GetStringTag(rec, "BX")
 	vxVal, hasVX := GetVX(rec)
 	if !hasBX {
-		matches := StlfTell.FindStringSubmatch(rec.Name)
-		if matches != nil {
-			switch {
-			case len(matches) > 1 && matches[1] != "":
-				// matches[1] is the tellseq barcode e.g. "ATCGN"
-				bxVal = matches[1]
-				hasBX = true
-			case len(matches) > 2 && matches[2] != "":
-				// matches[2] is the stlfr barcode e.g. "1_2_3"
-				bxVal = matches[2]
-				hasBX = true
-			}
-		}
+		bxVal, hasBX = findInlineBarcode(rec.Name)
 	}
 	if !hasVX && bxVal != "" {
 		vxVal = IsValid(bxVal)
@@ -91,11 +130,9 @@ func FindBarcode(rec *sam.Record) (string, bool) {
 
 // SetBX sets a string aux tag on a record
 func SetBxString(rec *sam.Record, val *string) {
-	//aux := make(sam.Aux, 3+len(val)+1)
 	aux := make(sam.Aux, 3+len(*val))
 	aux[0], aux[1], aux[2] = 'B', 'X', 'Z'
 	copy(aux[3:], *val)
-	// aux[len(aux)-1] = 0 // null terminator
 
 	for i, a := range rec.AuxFields {
 		if a.Tag() == BxTag {
@@ -108,11 +145,9 @@ func SetBxString(rec *sam.Record, val *string) {
 
 // SetBX sets a string aux tag on a record
 func SetBxByte(rec *sam.Record, val *[]byte) {
-	//aux := make(sam.Aux, 3+len(val)+1)
 	aux := make(sam.Aux, 3+len(*val))
 	aux[0], aux[1], aux[2] = 'B', 'X', 'Z'
 	copy(aux[3:], *val)
-	// aux[len(aux)-1] = 0 // null terminator
 
 	for i, a := range rec.AuxFields {
 		if a.Tag() == BxTag {
@@ -168,24 +203,6 @@ func SetVX(rec *sam.Record, isValid bool) {
 	}
 	rec.AuxFields = append(rec.AuxFields, aux)
 }
-
-/*
-
-func SetVX(rec *sam.Record, isValid bool) {
-	b := byte(0)
-	if isValid {
-		b = 1
-	}
-	for i, a := range rec.AuxFields {
-		if a.Tag() == VxTag {
-			a[3] = b
-			rec.AuxFields[i] = a
-			return
-		}
-	}
-	rec.AuxFields = append(rec.AuxFields, sam.Aux{'V', 'X', 'c', b})
-}
-*/
 
 // Return the value of the string tag `tag` (XX:Z) for a sam.Record
 func GetStringTag(r *sam.Record, tag string) (string, bool) {
