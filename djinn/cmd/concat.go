@@ -2,7 +2,7 @@
 package cmd
 
 import (
-	"djinn/sort"
+	"djinn/concat"
 	"fmt"
 	"runtime"
 
@@ -11,10 +11,10 @@ import (
 
 // preCmd represents the preprocess command
 var concatXamCmd = &cobra.Command{
-	Use:                   "sort [options] file.bam",
-	Short:                 "Sort reads by barcode",
-	Example:               "sort -t 4 curratum.bam > curratum.sort.bam",
-	Long:                  "Input must be one SAM/BAM file. Writes to stdout.",
+	Use:                   "concat [options] file1.bam file2.bam...",
+	Short:                 "Barcode-aware file concatenation",
+	Example:               "concat -t 4 curratum_gulf.bam curratum_gulf2.bam > curratum.concat.bam",
+	Long:                  "Concatenate records from linked-read SAM/BAM files while making sure barcodes tags (BX:Z) remain unique for every sample by overwriting all barcodes. Input must be one or more SAM/BAM files. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -22,9 +22,8 @@ var concatXamCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		//TODO not exact args, needs min/max
-		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-			return err
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return fmt.Errorf("Concatenation requires at least 1 input SAM-format file (SAM/BAM)")
 		}
 		if err := filecheck(args[0]); err != nil {
 			return err
@@ -34,25 +33,24 @@ var concatXamCmd = &cobra.Command{
 				return err
 			}
 		}
-		_, err := cmd.Flags().GetString("tmp-prefix")
-		if err != nil {
+		if _, err := cmd.Flags().GetString("tmp-prefix"); err != nil {
 			return err
 		}
-		_, err = cmd.Flags().GetBool("sam")
-		if err != nil {
+		if _, err := cmd.Flags().GetBool("sam"); err != nil {
 			return err
 		}
 
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		asSam, _ := cmd.Flags().GetBool("sam")
 		threads, _ := cmd.Flags().GetInt("threads")
 		runtime.GOMAXPROCS(safethreads(threads))
 
-		tmpDir, _ := cmd.Flags().GetString("tmp-prefix")
-		asSam, _ := cmd.Flags().GetBool("sam")
-
-		return sort.SortByBX(args[0], "-", tmpDir, threads, asSam)
+		if len(args) == 1 {
+			return concat.ConcatOneXam(args[0], threads, asSam)
+		}
+		return concat.ConcatXam(args, threads, asSam)
 	},
 }
 

@@ -39,6 +39,7 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 			return err
 		}
 	}
+	invalidBarcode := bcs.GetInvalid()
 	defer bcs.Close()
 
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
@@ -50,64 +51,50 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 		writeThread = threads - readThread
 	}
 
-	// ── open first file for reading────────────────────────────────────────────
-	recChan, br := xam.NewXamReaderChan(infiles[0], xam.ChanCap, xam.IoBuf, readThread)
+	// ── open first file to get header ────────────────────────────────────────────
+	_, br := xam.NewXamReaderChan(infiles[0], xam.ChanCap, xam.IoBuf, readThread)
 
 	// update PG line in header
 	hdr := br.Header()
 	pg := xam.NewPG(hdr, "djinn sam concat "+strings.Join(os.Args[1:], " "))
 	if err := hdr.AddProgram(pg); err != nil {
+		br.Close()
 		return err
 	}
+	br.Close()
 
 	// ── open writer ───────────────────────────────────────────────────────────
 	writeChan, writeDone := xam.NewXamWriterChan("-", hdr, xam.ChanCap, xam.IoBuf, writeThread, asSam)
-
-	// scale to number of input files
-	seenGlobal := make(map[string]struct{}, 1_000_000*len(infiles))
-
-	// ── loop records of first file ──────────────────────────────────────────────
-	// this will populate the globally-seen map
-	invalidBarcode := bcs.GetInvalid()
-	for rec := range recChan {
-		bxVal, vxVal := xam.FindBarcode(rec)
-		if bxVal == "" || !vxVal {
-			xam.SetBxByte(rec, &invalidBarcode)
-			writeChan <- rec
-			continue
-		}
-		if _, ok := seenGlobal[bxVal]; !ok {
-			seenGlobal[bxVal] = struct{}{}
-		}
-		writeChan <- rec
-	}
-	br.Close()
 
 	// ── loop through remaining files ──────────────────────────────────────────────
 	var n int
 	var _ok bool
 
-	for _, samfile := range infiles[1:] {
+	for _, samfile := range infiles {
 		recChan, br := xam.NewXamReaderChan(samfile, xam.ChanCap, xam.IoBuf, readThread)
 		seenLocal := make(map[string][]byte, 2_000_000)
 
 		for rec := range recChan {
 			bxVal, vxVal := xam.FindBarcode(rec)
-			if bxVal == "" || !vxVal {
+			if bxVal == "" {
+				// no barcode, set invalid and write
 				xam.SetBxByte(rec, &invalidBarcode)
 				writeChan <- rec
 				continue
 			}
-			// is it seen in the global inventory?
-			_, ok := seenGlobal[bxVal]
-			switch ok {
-			case false:
-				// not previously seen in any file, add to global inventory
-				seenGlobal[bxVal] = struct{}{}
-				// can keep this barcode, no need for conversion, add to local as self
-				seenLocal[bxVal] = []byte(bxVal)
-			case true:
-				// previously seen in another file, add to local inventory with new barcode
+			if !vxVal {
+				// invalid, just write
+				writeChan <- rec
+				continue
+			}
+
+			// is it seen in the local inventory?
+			if _, ok := seenLocal[bxVal]; ok {
+				// previously seen, set to the new barcode it was previously assigned
+				_bc := seenLocal[bxVal]
+				xam.SetBxByte(rec, &_bc)
+			} else {
+				// doesn't yet exist in local inventory, add with new unique barcode
 				n, _ok = bcs.NextInto(bcBuf)
 				if !_ok {
 					return fmt.Errorf("The data provided has more unique barcodes than the input technology (%q) can support. Stopped at file %q.", bcFmt, samfile)
@@ -115,13 +102,44 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 				converted := make([]byte, n) // must copy: buf gets reused next iteration
 				copy(converted, bcBuf[:n])
 				seenLocal[bxVal] = converted
-
 				xam.SetBxByte(rec, &converted)
-				writeChan <- rec
 			}
 			writeChan <- rec
 		}
 		br.Close()
+	}
+	close(writeChan)
+	<-writeDone
+	return nil
+}
+
+// Fake concatenation on a single file (mostly a no-op) by updating the header and writing unmodified records to stdout.
+func ConcatOneXam(infile string, threads int, asSam bool) error {
+	// ── init inventory and generator ──────────────────────────────────────────
+	readThread := 1
+	writeThread := 1
+	if threads > 2 {
+		readThread = 2
+		writeThread = threads - readThread
+	}
+
+	// ── open reader --------------────────────────────────────────────────────
+	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
+	defer br.Close()
+
+	// update PG line in header
+	hdr := br.Header()
+	pg := xam.NewPG(hdr, "djinn sam concat "+strings.Join(os.Args[1:], " "))
+	if err := hdr.AddProgram(pg); err != nil {
+		br.Close()
+		return err
+	}
+
+	// ── open writer ───────────────────────────────────────────────────────────
+	writeChan, writeDone := xam.NewXamWriterChan("-", hdr, xam.ChanCap, xam.IoBuf, writeThread, asSam)
+
+	for rec := range recChan {
+		writeChan <- rec
 	}
 	close(writeChan)
 	<-writeDone
