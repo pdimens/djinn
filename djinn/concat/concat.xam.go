@@ -1,19 +1,20 @@
 package concat
 
 import (
-	"bufio"
 	"djinn/barcodes"
 	"djinn/xam"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
-func ConcattXam(infiles []string, threads int, asSam bool) error {
+func ConcatXam(infiles []string, threads int, asSam bool) error {
 	// ── init inventory and generator ──────────────────────────────────────────
 	var bcs barcodes.Generator
 	var err error
 
-	bcFmt, err := xam.whichbarcode(infiles[0])
+	bcFmt, err := xam.DetectBarcodeFormat(infiles[0])
 	if err != nil {
 		return err
 	}
@@ -23,18 +24,25 @@ func ConcattXam(infiles []string, threads int, asSam bool) error {
 		bcs = barcodes.NewHaplotagging()
 	case "stlfr":
 		bcs = barcodes.NewStlfr()
-	case "tellseq":
+	case "nucleotide-18":
 		bcs = barcodes.NewTellseq()
-	case "10x":
-		bcs, err = barcodes.NewTenXList()
+	case "nucleotide-16":
+		bcs = barcodes.NewTenX()
+	default:
+		// generic-XX
+		n, err := strconv.Atoi(bcFmt[len(bcFmt)-2:])
 		if err != nil {
 			return err
 		}
+		bcs, err = barcodes.NewGeneric(n)
+		if err != nil {
+			return err
+		}
+	}
 	defer bcs.Close()
 
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
 
-	// ── open reader ───────────────────────────────────────────────────────────
 	readThread := 1
 	writeThread := 1
 	if threads > 2 {
@@ -42,13 +50,12 @@ func ConcattXam(infiles []string, threads int, asSam bool) error {
 		writeThread = threads - readThread
 	}
 
-	// ── open reader ───────────────────────────────────────────────────────────
-	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
-	defer br.Close()
+	// ── open first file for reading────────────────────────────────────────────
+	recChan, br := xam.NewXamReaderChan(infiles[0], xam.ChanCap, xam.IoBuf, readThread)
 
-	// ── update PG line in header ───────────────────────────────────────────────
+	// update PG line in header
 	hdr := br.Header()
-	pg := xam.NewPG(hdr, "djinn sam convert "+convTo+" "+infile)
+	pg := xam.NewPG(hdr, "djinn sam concat "+strings.Join(os.Args[1:], " "))
 	if err := hdr.AddProgram(pg); err != nil {
 		return err
 	}
@@ -56,10 +63,11 @@ func ConcattXam(infiles []string, threads int, asSam bool) error {
 	// ── open writer ───────────────────────────────────────────────────────────
 	writeChan, writeDone := xam.NewXamWriterChan("-", hdr, xam.ChanCap, xam.IoBuf, writeThread, asSam)
 
-	// ── loop record channel ──────────────────────────────────────────────
-	var n int
-	var ok bool
-	seen := make(map[string][]byte, 4_000_000)
+	// scale to number of input files
+	seenGlobal := make(map[string]struct{}, 1_000_000*len(infiles))
+
+	// ── loop records of first file ──────────────────────────────────────────────
+	// this will populate the globally-seen map
 	invalidBarcode := bcs.GetInvalid()
 	for rec := range recChan {
 		bxVal, vxVal := xam.FindBarcode(rec)
@@ -68,44 +76,54 @@ func ConcattXam(infiles []string, threads int, asSam bool) error {
 			writeChan <- rec
 			continue
 		}
-
-		if converted, ok := seen[bxVal]; ok {
-			xam.SetBxByte(rec, &converted)
-			writeChan <- rec
-			continue
+		if _, ok := seenGlobal[bxVal]; !ok {
+			seenGlobal[bxVal] = struct{}{}
 		}
-
-		// not seen — generate the next conversion barcode
-		n, ok = bcs.NextInto(bcBuf)
-		if !ok {
-			return fmt.Errorf("Barcodes exhausted before conversion finished. The data provided has more unique barcodes than %q barcodes can support.", convTo)
-		}
-		converted := make([]byte, n) // must copy: buf gets reused next iteration
-		copy(converted, bcBuf[:n])
-		seen[bxVal] = converted
-
-		xam.SetBxByte(rec, &converted)
 		writeChan <- rec
+	}
+	br.Close()
+
+	// ── loop through remaining files ──────────────────────────────────────────────
+	var n int
+	var _ok bool
+
+	for _, samfile := range infiles[1:] {
+		recChan, br := xam.NewXamReaderChan(samfile, xam.ChanCap, xam.IoBuf, readThread)
+		seenLocal := make(map[string][]byte, 2_000_000)
+
+		for rec := range recChan {
+			bxVal, vxVal := xam.FindBarcode(rec)
+			if bxVal == "" || !vxVal {
+				xam.SetBxByte(rec, &invalidBarcode)
+				writeChan <- rec
+				continue
+			}
+			// is it seen in the global inventory?
+			_, ok := seenGlobal[bxVal]
+			switch ok {
+			case false:
+				// not previously seen in any file, add to global inventory
+				seenGlobal[bxVal] = struct{}{}
+				// can keep this barcode, no need for conversion, add to local as self
+				seenLocal[bxVal] = []byte(bxVal)
+			case true:
+				// previously seen in another file, add to local inventory with new barcode
+				n, _ok = bcs.NextInto(bcBuf)
+				if !_ok {
+					return fmt.Errorf("The data provided has more unique barcodes than the input technology (%q) can support. Stopped at file %q.", bcFmt, samfile)
+				}
+				converted := make([]byte, n) // must copy: buf gets reused next iteration
+				copy(converted, bcBuf[:n])
+				seenLocal[bxVal] = converted
+
+				xam.SetBxByte(rec, &converted)
+				writeChan <- rec
+			}
+			writeChan <- rec
+		}
+		br.Close()
 	}
 	close(writeChan)
 	<-writeDone
-
-	// ------ write barcodes to map ------------------------
-	f, err := os.Create(bcMap)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	writer := bufio.NewWriter(f)
-	defer writer.Flush()
-
-	for key, val := range seen {
-		writer.WriteString(key)
-		writer.WriteByte('\t')
-		writer.Write(val)
-		writer.WriteByte('\n')
-	}
-
 	return nil
 }

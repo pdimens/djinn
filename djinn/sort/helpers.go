@@ -1,4 +1,4 @@
-package cluster
+package sort
 
 const chunkSize = 500_000 // records per temp file, tune to RAM
 const ioBatchSize = 2000  // records per channel send on the read/write hot paths

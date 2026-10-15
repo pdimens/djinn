@@ -45,8 +45,7 @@ type Nucleotides struct {
 	stop    func()
 }
 
-// NewTellseq creates a tellseq barcode generator producing nucleotide barcodes of length 18
-// over the ATCG alphabet (4^n total combinations).
+// NewTellseq creates a generic 18bp nucleotide barcode generator mimicking 10X (4^18 total combinations)
 func NewTellseq() *Nucleotides {
 	var invalid NucBarcode
 	for i := range 18 {
@@ -58,8 +57,7 @@ func NewTellseq() *Nucleotides {
 	return &Nucleotides{n: 18, invalid: invalid, next: next, stop: stop}
 }
 
-// NewTenX creates a 10X barcode generator producing nucleotide barcodes of length 16
-// over the ATCG alphabet (4^16 total combinations).
+// NewTenX creates a generic 16bp nucleotide barcode generator mimicking 10X (4^16 total combinations).
 func NewTenX() *Nucleotides {
 	var invalid NucBarcode
 	for i := range 16 {

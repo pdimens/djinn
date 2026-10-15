@@ -2,7 +2,7 @@
 // mirroring the sort package's BAM/SAM k-way merge sort: read + pair,
 // sort-and-spill chunks in parallel, then k-way merge the spilled chunks
 // back into barcode order.
-package cluster
+package sort
 
 import (
 	"bufio"

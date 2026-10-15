@@ -96,7 +96,7 @@ func openAlignmentReader(file string) (r AlignmentReader, fh *os.File, isBAM boo
 
 // DetectBarcodeFormat scans up to the first 100 records of file (SAM or
 // BAM, "-" for stdin) and reports which linked-read barcode format they
-// use: "haplotagging", "stlfr", "generic-<LEN>", or "error" when the
+// use: "haplotagging", "stlfr", "nucleotide-<LEN>", or returns an error when the
 // format can't be determined -- no recognizable barcode on any sampled
 // record, the file can't be opened/read, or more than one format was
 // identified (input is expected to be consistently one format,
@@ -107,20 +107,21 @@ func openAlignmentReader(file string) (r AlignmentReader, fh *os.File, isBAM boo
 // nucleotide strings once standardized -- are otherwise
 // indistinguishable by shape alone. Rather than resolving that via the
 // (expensive to load) 10X whitelist, nucleotide-shaped barcodes are
-// reported as "generic-<LEN>" (e.g. "generic-16" for 10X, "generic-18"
+// reported as "nucleotide-<LEN>" (e.g. "nucleotide-16" for 10X, "nucleotide-18"
 // for TELLseq) and left for the caller to interpret.
-func DetectBarcodeFormat(file string) string {
+func DetectBarcodeFormat(file string) (string, error) {
 	r, fh, isBAM, err := openAlignmentReader(file)
 	if err != nil {
-		return "error"
+		return "", err
 	}
 	defer r.Close()
 	if isBAM && fh != os.Stdin {
 		defer fh.Close()
 	}
 
-	var haplotagging, stlfr int
-	nucLens := make(map[int]int)
+	var haplotagging, stlfr, generic int
+	var nucLen int
+
 	for range 100 {
 		rec, err := r.Read()
 		if err != nil {
@@ -136,7 +137,10 @@ func DetectBarcodeFormat(file string) string {
 		case isStlfrBody(bc):
 			stlfr++
 		case isNucleotideBarcode(bc):
-			nucLens[len(bc)]++
+			generic++
+			if _l := len(bc); _l > nucLen {
+				nucLen = _l
+			}
 		}
 	}
 
@@ -147,20 +151,19 @@ func DetectBarcodeFormat(file string) string {
 	if stlfr > 0 {
 		formatsFound++
 	}
-	formatsFound += len(nucLens)
+	if generic > 0 {
+		formatsFound++
+	}
 
-	if formatsFound != 1 {
-		return "error"
-	}
 	switch {
+	case formatsFound > 1:
+		return "", fmt.Errorf("multiple barcode formats detected, cannot proceed (multiple barcode formats may be permissble with more widespread adoption of Standard format).")
 	case haplotagging > 0:
-		return "haplotagging"
+		return "haplotagging", nil
 	case stlfr > 0:
-		return "stlfr"
-	default:
-		for length := range nucLens {
-			return fmt.Sprintf("generic-%d", length)
-		}
-		return "error" // unreachable: formatsFound==1 guarantees one of the above
+		return "stlfr", nil
+	case generic > 0:
+		return fmt.Sprintf("nucleotide-%d", nucLen), nil
 	}
+	return "", fmt.Errorf("unable to detect barcode format from first 100 records")
 }

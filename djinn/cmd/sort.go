@@ -2,7 +2,7 @@
 package cmd
 
 import (
-	"djinn/cluster"
+	"djinn/sort"
 	"fmt"
 	"runtime"
 
@@ -10,10 +10,10 @@ import (
 )
 
 // preCmd represents the preprocess command
-var clusterXamCmd = &cobra.Command{
-	Use:                   "cluster [options] file.bam",
-	Short:                 "Cluster reads by barcode",
-	Example:               "cluster -t 4 curratum.bam > curratum.sort.bam",
+var sortXamCmd = &cobra.Command{
+	Use:                   "sort [options] file.bam",
+	Short:                 "Sort reads by barcode",
+	Example:               "sort -t 4 curratum.bam > curratum.sort.bam",
 	Long:                  "Input must be one SAM/BAM file. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -52,11 +52,11 @@ var clusterXamCmd = &cobra.Command{
 		tmpDir, _ := cmd.Flags().GetString("tmp-prefix")
 		asSam, _ := cmd.Flags().GetBool("sam")
 
-		return cluster.SortByBX(args[0], "-", tmpDir, threads, asSam)
+		return sort.SortByBX(args[0], "-", tmpDir, threads, asSam)
 	},
 }
 
-var clusterFqCmd = &cobra.Command{
+var sortFqCmd = &cobra.Command{
 	Use:                   "cluster [options] PREFIX file.R1.fq file.R2.fq",
 	Short:                 "Cluster read pairs by barcode",
 	Example:               "cluster -@ 4 omykiss.sort omykiss.R1.fq.gz omykiss.R2.fq.gz",
@@ -98,21 +98,21 @@ var clusterFqCmd = &cobra.Command{
 		standardize, _ := cmd.Flags().GetBool("standardize")
 		bcMap, _ := cmd.Flags().GetString("bc-map")
 
-		return cluster.SortFqByBX(args[1], args[2], args[0], tmpDir, threads, standardize, bcMap)
+		return sort.SortFqByBX(args[1], args[2], args[0], tmpDir, threads, standardize, bcMap)
 	},
 }
 
 func init() {
-	samCmd.AddCommand(clusterXamCmd)
-	fqCmd.AddCommand(clusterFqCmd)
+	samCmd.AddCommand(sortXamCmd)
+	fqCmd.AddCommand(sortFqCmd)
 
 	//---Command line arguments-------------
-	clusterXamCmd.Flags().BoolP("sam", "S", false, "Output SAM instead of BAM") //not implemented yet
-	clusterXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	clusterXamCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
+	sortXamCmd.Flags().BoolP("sam", "S", false, "Output SAM instead of BAM") //not implemented yet
+	sortXamCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sortXamCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
 
-	clusterFqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
-	clusterFqCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
-	clusterFqCmd.Flags().Bool("standardize", false, "Output using standardized BX:Z:/VX:i: tags instead of the detected input format")
-	clusterFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
+	sortFqCmd.Flags().IntP("threads", "@", 2, "Worker threads to use")
+	sortFqCmd.Flags().StringP("tmp-prefix", "t", "", "Folder for temporary files")
+	sortFqCmd.Flags().Bool("standardize", false, "Output using standardized BX:Z:/VX:i: tags instead of the detected input format")
+	sortFqCmd.Flags().StringP("bc-map", "b", "", "Valid barcode list (10X Genomics input format only)")
 }

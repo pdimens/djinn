@@ -33,14 +33,14 @@ func writeSamRecords(t *testing.T, bxValues []string) string {
 
 func TestDetectBarcodeFormat_Haplotagging(t *testing.T) {
 	path := writeSamRecords(t, []string{"A01C02B03D04", "A05C06B07D08", "A09C10B11D12"})
-	if got := DetectBarcodeFormat(path); got != "haplotagging" {
+	if got, _ := DetectBarcodeFormat(path); got != "haplotagging" {
 		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "haplotagging")
 	}
 }
 
 func TestDetectBarcodeFormat_Stlfr(t *testing.T) {
 	path := writeSamRecords(t, []string{"1_2_3", "4_5_6", "7_8_9"})
-	if got := DetectBarcodeFormat(path); got != "stlfr" {
+	if got, _ := DetectBarcodeFormat(path); got != "stlfr" {
 		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "stlfr")
 	}
 }
@@ -48,7 +48,7 @@ func TestDetectBarcodeFormat_Stlfr(t *testing.T) {
 func TestDetectBarcodeFormat_GenericTellseqLength(t *testing.T) {
 	// 18bp nucleotide barcodes -- TELLseq length, reported generically.
 	path := writeSamRecords(t, []string{"ATCGATCGATCGATCGAA", "ATCGATCGATCGATCGAC", "ATCGATCGATCGATCGAG"})
-	if got := DetectBarcodeFormat(path); got != "generic-18" {
+	if got, _ := DetectBarcodeFormat(path); got != "generic-18" {
 		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "generic-18")
 	}
 }
@@ -56,36 +56,28 @@ func TestDetectBarcodeFormat_GenericTellseqLength(t *testing.T) {
 func TestDetectBarcodeFormat_GenericTenXLength(t *testing.T) {
 	// 16bp nucleotide barcodes -- 10X length, reported generically.
 	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGAAAC", "ATCGATCGATCGAAAG"})
-	if got := DetectBarcodeFormat(path); got != "generic-16" {
+	if got, _ := DetectBarcodeFormat(path); got != "generic-16" {
 		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "generic-16")
-	}
-}
-
-func TestDetectBarcodeFormat_MixedNucleotideLengthsIsError(t *testing.T) {
-	// Same shape (pure nucleotide), different lengths -- still ambiguous.
-	path := writeSamRecords(t, []string{"ATCGATCGATCGAAAA", "ATCGATCGATCGATCGAA"})
-	if got := DetectBarcodeFormat(path); got != "error" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "error")
 	}
 }
 
 func TestDetectBarcodeFormat_MixedFormatsIsError(t *testing.T) {
 	path := writeSamRecords(t, []string{"A01C02B03D04", "1_2_3"})
-	if got := DetectBarcodeFormat(path); got != "error" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "error")
+	if _, err := DetectBarcodeFormat(path); err == nil {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", err, "error")
 	}
 }
 
 func TestDetectBarcodeFormat_NoBarcodesIsError(t *testing.T) {
 	path := writeSamRecords(t, []string{"", "", ""})
-	if got := DetectBarcodeFormat(path); got != "error" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "error")
+	if _, err := DetectBarcodeFormat(path); err == nil {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", err, "error")
 	}
 }
 
 func TestDetectBarcodeFormat_MissingFileIsError(t *testing.T) {
-	if got := DetectBarcodeFormat("/nonexistent/path/does-not-exist.sam"); got != "error" {
-		t.Errorf("DetectBarcodeFormat = %q, want %q", got, "error")
+	if _, err := DetectBarcodeFormat("/nonexistent/path/does-not-exist.sam"); err == nil {
+		t.Errorf("DetectBarcodeFormat = %q, want %q", err, "error")
 	}
 }
 
