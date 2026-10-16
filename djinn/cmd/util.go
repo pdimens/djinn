@@ -72,5 +72,12 @@ func ensureWritableDir(path string) error {
 func safethreads(threads int) int {
 	maxCores := runtime.NumCPU()
 	// clamp between 1 and max system threads
+	if threads > maxCores {
+		fmt.Fprintf(
+			os.Stderr,
+			"Threads requested (%v) exceed total available (%v), scaling down to maximum available threads.\n",
+			threads, maxCores,
+		)
+	}
 	return min(maxCores, max(threads, 1))
 }
