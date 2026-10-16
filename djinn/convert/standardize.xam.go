@@ -4,12 +4,8 @@ import "djinn/xam"
 
 func Standardize(infile string, threads int, asSam bool) error {
 	infile = xam.FileOrStdin(infile)
-	readThread := 1
-	writeThread := 1
-	if threads > 2 {
-		readThread = 2
-		writeThread = threads - readThread
-	}
+
+	readThread, writeThread := xam.IoThreads(threads)
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, r := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)

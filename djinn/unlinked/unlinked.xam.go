@@ -62,13 +62,8 @@ func RemoveUnlinkedXam(infile, singletons, barcodecount string, asSam bool, thre
 		writer.Flush()
 		f.Close()
 	}
-	// ── open reader ───────────────────────────────────────────────────────────
-	readThread := 1
-	writeThread := 1
-	if threads > 2 {
-		readThread = 2
-		writeThread = threads - readThread
-	}
+
+	readThread, writeThread := xam.IoThreads(threads)
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)

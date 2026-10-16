@@ -110,13 +110,7 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 
 // Fake concatenation on a single file (mostly a no-op) by updating the header and writing unmodified records to stdout.
 func ConcatOneXam(infile string, threads int, asSam bool) error {
-	// ── init inventory and generator ──────────────────────────────────────────
-	readThread := 1
-	writeThread := 1
-	if threads > 2 {
-		readThread = 2
-		writeThread = threads - readThread
-	}
+	readThread, writeThread := xam.IoThreads(threads)
 
 	// ── open reader --------------────────────────────────────────────────────
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
