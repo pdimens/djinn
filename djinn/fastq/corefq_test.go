@@ -147,6 +147,30 @@ func TestToTenX_R2LeavesSeqUnmodified(t *testing.T) {
 	}
 }
 
+func TestToTenX_NoCASAVA(t *testing.T) {
+	// CASAVA may be empty (no "/1" or "N:0:ATCG"-style marker was
+	// present, e.g. single-end input) -- must not panic indexing
+	// CASAVA[0], and must default to the barcode-bearing (R1) branch
+	// since a lone single-end record is that read by definition.
+	rec := CoreFq{
+		ID:      []byte("read1"),
+		Seq:     []byte("ACGTACGT"),
+		Qual:    []byte("IIIIIIII"),
+		Barcode: []byte("ATCGATCGATCGATCG"),
+	}
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	rec.ToTenX(w)
+	w.Flush()
+
+	want := "@read1:ATCGATCGATCGATCG\t\n" +
+		"ATCGATCGATCGATCGACGTACGT\n+\n" +
+		"IIIIIIIIIIIIIIIIIIIIIIII\n"
+	if got := out.String(); got != want {
+		t.Errorf("ToTenX (no CASAVA) output = %q, want %q", got, want)
+	}
+}
+
 // ---- constructors --------------------------------------------------
 
 func mkRecord(id, desc, seq_, qual string) *fastx.Record {

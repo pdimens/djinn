@@ -342,8 +342,14 @@ func (rec *CoreFq) ToTenX(writer *bufio.Writer) {
 		writer.Write(rec.CASAVA)
 	}
 	writer.WriteByte(Newline)
-	// only write barcode as R1 seq prefix
-	if rec.CASAVA[0] == '1' {
+	// only write barcode as R1 seq prefix. CASAVA may be empty (no "/1"
+	// or "N:0:ATCG"-style marker was present, e.g. single-end input) --
+	// indexing CASAVA[0] unconditionally would panic on exactly that
+	// input, same bug ToHaplotagging/ToStandard already guard against.
+	// Default to the R1 (barcode-bearing) branch when the mate can't be
+	// told apart: 10X's barcode only ever lives on the "first" read, so
+	// a lone single-end record is that read by definition.
+	if len(rec.CASAVA) == 0 || rec.CASAVA[0] == '1' {
 		writer.Write(rec.Barcode)
 		writer.Write(rec.Seq)
 		writer.WriteByte(Newline)
