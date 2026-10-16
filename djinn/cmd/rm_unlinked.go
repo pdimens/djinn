@@ -73,10 +73,10 @@ var unlinkedXamCmd = &cobra.Command{
 }
 
 var unlinkedFqCmd = &cobra.Command{
-	Use:     "rm-unlinked [options] PREFIX file.R1.fq file.R2.fq",
+	Use:     "rm-unlinked [options] PREFIX file.R1.fq [file.R2.fq]",
 	Short:   "Remove reads with unlinked barcodes",
 	Example: "rm-unlinked rclamitans.linked rclamitans.R1.fq rclamitans.R2.fq",
-	Long: "Inputs must be one or two FASTQ files (R1 and R2, can be gzipped). " +
+	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
 		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats. By default, only writes filtered output.",
 	DisableFlagsInUseLine: true,

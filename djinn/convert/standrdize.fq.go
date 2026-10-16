@@ -83,8 +83,12 @@ func StandardizeFq(fqs []string, prefix, bcmap string) error {
 	return nil
 }
 
+// StandardizeFrom10X standardizes 10X-format FASTQ (barcode inline in
+// R1's sequence prefix). fqs is either a single R1-only file or an
+// [R1, R2] pair -- 10X's barcode lives solely in R1, so R2 (when
+// present) only ever needs that barcode propagated onto it by matching
+// read ID, never re-derived itself.
 func StandardizeFrom10X(fqs []string, prefix, bcmap string) error {
-	var err error
 	invalid := barcodes.NewTenX().GetInvalid()
 
 	bclist, err := barcodes.LoadTenXFromFile(bcmap)
@@ -92,12 +96,36 @@ func StandardizeFrom10X(fqs []string, prefix, bcmap string) error {
 		return err
 	}
 
-	// ---- FQ readers -------------------------
 	R1Reader, err := fastx.NewReader(seq.DNA, fqs[0], "")
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", fqs[0], err)
 	}
 	defer R1Reader.Close()
+
+	R1Writer, err := xopen.Wopen(prefix + ".R1.fq.gz")
+	if err != nil {
+		return err
+	}
+	defer R1Writer.Close()
+
+	if len(fqs) == 1 {
+		// Single-end 10X input: no R2 to propagate the barcode onto.
+		for {
+			_r1, err := R1Reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+			r1core, ok := fastq.TenXR12Corefq(_r1, bclist)
+			if !ok {
+				r1core.Barcode = invalid
+			}
+			r1core.ToStandard(R1Writer.Writer)
+		}
+		return nil
+	}
 
 	R2Reader, err := fastx.NewReader(seq.DNA, fqs[1], "")
 	if err != nil {
@@ -105,14 +133,7 @@ func StandardizeFrom10X(fqs []string, prefix, bcmap string) error {
 	}
 	defer R2Reader.Close()
 
-	// ---- FQ writers -------------------------
-	R1Writer, err := xopen.Wopen(prefix + ".R1.fq.gz")
-	if err != nil {
-		return err
-	}
-	defer R1Writer.Close()
-
-	R2Writer, err := xopen.Wopen(prefix + ".R1.fq.gz")
+	R2Writer, err := xopen.Wopen(prefix + ".R2.fq.gz")
 	if err != nil {
 		return err
 	}
@@ -120,7 +141,6 @@ func StandardizeFrom10X(fqs []string, prefix, bcmap string) error {
 
 	var r1core fastq.CoreFq
 	var r2core fastq.CoreFq
-	var ok bool
 
 	// iterate through records
 Loop:
@@ -131,6 +151,7 @@ Loop:
 		case io.EOF:
 
 		case nil:
+			var ok bool
 			r1core, ok = fastq.TenXR12Corefq(_r1, bclist)
 			// if no barcode was found, add invalid BX
 			// VX is already invalid when no barcode found, doesn't need to be explicitly declared
@@ -139,7 +160,7 @@ Loop:
 			}
 			r1core.ToStandard(R1Writer.Writer)
 		default:
-			return err
+			return r1err
 		}
 
 		// process R2
@@ -162,7 +183,7 @@ Loop:
 			}
 			r2core.ToStandard(R2Writer.Writer)
 		default:
-			return err
+			return r2err
 		}
 	}
 	return nil

@@ -62,10 +62,10 @@ var invalidXamCmd = &cobra.Command{
 }
 
 var invalidFqCmd = &cobra.Command{
-	Use:     "rm-invalid <-i> PREFIX file.R1.fq file.R2.fq",
+	Use:     "rm-invalid <-i> PREFIX file.R1.fq [file.R2.fq]",
 	Short:   "Remove reads with invalid barcodes",
 	Example: "rm-invalid -i invalid/omykiss omykiss.valid omykiss.R1.fq omykiss.R2.fq",
-	Long: "Inputs must be one or two FASTQ files (R1 and R2, can be gzipped). " +
+	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
 		"Inputs expect barcodes to follow the standard (BX tag), stlfr (@seq_id#barcode), or tellseq " +
 		"(@seq_id:barcode) formats.",
 	DisableFlagsInUseLine: true,

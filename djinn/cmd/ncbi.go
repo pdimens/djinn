@@ -42,10 +42,10 @@ var ncbiXam2FqCmd = &cobra.Command{
 }
 
 var ncbiFq2XamCmd = &cobra.Command{
-	Use:                   "ncbi [options] file.R1.fq.gz file.R2.fq.gz",
+	Use:                   "ncbi [options] file.R1.fq.gz [file.R2.fq.gz]",
 	Short:                 "FASTQ → BAM conversion for NCBI",
 	Example:               "ncbi -t 10 obesus.R1.fq.gz obesus.R2.fq.gz > obesus.bam",
-	Long:                  "Converts a FASTQ file pair to unmapped SAM/BAM file to FASTQ sequences, losslessly, preserving barcode tags.",
+	Long:                  "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). Converts losslessly to an unmapped SAM/BAM file, preserving barcode tags.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -53,15 +53,16 @@ var ncbiFq2XamCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		//TODO not exact args, needs min/max
-		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 			return err
 		}
-		if err := filecheck(args[0]); err != nil {
+		if err := cobra.MaximumNArgs(2)(cmd, args); err != nil {
 			return err
 		}
-		if err := filecheck(args[1]); err != nil {
-			return err
+		for _, i := range args {
+			if err := filecheck(i); err != nil {
+				return err
+			}
 		}
 		mapfile, err := cmd.Flags().GetString("bc-map")
 		if err != nil {

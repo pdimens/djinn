@@ -74,10 +74,11 @@ var sampleXamCmd = &cobra.Command{
 }
 
 var sampleFqCmd = &cobra.Command{
-	Use:     "sample [options] file.R1.fq file.R2.fq",
+	Use:     "sample [options] prefix file.R1.fq [file.R2.fq]",
 	Short:   "Downsample data by barcode",
-	Example: "sample -d 50000 gbiloba.50k gbiloba.R1.fq gbiloba.R1.fq",
-	Long: "Downsamples a FASTQ file (or file pair) by barcode to keep all records containing `-d` randomly sampled barcodes. " +
+	Example: "sample -d 50000 gbiloba.50k gbiloba.R1.fq gbiloba.R2.fq",
+	Long: "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped). " +
+		"Downsamples by barcode to keep all records containing `-d` randomly sampled barcodes. " +
 		"If `d >= 1`, the downsampling is a fixed number of barcodes, whereas `d < 1` would indicate a fraction of the total " +
 		"number of barcodes `(e.g. `-d 0.5` retains 50% of all barcodes). Use `--invalid/-i` to include invalid barcodes " +
 		"in downsampling.",

@@ -82,10 +82,10 @@ var convertXamCmd = &cobra.Command{
 }
 
 var convertFqCmd = &cobra.Command{
-	Use:     "convert [options] outFormat prefix file.R1.fq.gz file.R2.fq.gz",
+	Use:     "convert [options] outFormat prefix file.R1.fq.gz [file.R2.fq.gz]",
 	Short:   "Convert between linked-read FASTQ/barcode formats",
-	Example: "convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R1.fq.gz",
-	Long: `Inputs must be one SAM/BAM file, with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
+	Example: "convert 10x gcurratum_as10X gcurratum.R1.fq.gz gcurratum.R2.fq.gz",
+	Long: `Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped), with barcodes specified in BX:Z SAM tag. Writes to stdout. The first positional argument toFormat specifies the target data format (standard, haplotagging, tellseq, stlfr, 10x). Specifying 10X output will draw barcodes from the official 10X Genomics barcode whitelist.
 
 | outFormat    | barcode format | example            |
 ------------------------------------------------------
@@ -102,14 +102,16 @@ var convertFqCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide a target format and input SAM/BAM file")
 		}
-		if err := cobra.ExactArgs(4)(cmd, args); err != nil {
+		if err := cobra.MinimumNArgs(3)(cmd, args); err != nil {
 			return err
 		}
-		if err := filecheck(args[2]); err != nil {
+		if err := cobra.MaximumNArgs(4)(cmd, args); err != nil {
 			return err
 		}
-		if err := filecheck(args[3]); err != nil {
-			return err
+		for _, i := range args[2:] {
+			if err := filecheck(i); err != nil {
+				return err
+			}
 		}
 		var err error
 		switch strings.ToLower(args[0]) {
