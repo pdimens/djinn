@@ -47,6 +47,27 @@ func writeHapFastqPair(t *testing.T, r1Path, r2Path string, reads []hapRead) {
 	}
 }
 
+// writeHapFastqSingle writes a single haplotagging-format FASTQ file (no
+// mate), for single-end sort tests.
+func writeHapFastqSingle(t *testing.T, path string, reads []hapRead) {
+	t.Helper()
+	var sb strings.Builder
+	for i, r := range reads {
+		id := r.id
+		if id == "" {
+			id = fmt.Sprintf("read%d", i)
+		}
+		tag := ""
+		if r.bc != "" {
+			tag = " BX:Z:" + r.bc
+		}
+		fmt.Fprintf(&sb, "@%s%s\nACGTACGTAC\n+\nIIIIIIIIII\n", id, tag)
+	}
+	if err := os.WriteFile(path, []byte(sb.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // readGzFastqIDsAndBX reads a gzip FASTQ file and returns, in record order,
 // each record's ID and its BX:Z value (empty string if none).
 func readGzFastqIDsAndBX(t *testing.T, path string) (ids, bxs []string) {
@@ -111,7 +132,7 @@ func TestSortFqByBX_SortsByBarcodeAndKeepsPairsMatched(t *testing.T) {
 	writeHapFastqPair(t, r1, r2, reads)
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err != nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err != nil {
 		t.Fatalf("SortFqByBX: %v", err)
 	}
 
@@ -139,6 +160,59 @@ func TestSortFqByBX_SortsByBarcodeAndKeepsPairsMatched(t *testing.T) {
 	}
 }
 
+func TestSortFqByBX_SingleEndSortsByBarcode(t *testing.T) {
+	dir := t.TempDir()
+	r1 := filepath.Join(dir, "r1.fq")
+
+	reads := []hapRead{
+		{id: "c", bc: "CCCC"},
+		{id: "a", bc: "AAAA"},
+		{id: "none", bc: ""}, // no barcode, must sort last
+		{id: "b", bc: "BBBB"},
+	}
+	writeHapFastqSingle(t, r1, reads)
+
+	prefix := filepath.Join(dir, "out")
+	if err := SortFqByBX([]string{r1}, prefix, dir, 2, false, ""); err != nil {
+		t.Fatalf("SortFqByBX: %v", err)
+	}
+
+	gotIDs, gotBX := readGzFastqIDsAndBX(t, prefix+".R1.fq.gz")
+	wantIDs := []string{"a", "b", "c", "none"}
+	wantBX := []string{"AAAA", "BBBB", "CCCC", ""}
+
+	if len(gotIDs) != len(wantIDs) {
+		t.Fatalf("got %d records, want %d (%v)", len(gotIDs), len(wantIDs), gotIDs)
+	}
+	for i := range wantIDs {
+		if gotIDs[i] != wantIDs[i] || gotBX[i] != wantBX[i] {
+			t.Errorf("record %d: got (id=%q,bx=%q), want (id=%q,bx=%q)", i, gotIDs[i], gotBX[i], wantIDs[i], wantBX[i])
+		}
+	}
+	if _, err := os.Stat(prefix + ".R2.fq.gz"); err == nil {
+		t.Errorf("expected no R2 output file for single-end input")
+	}
+}
+
+func TestSortFqByBX_SingleEndDoesNotForceCasavaMarker(t *testing.T) {
+	// Unlike paired output, single-end output has no "other side" to
+	// distinguish from, so the mate digit must never be synthesized --
+	// only written if the source record actually carried one.
+	dir := t.TempDir()
+	r1 := filepath.Join(dir, "r1.fq")
+	writeHapFastqSingle(t, r1, []hapRead{{id: "a", bc: "AAAA"}})
+
+	prefix := filepath.Join(dir, "out")
+	if err := SortFqByBX([]string{r1}, prefix, dir, 2, false, ""); err != nil {
+		t.Fatalf("SortFqByBX: %v", err)
+	}
+
+	raw := readGzFirstHeaderLine(t, prefix+".R1.fq.gz")
+	if raw != "@a\tBX:Z:AAAA" {
+		t.Errorf("expected no synthesized CASAVA suffix on single-end output, got %q", raw)
+	}
+}
+
 func TestSortFqByBX_DefaultPreservesInputFormat(t *testing.T) {
 	// standardize=false (the default): haplotagging input should come
 	// back out via ToHaplotagging -- a mate digit is always appended to
@@ -150,7 +224,7 @@ func TestSortFqByBX_DefaultPreservesInputFormat(t *testing.T) {
 	writeHapFastqPair(t, r1, r2, []hapRead{{id: "a", bc: "AAAA"}})
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err != nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err != nil {
 		t.Fatalf("SortFqByBX: %v", err)
 	}
 
@@ -172,7 +246,7 @@ func TestSortFqByBX_StandardizeFlag(t *testing.T) {
 	writeHapFastqPair(t, r1, r2, []hapRead{{id: "a", bc: "AAAA"}})
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, true, ""); err != nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, true, ""); err != nil {
 		t.Fatalf("SortFqByBX: %v", err)
 	}
 
@@ -200,7 +274,7 @@ func TestSortFqByBX_FallsBackTo10XWhenBcMapProvided(t *testing.T) {
 	}
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, bcMap); err != nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, bcMap); err != nil {
 		t.Fatalf("SortFqByBX: %v", err)
 	}
 
@@ -221,7 +295,7 @@ func TestSortFqByBX_NoFormatDetectedAndNoBcMapIsError(t *testing.T) {
 	os.WriteFile(r2, []byte("@read1\nTGCATGCATG\n+\nIIIIIIIIII\n"), 0o644)
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err == nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err == nil {
 		t.Fatal("expected an error when no format is detected and no bc-map is given")
 	}
 }
@@ -256,7 +330,7 @@ func TestSortFqByBX_MismatchedMateIDsIsError(t *testing.T) {
 	}
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err == nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err == nil {
 		t.Fatal("expected an error for mismatched mate IDs, got nil")
 	}
 }
@@ -272,7 +346,7 @@ func TestSortFqByBX_MismatchedMateCountIsError(t *testing.T) {
 	}
 
 	prefix := filepath.Join(dir, "out")
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err == nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err == nil {
 		t.Fatal("expected an error for mismatched mate counts, got nil")
 	}
 }
@@ -286,7 +360,7 @@ func TestSortFqByBX_EmptyInput(t *testing.T) {
 	// With zero records, no format can be sampled/detected -- same
 	// behavior as every other fastq.CoreFqParser caller (ConvertFq,
 	// FilterInvalidFQ, ...) on a fully empty input.
-	if err := SortFqByBX(r1, r2, prefix, dir, 2, false, ""); err == nil {
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err == nil {
 		t.Fatal("expected an error when no format can be detected from empty input, got nil")
 	}
 }
@@ -314,8 +388,10 @@ func TestMergeFqChunks_ManySpilledChunks(t *testing.T) {
 				id:      fmt.Appendf(nil, "c%d_r%d", c, i),
 				barcode: append([]byte(nil), bc...),
 				valid:   true,
-				seq1:    []byte("ACGT"), qual1: []byte("IIII"),
-				seq2: []byte("TGCA"), qual2: []byte("JJJJ"),
+				mates: []mate{
+					{seq: []byte("ACGT"), qual: []byte("IIII")},
+					{seq: []byte("TGCA"), qual: []byte("JJJJ")},
+				},
 			}
 			wantBX = append(wantBX, string(bc))
 		}
@@ -328,7 +404,7 @@ func TestMergeFqChunks_ManySpilledChunks(t *testing.T) {
 	sort.Strings(wantBX)
 
 	prefix := filepath.Join(dir, "out")
-	if err := mergeFqChunks(tmpFiles, prefix, (*fastq.CoreFq).ToStandard, true); err != nil {
+	if err := mergeFqChunks(tmpFiles, prefix, (*fastq.CoreFq).ToStandard, true, 2); err != nil {
 		t.Fatalf("mergeFqChunks: %v", err)
 	}
 
@@ -363,16 +439,14 @@ func equalSlices(a, b []string) bool {
 
 func TestWriteReadPairRoundTrip(t *testing.T) {
 	p := fqPair{
-		id:         []byte("read1"),
-		barcode:    []byte("AAAA"),
-		comments:   []byte("XX:i:5"),
-		valid:      true,
-		hasCasava1: true,
-		hasCasava2: true,
-		seq1:       []byte("ACGT"),
-		qual1:      []byte("IIII"),
-		seq2:       []byte("TGCA"),
-		qual2:      []byte("JJJJ"),
+		id:       []byte("read1"),
+		barcode:  []byte("AAAA"),
+		comments: []byte("XX:i:5"),
+		valid:    true,
+		mates: []mate{
+			{seq: []byte("ACGT"), qual: []byte("IIII"), hasCasava: true},
+			{seq: []byte("TGCA"), qual: []byte("JJJJ"), hasCasava: true},
+		},
 	}
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
@@ -383,17 +457,17 @@ func TestWriteReadPairRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := readPair(bufio.NewReader(&buf))
+	got, err := readPair(bufio.NewReader(&buf), 2)
 	if err != nil {
 		t.Fatalf("readPair: %v", err)
 	}
 	if string(got.id) != "read1" || string(got.barcode) != "AAAA" || string(got.comments) != "XX:i:5" || !got.valid {
 		t.Errorf("round trip mismatch: %+v", got)
 	}
-	if string(got.seq1) != "ACGT" || string(got.qual1) != "IIII" || !got.hasCasava1 {
+	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || !got.mates[0].hasCasava {
 		t.Errorf("mate1 round trip mismatch: %+v", got)
 	}
-	if string(got.seq2) != "TGCA" || string(got.qual2) != "JJJJ" || !got.hasCasava2 {
+	if string(got.mates[1].seq) != "TGCA" || string(got.mates[1].qual) != "JJJJ" || !got.mates[1].hasCasava {
 		t.Errorf("mate2 round trip mismatch: %+v", got)
 	}
 }
@@ -402,10 +476,10 @@ func TestWriteReadPairRoundTrip_NoCasavaOrComments(t *testing.T) {
 	p := fqPair{
 		id:      []byte("read1"),
 		barcode: []byte("AAAA"),
-		seq1:    []byte("ACGT"),
-		qual1:   []byte("IIII"),
-		seq2:    []byte("TGCA"),
-		qual2:   []byte("JJJJ"),
+		mates: []mate{
+			{seq: []byte("ACGT"), qual: []byte("IIII")},
+			{seq: []byte("TGCA"), qual: []byte("JJJJ")},
+		},
 	}
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
@@ -414,15 +488,44 @@ func TestWriteReadPairRoundTrip_NoCasavaOrComments(t *testing.T) {
 	}
 	w.Flush()
 
-	got, err := readPair(bufio.NewReader(&buf))
+	got, err := readPair(bufio.NewReader(&buf), 2)
 	if err != nil {
 		t.Fatalf("readPair: %v", err)
 	}
-	if got.hasCasava1 || got.hasCasava2 {
+	if got.mates[0].hasCasava || got.mates[1].hasCasava {
 		t.Errorf("expected no CASAVA marker on either mate, got %+v", got)
 	}
 	if len(got.comments) != 0 {
 		t.Errorf("expected empty comments, got %q", got.comments)
+	}
+}
+
+func TestWriteReadPairRoundTrip_SingleEnd(t *testing.T) {
+	p := fqPair{
+		id:       []byte("read1"),
+		barcode:  []byte("AAAA"),
+		comments: []byte("XX:i:5"),
+		valid:    true,
+		mates: []mate{
+			{seq: []byte("ACGT"), qual: []byte("IIII"), hasCasava: true},
+		},
+	}
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	if err := writePair(w, &p); err != nil {
+		t.Fatalf("writePair: %v", err)
+	}
+	w.Flush()
+
+	got, err := readPair(bufio.NewReader(&buf), 1)
+	if err != nil {
+		t.Fatalf("readPair: %v", err)
+	}
+	if len(got.mates) != 1 {
+		t.Fatalf("got %d mates, want 1", len(got.mates))
+	}
+	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || !got.mates[0].hasCasava {
+		t.Errorf("mate round trip mismatch: %+v", got)
 	}
 }
 
@@ -436,10 +539,10 @@ func TestReadPairEOFAtBoundary(t *testing.T) {
 	w.Flush()
 
 	r := bufio.NewReader(&buf)
-	if _, err := readPair(r); err != nil {
+	if _, err := readPair(r, 0); err != nil {
 		t.Fatalf("first readPair: %v", err)
 	}
-	if _, err := readPair(r); err != io.EOF {
+	if _, err := readPair(r, 0); err != io.EOF {
 		t.Fatalf("second readPair: got %v, want io.EOF", err)
 	}
 }

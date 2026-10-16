@@ -57,10 +57,10 @@ var sortXamCmd = &cobra.Command{
 }
 
 var sortFqCmd = &cobra.Command{
-	Use:                   "cluster [options] PREFIX file.R1.fq file.R2.fq",
-	Short:                 "Cluster read pairs by barcode",
-	Example:               "cluster -@ 4 omykiss.sort omykiss.R1.fq.gz omykiss.R2.fq.gz",
-	Long:                  "Inputs must be two paired-end FASTQ files (R1 and R2, can be gzipped) sharing matching read IDs. Writes PREFIX.R1.fq.gz and PREFIX.R2.fq.gz.",
+	Use:                   "sort [options] PREFIX file.R1.fq [file.R2.fq]",
+	Short:                 "Sort read(s) by barcode",
+	Example:               "sort -@ 4 omykiss.sort omykiss.R1.fq.gz omykiss.R2.fq.gz",
+	Long:                  "Accepts one unpaired FASTQ file or two paired FASTQ files (R1 and R2, can be gzipped) sharing matching read IDs. Writes PREFIX.R1.fq.gz (and PREFIX.R2.fq.gz if paired).",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -68,7 +68,10 @@ var sortFqCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		if err := cobra.ExactArgs(3)(cmd, args); err != nil {
+		if err := cobra.MinimumNArgs(2)(cmd, args); err != nil {
+			return err
+		}
+		if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
 			return err
 		}
 		if err := ensureWritableDir(args[0]); err != nil {
@@ -98,7 +101,7 @@ var sortFqCmd = &cobra.Command{
 		standardize, _ := cmd.Flags().GetBool("standardize")
 		bcMap, _ := cmd.Flags().GetString("bc-map")
 
-		return sort.SortFqByBX(args[1], args[2], args[0], tmpDir, threads, standardize, bcMap)
+		return sort.SortFqByBX(args[1:], args[0], tmpDir, threads, standardize, bcMap)
 	},
 }
 

@@ -21,30 +21,38 @@ import (
 	"github.com/shenwei356/xopen"
 )
 
-// fqPair is a self-contained (deep-copied) read pair: both mates' FASTQ
-// fields plus the barcode/validity resolved from whichever mate carried
-// it. Unlike the xam sort's bxKeyOf, which can alias the BAM reader's own
-// buffers because a record is re-encoded to its temp file immediately,
-// fqPair must own its memory: a chunk of these sits in RAM across a sort
-// before being spilled, long after fastx.Reader has reused its internal
-// buffers for later records.
+// mate is one read's sequence/quality plus whether it carried a CASAVA
+// marker at all; see fqPair's comment for why that's all a mate needs to
+// remember of CASAVA.
+type mate struct {
+	seq, qual []byte
+	hasCasava bool
+}
+
+// fqPair is a self-contained (deep-copied) record: one mate for
+// single-end input, two for paired -- every record within a single
+// SortFqByBX call has the same number, fixed by how many files were
+// given -- plus the barcode/validity resolved from whichever mate (or
+// the lone mate, single-end) carried it. Unlike the xam sort's bxKeyOf,
+// which can alias the BAM reader's own buffers because a record is
+// re-encoded to its temp file immediately, fqPair must own its memory: a
+// chunk of these sits in RAM across a sort before being spilled, long
+// after fastx.Reader has reused its internal buffers for later records.
 //
 // id and comments are stored once, not once per mate: every format
 // CoreFqParser detects carries its barcode/CASAVA marker as the only
 // thing that structurally differs between mates, so once those are
 // stripped out (which CoreFq already does), the remaining description
-// text is identical on both -- see resolveComments. CASAVA itself isn't
-// stored at all: ToStandard only ever emits its first byte (the '1'/'2'
-// mate digit, see casavaOne/casavaTwo below), so all a stored pair needs
-// is whether each mate had a marker at all.
+// text is identical across mates -- see resolveComments. CASAVA itself
+// isn't stored as text at all: ToStandard only ever emits its first byte
+// (the '1'/'2' mate digit, see casavaOne/casavaTwo below), so all a
+// stored mate needs is whether it had a marker at all.
 type fqPair struct {
-	barcode                []byte // nil if neither mate carried one
-	id                     []byte // shared base read ID (CASAVA suffix stripped)
-	comments               []byte // shared description text once CASAVA/barcode are stripped
-	valid                  bool
-	hasCasava1, hasCasava2 bool
-	seq1, qual1            []byte
-	seq2, qual2            []byte
+	barcode  []byte // nil if no mate carried one
+	id       []byte // shared base read ID (CASAVA suffix stripped)
+	comments []byte // shared description text once CASAVA/barcode are stripped
+	valid    bool
+	mates    []mate // len 1 (single-end) or 2 (paired)
 }
 
 // pairKey returns p's sort key: its barcode, or missingBXKey when p has
@@ -101,12 +109,13 @@ func resolveComments(c1, c2 fastq.CoreFq) []byte {
 var casavaOne = []byte{'1'}
 var casavaTwo = []byte{'2'}
 
-// SortFqByBX reads r1Path/r2Path as a matched read-pair stream, sorts the
-// pairs by linked-read barcode, and writes outPrefix+".R1.fq.gz" /
-// outPrefix+".R2.fq.gz". The barcode format (haplotagging/stLFR/TELL-seq)
-// is auto-detected from r1Path, same as fastq.CoreFqParser's other
-// callers. When none of those is detected and bcMap names a 10X barcode
-// whitelist file, falls back to the 10X path instead -- same dispatch
+// SortFqByBX reads fqs (one unpaired FASTQ file, or two sharing matching
+// read IDs) as a record stream, sorts by linked-read barcode, and writes
+// outPrefix+".R1.fq.gz" (and outPrefix+".R2.fq.gz" when fqs has two
+// entries). The barcode format (haplotagging/stLFR/TELL-seq) is
+// auto-detected from fqs[0], same as fastq.CoreFqParser's other callers.
+// When none of those is detected and bcMap names a 10X barcode whitelist
+// file, falls back to the 10X path instead -- same dispatch
 // convert.ConvertFq uses: format detection first, an explicit whitelist
 // as the fallback, since 10X's barcode lives inline in R1's sequence and
 // has no marker a sampling pass could recognize on its own.
@@ -115,11 +124,16 @@ var casavaTwo = []byte{'2'}
 // haplotagging, etc.) unless standardize is true, in which case output
 // uses fastq.CoreFq.ToStandard's generic BX:Z:/VX:i: form instead -- the
 // same opt-in every other djinn fastq tool (count, extract, invalid,
-// sample, singletons) already leaves to the caller.
-func SortFqByBX(r1Path, r2Path, outPrefix, tmpDir string, threads int, standardize bool, bcMap string) error {
+// sample, unlinked) already leaves to the caller.
+func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize bool, bcMap string) error {
 	seq.ValidateSeq = false
 
-	coreParser, fmtType, err := fastq.CoreFqParser(r1Path)
+	numMates := len(fqs)
+	if numMates < 1 || numMates > 2 {
+		return fmt.Errorf("SortFqByBX accepts one or two FASTQ files, got %d", numMates)
+	}
+
+	coreParser, fmtType, err := fastq.CoreFqParser(fqs[0])
 	if err != nil {
 		return err
 	}
@@ -133,7 +147,7 @@ func SortFqByBX(r1Path, r2Path, outPrefix, tmpDir string, threads int, standardi
 	parseMate1, parseMate2 := coreParser, coreParser
 	if coreParser == nil {
 		if bcMap == "" {
-			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode whitelist file must be provided to identify inline barcodes.", r1Path)
+			return fmt.Errorf("unable to determine linked-read technology from first 100 records in %s. If this is 10X data, a barcode whitelist file must be provided to identify inline barcodes.", fqs[0])
 		}
 		bclist, err := barcodes.LoadTenXFromFile(bcMap)
 		if err != nil {
@@ -149,17 +163,20 @@ func SortFqByBX(r1Path, r2Path, outPrefix, tmpDir string, threads int, standardi
 		return err
 	}
 
-	r1Reader, err := fastx.NewReader(seq.DNA, r1Path, "")
+	r1Reader, err := fastx.NewReader(seq.DNA, fqs[0], "")
 	if err != nil {
-		return fmt.Errorf("opening %s: %w", r1Path, err)
+		return fmt.Errorf("opening %s: %w", fqs[0], err)
 	}
 	defer r1Reader.Close()
 
-	r2Reader, err := fastx.NewReader(seq.DNA, r2Path, "")
-	if err != nil {
-		return fmt.Errorf("opening %s: %w", r2Path, err)
+	var r2Reader *fastx.Reader
+	if numMates == 2 {
+		r2Reader, err = fastx.NewReader(seq.DNA, fqs[1], "")
+		if err != nil {
+			return fmt.Errorf("opening %s: %w", fqs[1], err)
+		}
+		defer r2Reader.Close()
 	}
-	defer r2Reader.Close()
 
 	if tmpDir != "" {
 		if err := os.MkdirAll(tmpDir, 0o755); err != nil {
@@ -198,54 +215,95 @@ func SortFqByBX(r1Path, r2Path, outPrefix, tmpDir string, threads int, standardi
 		}
 	})
 
-	// producer: read matched pairs on the calling goroutine (reading is
-	// inherently serial here -- R1 and R2 must be advanced in lockstep --
-	// so there's no analogue to the xam sort's separate reader channel).
+	// producer: read record(s) on the calling goroutine (reading is
+	// inherently serial here -- when paired, R1 and R2 must be advanced
+	// in lockstep -- so there's no analogue to the xam sort's separate
+	// reader channel).
 	var readErr error
 	var chunk []fqPair
-readLoop:
-	for {
-		rec1, err1 := r1Reader.Read()
-		rec2, err2 := r2Reader.Read()
-		eof1, eof2 := err1 == io.EOF, err2 == io.EOF
-		if eof1 && eof2 {
-			break readLoop
-		}
-		if err1 != nil && !eof1 {
-			readErr = err1
-			break readLoop
-		}
-		if err2 != nil && !eof2 {
-			readErr = err2
-			break readLoop
-		}
-		if eof1 != eof2 {
-			readErr = fmt.Errorf("%s and %s have different numbers of records (mate files out of sync)", r1Path, r2Path)
-			break readLoop
-		}
-
-		core1, ok1 := parseMate1(rec1)
-		core2, ok2 := parseMate2(rec2)
-		if !bytes.Equal(core1.ID, core2.ID) {
-			readErr = fmt.Errorf("mismatched read IDs between mates: %q (R1) vs %q (R2)", core1.ID, core2.ID)
-			break readLoop
-		}
-
-		chunk = append(chunk, fqPair{
-			barcode:    append([]byte(nil), resolveBarcode(core1, ok1, core2, ok2)...),
-			id:         append([]byte(nil), core1.ID...),
-			comments:   append([]byte(nil), resolveComments(core1, core2)...),
-			valid:      resolveValid(core1, ok1, core2, ok2),
-			hasCasava1: len(core1.CASAVA) > 0,
-			hasCasava2: len(core2.CASAVA) > 0,
-			seq1:       append([]byte(nil), core1.Seq...),
-			qual1:      append([]byte(nil), core1.Qual...),
-			seq2:       append([]byte(nil), core2.Seq...),
-			qual2:      append([]byte(nil), core2.Qual...),
-		})
+	enqueue := func(p fqPair) {
+		chunk = append(chunk, p)
 		if len(chunk) >= chunkSize {
 			chunks <- chunk
 			chunk = nil
+		}
+	}
+
+	if numMates == 1 {
+		for {
+			rec1, err1 := r1Reader.Read()
+			if err1 == io.EOF {
+				break
+			}
+			if err1 != nil {
+				readErr = err1
+				break
+			}
+
+			core1, ok1 := parseMate1(rec1)
+			var bc []byte
+			if ok1 {
+				bc = core1.Barcode
+			}
+			enqueue(fqPair{
+				barcode:  append([]byte(nil), bc...),
+				id:       append([]byte(nil), core1.ID...),
+				comments: append([]byte(nil), core1.Comments...),
+				valid:    ok1 && core1.Valid,
+				mates: []mate{{
+					seq:       append([]byte(nil), core1.Seq...),
+					qual:      append([]byte(nil), core1.Qual...),
+					hasCasava: len(core1.CASAVA) > 0,
+				}},
+			})
+		}
+	} else {
+	readLoop:
+		for {
+			rec1, err1 := r1Reader.Read()
+			rec2, err2 := r2Reader.Read()
+			eof1, eof2 := err1 == io.EOF, err2 == io.EOF
+			if eof1 && eof2 {
+				break readLoop
+			}
+			if err1 != nil && !eof1 {
+				readErr = err1
+				break readLoop
+			}
+			if err2 != nil && !eof2 {
+				readErr = err2
+				break readLoop
+			}
+			if eof1 != eof2 {
+				readErr = fmt.Errorf("%s and %s have different numbers of records (mate files out of sync)", fqs[0], fqs[1])
+				break readLoop
+			}
+
+			core1, ok1 := parseMate1(rec1)
+			core2, ok2 := parseMate2(rec2)
+			if !bytes.Equal(core1.ID, core2.ID) {
+				readErr = fmt.Errorf("mismatched read IDs between mates: %q (R1) vs %q (R2)", core1.ID, core2.ID)
+				break readLoop
+			}
+
+			enqueue(fqPair{
+				barcode:  append([]byte(nil), resolveBarcode(core1, ok1, core2, ok2)...),
+				id:       append([]byte(nil), core1.ID...),
+				comments: append([]byte(nil), resolveComments(core1, core2)...),
+				valid:    resolveValid(core1, ok1, core2, ok2),
+				mates: []mate{
+					{
+						seq:       append([]byte(nil), core1.Seq...),
+						qual:      append([]byte(nil), core1.Qual...),
+						hasCasava: len(core1.CASAVA) > 0,
+					},
+					{
+						seq:       append([]byte(nil), core2.Seq...),
+						qual:      append([]byte(nil), core2.Qual...),
+						hasCasava: len(core2.CASAVA) > 0,
+					},
+				},
+			})
 		}
 	}
 
@@ -275,7 +333,7 @@ readLoop:
 	default:
 	}
 
-	return mergeFqChunks(tmpFiles, outPrefix, converter, standardize)
+	return mergeFqChunks(tmpFiles, outPrefix, converter, standardize, numMates)
 }
 
 // formatConverter picks which fastq.CoreFq writer method reconstructs
@@ -357,25 +415,31 @@ func readBytes(r *bufio.Reader) ([]byte, error) {
 	return b, nil
 }
 
-// flag bits packed into writePair/readPair's single trailing byte.
-const (
-	flagValid      = 1 << 0
-	flagHasCasava1 = 1 << 1
-	flagHasCasava2 = 1 << 2
-)
+// flagValid and flagMateHasCasava(i) are the bits packed into
+// writePair/readPair's single trailing byte: flagValid is bit 0, and
+// each mate i's hasCasava occupies bit (1+i) -- up to 2 mates, so bits 1
+// and 2.
+const flagValid = 1 << 0
 
-// writePair/readPair's field order must match exactly. Barcode leads
-// since it's the sort key -- were this format ever inspected line-by-line
-// (e.g. hexdump during debugging) the key would be the first thing in
-// each record, same spirit as putting it first in a hypothetical TSV
-// encoding.
+func flagMateHasCasava(i int) byte { return 1 << (1 + i) }
+
+// writePair/readPair's field order must match exactly, and both must
+// agree (out of band -- see numMates below) on how many mates each
+// record carries. Barcode leads since it's the sort key -- were this
+// format ever inspected line-by-line (e.g. hexdump during debugging)
+// the key would be the first thing in each record, same spirit as
+// putting it first in a hypothetical TSV encoding.
 func writePair(w *bufio.Writer, p *fqPair) error {
-	for _, b := range [...][]byte{
-		p.barcode, p.id, p.comments,
-		p.seq1, p.qual1,
-		p.seq2, p.qual2,
-	} {
+	for _, b := range [...][]byte{p.barcode, p.id, p.comments} {
 		if err := writeBytes(w, b); err != nil {
+			return err
+		}
+	}
+	for _, m := range p.mates {
+		if err := writeBytes(w, m.seq); err != nil {
+			return err
+		}
+		if err := writeBytes(w, m.qual); err != nil {
 			return err
 		}
 	}
@@ -383,42 +447,57 @@ func writePair(w *bufio.Writer, p *fqPair) error {
 	if p.valid {
 		flags |= flagValid
 	}
-	if p.hasCasava1 {
-		flags |= flagHasCasava1
-	}
-	if p.hasCasava2 {
-		flags |= flagHasCasava2
+	for i, m := range p.mates {
+		if m.hasCasava {
+			flags |= flagMateHasCasava(i)
+		}
 	}
 	return w.WriteByte(flags)
 }
 
-// readPair reads one record written by writePair. err is io.EOF (and p is
-// nil) only when the stream is exhausted exactly at a record boundary, same
-// contract sort.mergeChunks relies on for its BAM readers.
-func readPair(r *bufio.Reader) (*fqPair, error) {
-	var fields [7][]byte
-	for i := range fields {
-		b, err := readBytes(r)
+// readPair reads one record written by writePair, which carried
+// numMates mates (fixed for the whole run -- every spill file from the
+// same SortFqByBX call agrees). err is io.EOF (and p is nil) only when
+// the stream is exhausted exactly at a record boundary, same contract
+// sort.mergeChunks relies on for its BAM readers.
+func readPair(r *bufio.Reader, numMates int) (*fqPair, error) {
+	barcode, err := readBytes(r)
+	if err != nil {
+		return nil, err
+	}
+	id, err := readBytes(r)
+	if err != nil {
+		return nil, err
+	}
+	comments, err := readBytes(r)
+	if err != nil {
+		return nil, err
+	}
+	mates := make([]mate, numMates)
+	for i := range mates {
+		seq, err := readBytes(r)
 		if err != nil {
 			return nil, err
 		}
-		fields[i] = b
+		qual, err := readBytes(r)
+		if err != nil {
+			return nil, err
+		}
+		mates[i] = mate{seq: seq, qual: qual}
 	}
 	flags, err := r.ReadByte()
 	if err != nil {
 		return nil, err
 	}
+	for i := range mates {
+		mates[i].hasCasava = flags&flagMateHasCasava(i) != 0
+	}
 	return &fqPair{
-		barcode:    fields[0],
-		id:         fields[1],
-		comments:   fields[2],
-		seq1:       fields[3],
-		qual1:      fields[4],
-		seq2:       fields[5],
-		qual2:      fields[6],
-		valid:      flags&flagValid != 0,
-		hasCasava1: flags&flagHasCasava1 != 0,
-		hasCasava2: flags&flagHasCasava2 != 0,
+		barcode:  barcode,
+		id:       id,
+		comments: comments,
+		valid:    flags&flagValid != 0,
+		mates:    mates,
 	}, nil
 }
 
@@ -478,10 +557,11 @@ func (h *fqMergeHeap) siftDown(i int) {
 }
 
 // mergeFqChunks does a single-threaded k-way merge of the already
-// barcode-sorted temp files, writing the result as gzipped paired FASTQ
-// via converter. standardize controls how an absent CASAVA marker is
-// handled -- see writePairAsFastq.
-func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.CoreFq, *bufio.Writer), standardize bool) (err error) {
+// barcode-sorted temp files, writing the result as gzipped FASTQ via
+// converter -- one output file (outPrefix+".R1.fq.gz") for single-end,
+// two (adding ".R2.fq.gz") for paired, per numMates. standardize controls
+// how an absent CASAVA marker is handled -- see writePairAsFastq.
+func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.CoreFq, *bufio.Writer), standardize bool, numMates int) (err error) {
 	readers := make([]*bufio.Reader, len(tmpFiles))
 	files := make([]*os.File, len(tmpFiles))
 	for i, path := range tmpFiles {
@@ -498,21 +578,29 @@ func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.Co
 		}
 	}()
 
-	r1Out, err := xopen.Wopen(outPrefix + ".R1.fq.gz")
-	if err != nil {
-		return err
+	outs := make([]*xopen.Writer, numMates)
+	writers := make([]*bufio.Writer, numMates)
+	for i := range outs {
+		suffix := ".R1.fq.gz"
+		if i == 1 {
+			suffix = ".R2.fq.gz"
+		}
+		o, oerr := xopen.Wopen(outPrefix + suffix)
+		if oerr != nil {
+			return oerr
+		}
+		outs[i] = o
+		writers[i] = o.Writer
 	}
-	defer r1Out.Close()
-
-	r2Out, err := xopen.Wopen(outPrefix + ".R2.fq.gz")
-	if err != nil {
-		return err
-	}
-	defer r2Out.Close()
+	defer func() {
+		for _, o := range outs {
+			o.Close()
+		}
+	}()
 
 	h := &fqMergeHeap{}
 	for i, r := range readers {
-		p, perr := readPair(r)
+		p, perr := readPair(r, numMates)
 		if perr == nil {
 			h.push(fqMergeItem{pair: p, src: i})
 		} else if perr != io.EOF {
@@ -522,8 +610,8 @@ func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.Co
 
 	for len(*h) > 0 {
 		top := h.pop()
-		writePairAsFastq(top.pair, r1Out.Writer, r2Out.Writer, converter, standardize)
-		p, perr := readPair(readers[top.src])
+		writePairAsFastq(top.pair, writers, converter, standardize)
+		p, perr := readPair(readers[top.src], numMates)
 		if perr == nil {
 			h.push(fqMergeItem{pair: p, src: top.src})
 		} else if perr != io.EOF {
@@ -534,33 +622,41 @@ func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.Co
 	return nil
 }
 
-// writePairAsFastq re-assembles both mates as fastq.CoreFq and writes them
-// with converter, reproducing either the original format (converter is
-// one of ToHaplotagging/ToStlfr/ToTellseq) or the generic BX:Z:/VX:i: form
-// every other djinn fastq tool already produces (converter is ToStandard,
-// when standardize is set).
+// mateCasavaByte returns the literal CASAVA byte for mate index i (0 ->
+// '1', 1 -> '2'), the same sentinel casavaOne/casavaTwo values declared
+// above.
+func mateCasavaByte(i int) []byte {
+	if i == 0 {
+		return casavaOne
+	}
+	return casavaTwo
+}
+
+// writePairAsFastq re-assembles each mate as a fastq.CoreFq and writes
+// it with converter, reproducing either the original format (converter
+// is one of ToHaplotagging/ToStlfr/ToTellseq) or the generic BX:Z:/VX:i:
+// form every other djinn fastq tool already produces (converter is
+// ToStandard, when standardize is set).
 //
 // Only ToStandard treats an absent CASAVA marker as optional (it omits
 // the "/1"-style suffix entirely, matching every other CoreFq-producing
 // caller that never found one); the format-specific writers always
-// expect *a* mate digit to embed -- ToHaplotagging in particular indexes
-// CASAVA[0] unconditionally and would panic on a nil/empty CASAVA -- so
-// when standardize is false the mate digit is always synthesized from
-// which side of the pair this is, regardless of whether the source
-// record actually carried a marker.
-func writePairAsFastq(p *fqPair, w1, w2 *bufio.Writer, converter func(*fastq.CoreFq, *bufio.Writer), standardize bool) {
-	casava1, casava2 := casavaOne, casavaTwo
-	if standardize {
-		casava1, casava2 = nil, nil
-		if p.hasCasava1 {
-			casava1 = casavaOne
+// expect *a* mate digit to embed when there are two mates -- ToHaplotagging
+// in particular indexes CASAVA[0] unconditionally and would panic on a
+// nil/empty CASAVA -- so for paired output with standardize false, the
+// mate digit is always synthesized from which side of the pair this is,
+// regardless of whether the source record actually carried a marker.
+// Single-end output has no "other side" to distinguish from, so there's
+// nothing to synthesize: the marker is only ever written if the source
+// record actually had one, same as ToStandard's own rule.
+func writePairAsFastq(p *fqPair, writers []*bufio.Writer, converter func(*fastq.CoreFq, *bufio.Writer), standardize bool) {
+	forceMarker := !standardize && len(p.mates) == 2
+	for i, m := range p.mates {
+		var casava []byte
+		if forceMarker || m.hasCasava {
+			casava = mateCasavaByte(i)
 		}
-		if p.hasCasava2 {
-			casava2 = casavaTwo
-		}
+		c := fastq.CoreFq{ID: p.id, Seq: m.seq, Qual: m.qual, CASAVA: casava, Barcode: p.barcode, Valid: p.valid, Comments: p.comments}
+		converter(&c, writers[i])
 	}
-	c1 := fastq.CoreFq{ID: p.id, Seq: p.seq1, Qual: p.qual1, CASAVA: casava1, Barcode: p.barcode, Valid: p.valid, Comments: p.comments}
-	converter(&c1, w1)
-	c2 := fastq.CoreFq{ID: p.id, Seq: p.seq2, Qual: p.qual2, CASAVA: casava2, Barcode: p.barcode, Valid: p.valid, Comments: p.comments}
-	converter(&c2, w2)
 }
