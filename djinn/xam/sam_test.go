@@ -25,6 +25,9 @@ func TestIsValid(t *testing.T) {
 		{"empty string valid", "", true},
 		{"tellseq clean", "ATCGATCG", true},
 		{"tellseq with N", "ATCGNATCG", false},
+		{"clean haplotag with hyphen suffix", "A01C02B03D04-1", true},
+		{"haplotag A00 despite hyphen suffix", "A00C02B03D04-1", false},
+		{"suffix content never affects validity", "1_2_3-NN", true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -252,6 +255,28 @@ func TestFindBarcodeFromNameStlfr(t *testing.T) {
 	gotBX, gotVX := FindBarcode(rec)
 	if gotBX != "1_2_3" {
 		t.Errorf("FindBarcode bx = %q, want %q", gotBX, "1_2_3")
+	}
+	if !gotVX {
+		t.Errorf("FindBarcode vx = false, want true")
+	}
+}
+
+func TestFindBarcodeFromNameTellseqWithHyphenSuffix(t *testing.T) {
+	rec := newRecord(t, "READ123:ATCGATCG-1")
+	gotBX, gotVX := FindBarcode(rec)
+	if gotBX != "ATCGATCG-1" {
+		t.Errorf("FindBarcode bx = %q, want %q", gotBX, "ATCGATCG-1")
+	}
+	if !gotVX {
+		t.Errorf("FindBarcode vx = false, want true")
+	}
+}
+
+func TestFindBarcodeFromNameStlfrWithHyphenSuffix(t *testing.T) {
+	rec := newRecord(t, "READ123#1_2_3-1")
+	gotBX, gotVX := FindBarcode(rec)
+	if gotBX != "1_2_3-1" {
+		t.Errorf("FindBarcode bx = %q, want %q", gotBX, "1_2_3-1")
 	}
 	if !gotVX {
 		t.Errorf("FindBarcode vx = false, want true")

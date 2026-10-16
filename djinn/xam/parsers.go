@@ -9,11 +9,23 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
+// hasHyphenSuffix reports whether rest is empty (no suffix) or begins
+// with '-' followed by at least one more character. Every barcode shape
+// matcher in this file (and isStlfrBody/findInlineBarcode in sam.go)
+// uses this to permit an optional trailing tag after a technology's own
+// barcode shape -- e.g. Cell Ranger's "-1" GEM well suffix convention,
+// generalized here to every linked-read technology: a hyphen, then any
+// non-whitespace content, is always allowed after the recognized core.
+func hasHyphenSuffix(rest string) bool {
+	return len(rest) == 0 || (rest[0] == '-' && len(rest) > 1)
+}
+
 // isHaplotaggingBarcode reports whether bc has the fixed haplotagging
 // shape "A##C##B##D##" -- 12 bytes: a letter followed by two digits,
-// repeated for A, C, B, D in that order.
+// repeated for A, C, B, D in that order -- optionally followed by "-"
+// and a suffix (see hasHyphenSuffix).
 func isHaplotaggingBarcode(bc string) bool {
-	if len(bc) != 12 {
+	if len(bc) < 12 {
 		return false
 	}
 	letters := [4]byte{'A', 'C', 'B', 'D'}
@@ -23,23 +35,32 @@ func isHaplotaggingBarcode(bc string) bool {
 			return false
 		}
 	}
-	return true
+	return hasHyphenSuffix(bc[12:])
 }
 
-// isNucleotideBarcode reports whether bc consists solely of DNA bases
+// nucleotideCoreLen reports the length of bc's leading run of DNA bases
 // (including the ambiguity code N) -- the shape shared by both TELLseq
-// and 10X barcodes once standardized into a BX:Z tag. The two are told
-// apart purely by length (10X: 16, TELLseq: 18); see DetectBarcodeFormat.
+// and 10X barcodes once standardized into a BX:Z tag -- when that run
+// covers the whole of bc or is followed by a hyphen suffix (see
+// hasHyphenSuffix); 0 otherwise. The two technologies are told apart
+// purely by this core length (10X: 16, TELLseq: 18), not bc's raw
+// length, so a "-1"-style suffix never skews the count; see
+// DetectBarcodeFormat.
+func nucleotideCoreLen(bc string) int {
+	i := 0
+	for i < len(bc) && isBase(bc[i]) {
+		i++
+	}
+	if i == 0 || !hasHyphenSuffix(bc[i:]) {
+		return 0
+	}
+	return i
+}
+
+// isNucleotideBarcode reports whether bc is a nucleotide barcode, same
+// shape nucleotideCoreLen matches.
 func isNucleotideBarcode(bc string) bool {
-	if bc == "" {
-		return false
-	}
-	for i := 0; i < len(bc); i++ {
-		if !isBase(bc[i]) {
-			return false
-		}
-	}
-	return true
+	return nucleotideCoreLen(bc) > 0
 }
 
 // openAlignmentReader opens file (or stdin for "-") as a SAM or BAM
@@ -136,10 +157,12 @@ func DetectBarcodeFormat(file string) (string, error) {
 			haplotagging++
 		case isStlfrBody(bc):
 			stlfr++
-		case isNucleotideBarcode(bc):
-			generic++
-			if _l := len(bc); _l > nucLen {
-				nucLen = _l
+		default:
+			if l := nucleotideCoreLen(bc); l > 0 {
+				generic++
+				if l > nucLen {
+					nucLen = l
+				}
 			}
 		}
 	}

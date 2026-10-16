@@ -263,6 +263,25 @@ func TestHaplotag2Corefq(t *testing.T) {
 			t.Error("expected ok=false when no BX:Z: tag is present")
 		}
 	})
+
+	t.Run("hyphen suffix is permitted and kept", func(t *testing.T) {
+		// A BX:Z: tag's value is read verbatim regardless of shape, so
+		// this already worked before the hyphen-suffix allowance was
+		// added elsewhere -- asserted explicitly here so the behavior
+		// (and its validity handling) stays covered alongside stlfr's
+		// and TELLseq's equivalent cases, which needed real fixes.
+		rec := mkRecord("read1", "BX:Z:A21C44B11D19-xxx", "ACGT", "IIII")
+		core, ok := Haplotag2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.Barcode), "A21C44B11D19-xxx"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true: the suffix is not part of the barcode's own validity")
+		}
+	})
 }
 
 func TestTellseq2Corefq(t *testing.T) {
@@ -304,6 +323,20 @@ func TestTellseq2Corefq(t *testing.T) {
 			t.Error("expected Valid=false for a barcode containing N")
 		}
 	})
+
+	t.Run("hyphen suffix is permitted and kept", func(t *testing.T) {
+		rec := mkRecord("read1:ATCGATCG-1", "", "ACGT", "IIII")
+		core, ok := Tellseq2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.Barcode), "ATCGATCG-1"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true: the suffix is not part of the barcode's own validity")
+		}
+	})
 }
 
 func TestStlfr2Corefq(t *testing.T) {
@@ -343,6 +376,31 @@ func TestStlfr2Corefq(t *testing.T) {
 		_, ok := Stlfr2Corefq(rec)
 		if ok {
 			t.Error("expected ok=false when ID has no #n_n_n suffix")
+		}
+	})
+
+	t.Run("hyphen suffix is permitted and kept", func(t *testing.T) {
+		rec := mkRecord("read1#123_456_789-1", "", "ACGT", "IIII")
+		core, ok := Stlfr2Corefq(rec)
+		if !ok {
+			t.Fatal("expected ok=true")
+		}
+		if got, want := string(core.Barcode), "123_456_789-1"; got != want {
+			t.Errorf("Barcode = %q, want %q", got, want)
+		}
+		if !core.Valid {
+			t.Error("expected Valid=true: the suffix is not part of the barcode's own validity")
+		}
+	})
+
+	t.Run("bare trailing junk with no hyphen is not a suffix", func(t *testing.T) {
+		// Regression guard: only a literal "-" introduces a suffix; a
+		// bare extra non-digit character glued onto the third group must
+		// still be rejected as not matching the n_n_n shape at all.
+		rec := mkRecord("read1#123_456_789x", "", "ACGT", "IIII")
+		_, ok := Stlfr2Corefq(rec)
+		if ok {
+			t.Error("expected ok=false: no hyphen means no suffix is permitted")
 		}
 	})
 }
