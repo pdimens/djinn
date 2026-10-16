@@ -256,6 +256,36 @@ func TestSortFqByBX_StandardizeFlag(t *testing.T) {
 	}
 }
 
+func TestSortFqByBX_PreservesFullCasavaTextForStlfr(t *testing.T) {
+	// ToStlfr (and ToTellseq/ToTenX) write a mate's entire CASAVA marker
+	// back out verbatim when it's a new-style Illumina field (longer
+	// than the bare '1'/'2' digit ToStandard/ToHaplotagging settle for).
+	// A record's real filter flag and index sequence must survive the
+	// sort unchanged -- not collapse to a generic reconstructed stand-in.
+	dir := t.TempDir()
+	r1, r2 := filepath.Join(dir, "r1.fq"), filepath.Join(dir, "r2.fq")
+	if err := os.WriteFile(r1, []byte("@read1#123_456_789 1:N:0:ATCGATCGATCG\nACGTACGTAC\n+\nIIIIIIIIII\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(r2, []byte("@read1#123_456_789 2:N:0:ATCGATCGATCG\nTGCATGCATG\n+\nIIIIIIIIII\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	prefix := filepath.Join(dir, "out")
+	if err := SortFqByBX([]string{r1, r2}, prefix, dir, 2, false, ""); err != nil {
+		t.Fatalf("SortFqByBX: %v", err)
+	}
+
+	raw1 := readGzFirstHeaderLine(t, prefix+".R1.fq.gz")
+	if want := "@read1#123_456_789\t1:N:0:ATCGATCGATCG"; raw1 != want {
+		t.Errorf("R1 header = %q, want %q (original CASAVA marker preserved verbatim)", raw1, want)
+	}
+	raw2 := readGzFirstHeaderLine(t, prefix+".R2.fq.gz")
+	if want := "@read1#123_456_789\t2:N:0:ATCGATCGATCG"; raw2 != want {
+		t.Errorf("R2 header = %q, want %q (original CASAVA marker preserved verbatim)", raw2, want)
+	}
+}
+
 func TestSortFqByBX_FallsBackTo10XWhenBcMapProvided(t *testing.T) {
 	// No BX:Z:/stlfr/tellseq marker is present on these records, so
 	// CoreFqParser can't detect a format; with a 10X whitelist provided,
@@ -444,8 +474,8 @@ func TestWriteReadPairRoundTrip(t *testing.T) {
 		comments: []byte("XX:i:5"),
 		valid:    true,
 		mates: []mate{
-			{seq: []byte("ACGT"), qual: []byte("IIII"), hasCasava: true},
-			{seq: []byte("TGCA"), qual: []byte("JJJJ"), hasCasava: true},
+			{seq: []byte("ACGT"), qual: []byte("IIII"), casava: []byte("1")},
+			{seq: []byte("TGCA"), qual: []byte("JJJJ"), casava: []byte("2")},
 		},
 	}
 	var buf bytes.Buffer
@@ -464,11 +494,46 @@ func TestWriteReadPairRoundTrip(t *testing.T) {
 	if string(got.id) != "read1" || string(got.barcode) != "AAAA" || string(got.comments) != "XX:i:5" || !got.valid {
 		t.Errorf("round trip mismatch: %+v", got)
 	}
-	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || !got.mates[0].hasCasava {
+	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || string(got.mates[0].casava) != "1" {
 		t.Errorf("mate1 round trip mismatch: %+v", got)
 	}
-	if string(got.mates[1].seq) != "TGCA" || string(got.mates[1].qual) != "JJJJ" || !got.mates[1].hasCasava {
+	if string(got.mates[1].seq) != "TGCA" || string(got.mates[1].qual) != "JJJJ" || string(got.mates[1].casava) != "2" {
 		t.Errorf("mate2 round trip mismatch: %+v", got)
+	}
+}
+
+// TestWriteReadPairRoundTrip_FullCasavaTextPreserved guards the bug this
+// struct's earlier hasCasava-bool design had: ToStlfr/ToTellseq/ToTenX
+// write a mate's *entire* CASAVA marker back out when it's longer than
+// one byte, not just its first byte like ToStandard/ToHaplotagging do.
+// A new-style Illumina marker's real filter flag and index sequence
+// must survive the spill/merge round trip verbatim, not collapse to a
+// bare "1"/"2" and get reconstructed as a generic placeholder on write.
+func TestWriteReadPairRoundTrip_FullCasavaTextPreserved(t *testing.T) {
+	p := fqPair{
+		id:      []byte("read1"),
+		barcode: []byte("AAAA"),
+		mates: []mate{
+			{seq: []byte("ACGT"), qual: []byte("IIII"), casava: []byte("1:N:0:ATCGATCGATCG")},
+			{seq: []byte("TGCA"), qual: []byte("JJJJ"), casava: []byte("2:N:0:ATCGATCGATCG")},
+		},
+	}
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	if err := writePair(w, &p); err != nil {
+		t.Fatalf("writePair: %v", err)
+	}
+	w.Flush()
+
+	got, err := readPair(bufio.NewReader(&buf), 2)
+	if err != nil {
+		t.Fatalf("readPair: %v", err)
+	}
+	if string(got.mates[0].casava) != "1:N:0:ATCGATCGATCG" {
+		t.Errorf("mate1 CASAVA = %q, want the original marker verbatim", got.mates[0].casava)
+	}
+	if string(got.mates[1].casava) != "2:N:0:ATCGATCGATCG" {
+		t.Errorf("mate2 CASAVA = %q, want the original marker verbatim", got.mates[1].casava)
 	}
 }
 
@@ -492,7 +557,7 @@ func TestWriteReadPairRoundTrip_NoCasavaOrComments(t *testing.T) {
 	if err != nil {
 		t.Fatalf("readPair: %v", err)
 	}
-	if got.mates[0].hasCasava || got.mates[1].hasCasava {
+	if len(got.mates[0].casava) != 0 || len(got.mates[1].casava) != 0 {
 		t.Errorf("expected no CASAVA marker on either mate, got %+v", got)
 	}
 	if len(got.comments) != 0 {
@@ -507,7 +572,7 @@ func TestWriteReadPairRoundTrip_SingleEnd(t *testing.T) {
 		comments: []byte("XX:i:5"),
 		valid:    true,
 		mates: []mate{
-			{seq: []byte("ACGT"), qual: []byte("IIII"), hasCasava: true},
+			{seq: []byte("ACGT"), qual: []byte("IIII"), casava: []byte("1")},
 		},
 	}
 	var buf bytes.Buffer
@@ -524,7 +589,7 @@ func TestWriteReadPairRoundTrip_SingleEnd(t *testing.T) {
 	if len(got.mates) != 1 {
 		t.Fatalf("got %d mates, want 1", len(got.mates))
 	}
-	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || !got.mates[0].hasCasava {
+	if string(got.mates[0].seq) != "ACGT" || string(got.mates[0].qual) != "IIII" || string(got.mates[0].casava) != "1" {
 		t.Errorf("mate round trip mismatch: %+v", got)
 	}
 }

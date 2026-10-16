@@ -21,12 +21,20 @@ import (
 	"github.com/shenwei356/xopen"
 )
 
-// mate is one read's sequence/quality plus whether it carried a CASAVA
-// marker at all; see fqPair's comment for why that's all a mate needs to
-// remember of CASAVA.
+// mate is one read's sequence/quality plus its CASAVA marker verbatim
+// (nil if the source record had none). The marker's own text matters,
+// not just whether one was present: ToStandard and ToHaplotagging only
+// ever read its first byte (the '1'/'2' mate digit), but ToStlfr,
+// ToTellseq, and ToTenX all write the *whole* marker back out when it's
+// longer than that single byte -- a new-style Illumina CASAVA field
+// ("1:N:0:ATCGATCG") carries its own filter flag and index sequence that
+// a synthesized placeholder can't reconstruct. Storing only a hasCasava
+// bool here (an earlier version of this file did) silently replaced
+// that real marker with a generic stand-in on round-trip for those
+// three formats -- wrong for anything but ToStandard/ToHaplotagging.
 type mate struct {
 	seq, qual []byte
-	hasCasava bool
+	casava    []byte
 }
 
 // fqPair is a self-contained (deep-copied) record: one mate for
@@ -43,10 +51,7 @@ type mate struct {
 // CoreFqParser detects carries its barcode/CASAVA marker as the only
 // thing that structurally differs between mates, so once those are
 // stripped out (which CoreFq already does), the remaining description
-// text is identical across mates -- see resolveComments. CASAVA itself
-// isn't stored as text at all: ToStandard only ever emits its first byte
-// (the '1'/'2' mate digit, see casavaOne/casavaTwo below), so all a
-// stored mate needs is whether it had a marker at all.
+// text is identical across mates -- see resolveComments.
 type fqPair struct {
 	barcode  []byte // nil if no mate carried one
 	id       []byte // shared base read ID (CASAVA suffix stripped)
@@ -251,9 +256,9 @@ func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize
 				comments: append([]byte(nil), core1.Comments...),
 				valid:    ok1 && core1.Valid,
 				mates: []mate{{
-					seq:       append([]byte(nil), core1.Seq...),
-					qual:      append([]byte(nil), core1.Qual...),
-					hasCasava: len(core1.CASAVA) > 0,
+					seq:    append([]byte(nil), core1.Seq...),
+					qual:   append([]byte(nil), core1.Qual...),
+					casava: append([]byte(nil), core1.CASAVA...),
 				}},
 			})
 		}
@@ -293,14 +298,14 @@ func SortFqByBX(fqs []string, outPrefix, tmpDir string, threads int, standardize
 				valid:    resolveValid(core1, ok1, core2, ok2),
 				mates: []mate{
 					{
-						seq:       append([]byte(nil), core1.Seq...),
-						qual:      append([]byte(nil), core1.Qual...),
-						hasCasava: len(core1.CASAVA) > 0,
+						seq:    append([]byte(nil), core1.Seq...),
+						qual:   append([]byte(nil), core1.Qual...),
+						casava: append([]byte(nil), core1.CASAVA...),
 					},
 					{
-						seq:       append([]byte(nil), core2.Seq...),
-						qual:      append([]byte(nil), core2.Qual...),
-						hasCasava: len(core2.CASAVA) > 0,
+						seq:    append([]byte(nil), core2.Seq...),
+						qual:   append([]byte(nil), core2.Qual...),
+						casava: append([]byte(nil), core2.CASAVA...),
 					},
 				},
 			})
@@ -415,13 +420,9 @@ func readBytes(r *bufio.Reader) ([]byte, error) {
 	return b, nil
 }
 
-// flagValid and flagMateHasCasava(i) are the bits packed into
-// writePair/readPair's single trailing byte: flagValid is bit 0, and
-// each mate i's hasCasava occupies bit (1+i) -- up to 2 mates, so bits 1
-// and 2.
+// flagValid is the one bit packed into writePair/readPair's single
+// trailing byte.
 const flagValid = 1 << 0
-
-func flagMateHasCasava(i int) byte { return 1 << (1 + i) }
 
 // writePair/readPair's field order must match exactly, and both must
 // agree (out of band -- see numMates below) on how many mates each
@@ -442,15 +443,13 @@ func writePair(w *bufio.Writer, p *fqPair) error {
 		if err := writeBytes(w, m.qual); err != nil {
 			return err
 		}
+		if err := writeBytes(w, m.casava); err != nil {
+			return err
+		}
 	}
 	var flags byte
 	if p.valid {
 		flags |= flagValid
-	}
-	for i, m := range p.mates {
-		if m.hasCasava {
-			flags |= flagMateHasCasava(i)
-		}
 	}
 	return w.WriteByte(flags)
 }
@@ -483,14 +482,15 @@ func readPair(r *bufio.Reader, numMates int) (*fqPair, error) {
 		if err != nil {
 			return nil, err
 		}
-		mates[i] = mate{seq: seq, qual: qual}
+		casava, err := readBytes(r)
+		if err != nil {
+			return nil, err
+		}
+		mates[i] = mate{seq: seq, qual: qual, casava: casava}
 	}
 	flags, err := r.ReadByte()
 	if err != nil {
 		return nil, err
-	}
-	for i := range mates {
-		mates[i].hasCasava = flags&flagMateHasCasava(i) != 0
 	}
 	return &fqPair{
 		barcode:  barcode,
@@ -622,9 +622,9 @@ func mergeFqChunks(tmpFiles []string, outPrefix string, converter func(*fastq.Co
 	return nil
 }
 
-// mateCasavaByte returns the literal CASAVA byte for mate index i (0 ->
-// '1', 1 -> '2'), the same sentinel casavaOne/casavaTwo values declared
-// above.
+// mateCasavaByte returns the fallback single-byte CASAVA marker for mate
+// index i (0 -> '1', 1 -> '2'), used only when a mate genuinely had no
+// marker of its own -- see writePairAsFastq.
 func mateCasavaByte(i int) []byte {
 	if i == 0 {
 		return casavaOne
@@ -634,26 +634,31 @@ func mateCasavaByte(i int) []byte {
 
 // writePairAsFastq re-assembles each mate as a fastq.CoreFq and writes
 // it with converter, reproducing either the original format (converter
-// is one of ToHaplotagging/ToStlfr/ToTellseq) or the generic BX:Z:/VX:i:
-// form every other djinn fastq tool already produces (converter is
-// ToStandard, when standardize is set).
+// is one of ToHaplotagging/ToStlfr/ToTellseq/ToTenX) or the generic
+// BX:Z:/VX:i: form every other djinn fastq tool already produces
+// (converter is ToStandard, when standardize is set).
 //
-// Only ToStandard treats an absent CASAVA marker as optional (it omits
-// the "/1"-style suffix entirely, matching every other CoreFq-producing
-// caller that never found one); the format-specific writers always
-// expect *a* mate digit to embed when there are two mates -- ToHaplotagging
-// in particular indexes CASAVA[0] unconditionally and would panic on a
-// nil/empty CASAVA -- so for paired output with standardize false, the
-// mate digit is always synthesized from which side of the pair this is,
-// regardless of whether the source record actually carried a marker.
-// Single-end output has no "other side" to distinguish from, so there's
-// nothing to synthesize: the marker is only ever written if the source
-// record actually had one, same as ToStandard's own rule.
+// A mate's own CASAVA marker, when it has one, is always passed through
+// verbatim -- not just its first byte -- since ToStlfr/ToTellseq/ToTenX
+// write the whole thing back out for anything longer than one byte (a
+// new-style Illumina marker's real filter flag and index sequence,
+// which a synthesized placeholder can't reproduce). Only ToStandard
+// treats an absent marker as optional (it omits the "/1"-style suffix
+// entirely, matching every other CoreFq-producing caller that never
+// found one); the format-specific writers always expect *a* mate digit
+// to embed when there are two mates -- ToHaplotagging in particular
+// indexes CASAVA[0] unconditionally and would panic on a nil/empty
+// CASAVA -- so for paired output with standardize false, a mate that
+// truly had no marker of its own gets a bare single-byte fallback
+// synthesized from which side of the pair it's on. Single-end output
+// has no "other side" to distinguish from, so there's nothing to
+// synthesize: the marker is only ever written if the source record
+// actually had one, same as ToStandard's own rule.
 func writePairAsFastq(p *fqPair, writers []*bufio.Writer, converter func(*fastq.CoreFq, *bufio.Writer), standardize bool) {
 	forceMarker := !standardize && len(p.mates) == 2
 	for i, m := range p.mates {
-		var casava []byte
-		if forceMarker || m.hasCasava {
+		casava := m.casava
+		if len(casava) == 0 && forceMarker {
 			casava = mateCasavaByte(i)
 		}
 		c := fastq.CoreFq{ID: p.id, Seq: m.seq, Qual: m.qual, CASAVA: casava, Barcode: p.barcode, Valid: p.valid, Comments: p.comments}
