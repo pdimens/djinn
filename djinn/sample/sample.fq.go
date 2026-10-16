@@ -19,7 +19,7 @@ import (
 
 func SampleFq(fqs []string, prefix string, downsample float64, seed int, keepInvalid bool) error {
 	// --- Get barcode map --------------------------
-	set := make(map[string]struct{}, 7_000_000)
+	set := make(map[string]struct{}, 4_000_000)
 	seq.ValidateSeq = false
 
 	coreParser, _, err := fastq.CoreFqParser(fqs[0])

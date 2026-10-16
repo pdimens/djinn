@@ -1,4 +1,4 @@
-package singletons
+package unlinked
 
 import (
 	"bufio"
@@ -26,7 +26,7 @@ func getCount(infile string, threads int) map[string]int {
 	return set
 }
 
-func FilterSingletonsXam(infile, singletons, barcodecount string, asSam bool, threads int) error {
+func RemoveUnlinkedXam(infile, singletons, barcodecount string, asSam bool, threads int) error {
 	// guard against draining stdin when getting barcode counts
 	var f *os.File
 	if infile == "-" {

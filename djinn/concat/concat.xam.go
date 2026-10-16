@@ -44,12 +44,7 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 
 	bcBuf := make([]byte, bcs.MaxLen()) // generated-barcode buffer
 
-	readThread := 1
-	writeThread := 1
-	if threads > 2 {
-		readThread = 2
-		writeThread = threads - readThread
-	}
+	readThread, writeThread := xam.IoThreads(threads)
 
 	// ── open first file to get header ────────────────────────────────────────────
 	_, br := xam.NewXamReaderChan(infiles[0], xam.ChanCap, xam.IoBuf, readThread)

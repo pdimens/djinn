@@ -1,4 +1,4 @@
-package singletons
+package unlinked
 
 import (
 	"compress/gzip"

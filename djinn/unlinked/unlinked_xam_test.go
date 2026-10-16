@@ -1,4 +1,4 @@
-package singletons
+package unlinked
 
 import (
 	"os"
@@ -28,7 +28,7 @@ func TestGetCount_Basic(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsXam_SplitsSingletonsAndNot(t *testing.T) {
+func TestRemoveUnlinkedXam_SplitsSingletonsAndNot(t *testing.T) {
 	in := tempPath(t, "in.sam")
 	writeSamFile(t, in, []samRec{
 		{name: "a1", bx: "AAAA", vx: -1},
@@ -41,10 +41,10 @@ func TestFilterSingletonsXam_SplitsSingletonsAndNot(t *testing.T) {
 	bcCountFile := tempPath(t, "counts.tsv")
 
 	out, err := captureStdout(t, func() error {
-		return FilterSingletonsXam(in, singletonOut, bcCountFile, true, 1)
+		return RemoveUnlinkedXam(in, singletonOut, bcCountFile, true, 1)
 	})
 	if err != nil {
-		t.Fatalf("FilterSingletonsXam returned error: %v", err)
+		t.Fatalf("RemoveUnlinkedXam returned error: %v", err)
 	}
 
 	mainNames := recNames(parseSamText(t, out))
@@ -68,7 +68,7 @@ func TestFilterSingletonsXam_SplitsSingletonsAndNot(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsXam_NoSingletonOutput(t *testing.T) {
+func TestRemoveUnlinkedXam_NoSingletonOutput(t *testing.T) {
 	in := tempPath(t, "in.sam")
 	writeSamFile(t, in, []samRec{
 		{name: "a1", bx: "AAAA", vx: -1},
@@ -77,10 +77,10 @@ func TestFilterSingletonsXam_NoSingletonOutput(t *testing.T) {
 	})
 
 	out, err := captureStdout(t, func() error {
-		return FilterSingletonsXam(in, "", "", true, 1)
+		return RemoveUnlinkedXam(in, "", "", true, 1)
 	})
 	if err != nil {
-		t.Fatalf("FilterSingletonsXam returned error: %v", err)
+		t.Fatalf("RemoveUnlinkedXam returned error: %v", err)
 	}
 	mainNames := recNames(parseSamText(t, out))
 	if !contains(mainNames, "a1") || contains(mainNames, "c1") {
@@ -88,7 +88,7 @@ func TestFilterSingletonsXam_NoSingletonOutput(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsXam_StdinSpool(t *testing.T) {
+func TestRemoveUnlinkedXam_StdinSpool(t *testing.T) {
 	// Exercises the infile == "-" path, which spools stdin to a temp file
 	// before reading it twice (once for counts, once for filtering).
 	var samText strings.Builder
@@ -110,10 +110,10 @@ func TestFilterSingletonsXam_StdinSpool(t *testing.T) {
 	t.Cleanup(func() { os.Stdin = origStdin })
 
 	out, err := captureStdout(t, func() error {
-		return FilterSingletonsXam("-", "", "", true, 1)
+		return RemoveUnlinkedXam("-", "", "", true, 1)
 	})
 	if err != nil {
-		t.Fatalf("FilterSingletonsXam(\"-\", ...) returned error: %v", err)
+		t.Fatalf("RemoveUnlinkedXam(\"-\", ...) returned error: %v", err)
 	}
 	mainNames := recNames(parseSamText(t, out))
 	if !contains(mainNames, "a1") || !contains(mainNames, "a2") {
@@ -124,15 +124,15 @@ func TestFilterSingletonsXam_StdinSpool(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsXam_EmptyInput(t *testing.T) {
+func TestRemoveUnlinkedXam_EmptyInput(t *testing.T) {
 	in := tempPath(t, "empty.sam")
 	writeSamFile(t, in, nil)
 
 	out, err := captureStdout(t, func() error {
-		return FilterSingletonsXam(in, "", "", true, 1)
+		return RemoveUnlinkedXam(in, "", "", true, 1)
 	})
 	if err != nil {
-		t.Fatalf("FilterSingletonsXam returned error on empty input: %v", err)
+		t.Fatalf("RemoveUnlinkedXam returned error on empty input: %v", err)
 	}
 	if recs := parseSamText(t, out); len(recs) != 0 {
 		t.Errorf("expected no records for an empty SAM file, got %d", len(recs))

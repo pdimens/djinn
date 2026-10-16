@@ -19,7 +19,7 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 	// Batched: the reader goroutine hands over up to ioBatchSize records per
 	// channel send instead of one, so this hot path pays one channel
 	// send/receive per batch rather than one per record.
-	recChan, br := xam.NewXamReaderChanBatch(infile, xam.ChanCap, xam.IoBuf, max(2, threads), ioBatchSize)
+	recChan, br := xam.NewXamReaderChanBatch(infile, xam.ChanCap, xam.IoBuf, 1, ioBatchSize)
 
 	// ── establish temp dir -------------───────────────────────────────────────────────
 	if tmpDir != "" {
@@ -101,7 +101,7 @@ func SortByBX(infile, outPath, tmpDir string, threads int, asSam bool) error {
 	default:
 	}
 
-	return mergeChunks(tmpFiles, hdr, outPath, asSam)
+	return mergeChunks(tmpFiles, hdr, outPath, threads, asSam)
 }
 
 // bxTagName is the two-byte SAM tag ID looked up on every record; hoisted to
@@ -232,7 +232,7 @@ func (h *mergeHeap) siftDown(i int) {
 // files. This stage is I/O-bound with one writer, so it stays serial;
 // parallelizing it would need a second merge pass over partial merges,
 // more complexity than the win is worth.
-func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool) (err error) {
+func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, threads int, asSam bool) (err error) {
 	readers := make([]*bam.Reader, len(tmpFiles))
 	files := make([]*os.File, len(tmpFiles))
 	for i, path := range tmpFiles {
@@ -258,7 +258,7 @@ func mergeChunks(tmpFiles []string, hdr *sam.Header, outPath string, asSam bool)
 	// owns opening/creating the destination file itself. Batched: records popped
 	// off the heap are accumulated into a slice and sent ioBatchSize at a time,
 	// rather than one channel send per record.
-	writeChan, writeDone := xam.NewXamWriterChanBatch(outPath, hdr, xam.ChanCap, xam.IoBuf, 2, asSam)
+	writeChan, writeDone := xam.NewXamWriterChanBatch(outPath, hdr, xam.ChanCap, xam.IoBuf, threads, asSam)
 
 	h := &mergeHeap{}
 	for i, br := range readers {

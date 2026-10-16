@@ -29,6 +29,14 @@ type AlignmentWriter interface {
 	Close() error
 }
 
+// ── Misc ────────────────────────────────────────────────────────────────
+
+// Given a thread total, allots read and write threads, keeping read constant at 1
+// and scaling write. Returns: read, write.
+func IoThreads(threads int) (int, int) {
+	return 1, max(1, threads-1)
+}
+
 // ── SAM wrappers (sam.Reader/Writer lack Close()) ─────────────────────────────
 
 type SamReader struct {

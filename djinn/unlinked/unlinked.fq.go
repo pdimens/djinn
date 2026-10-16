@@ -1,4 +1,4 @@
-package singletons
+package unlinked
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 )
 
 func getFqCount(infiles []string) (map[string]int, error) {
-	set := make(map[string]int, 7_000_000) // barcode container
+	set := make(map[string]int, 4_000_000) // barcode container
 	var emptymap map[string]int            // for returning empty thing on error
 	seq.ValidateSeq = false
 
@@ -85,7 +85,7 @@ func getFqCount(infiles []string) (map[string]int, error) {
 	return set, nil
 }
 
-func FilterSingletonsFQ(fqs []string, prefix, singletonprefix, barcodecount string) error {
+func RemoveUnlinkedFQ(fqs []string, prefix, singletonprefix, barcodecount string) error {
 	// guard against draining stdin when getting barcode counts
 	bcCounts, err := getFqCount(fqs)
 	if err != nil {

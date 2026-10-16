@@ -230,7 +230,7 @@ func TestMergeChunksWritesToOutPath(t *testing.T) {
 	}
 
 	outPath := dir + "/merged.bam"
-	if err := mergeChunks([]string{pathA, pathB}, hdr, outPath, false); err != nil {
+	if err := mergeChunks([]string{pathA, pathB}, hdr, outPath, 2, false); err != nil {
 		t.Fatalf("mergeChunks: %v", err)
 	}
 

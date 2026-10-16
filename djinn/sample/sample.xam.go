@@ -11,17 +11,13 @@ import (
 )
 
 func SampleXam(infile string, downsample float64, seed, threads int, invalid, asSam bool) error {
+	readThread, writeThread := xam.IoThreads(threads)
+
 	// --- Get barcode map --------------------------
 	infile = xam.FileOrStdin(infile)
-	set := make(map[string]struct{}, 7_000_000)
+	set := make(map[string]struct{}, 4_000_000)
 
 	// ── open reader ───────────────────────────────────────────────────────────
-	readThread := 1
-	writeThread := 1
-	if threads > 2 {
-		readThread = 2
-		writeThread = threads - readThread
-	}
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, readThread)
 
 	// ── loop record channel to get barcodes ───────────────────────────────────

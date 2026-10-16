@@ -1,4 +1,4 @@
-package singletons
+package unlinked
 
 import (
 	"os"
@@ -73,7 +73,7 @@ func TestGetFqCount_MissingFile(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsFQ_SplitsSingletonsAndNot(t *testing.T) {
+func TestRemoveUnlinkedFQ_SplitsSingletonsAndNot(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 
@@ -90,8 +90,8 @@ func TestFilterSingletonsFQ_SplitsSingletonsAndNot(t *testing.T) {
 	singlePrefix := filepath.Join(dir, "single")
 	bcCountFile := filepath.Join(dir, "counts.tsv")
 
-	if err := FilterSingletonsFQ([]string{r1}, prefix, singlePrefix, bcCountFile); err != nil {
-		t.Fatalf("FilterSingletonsFQ returned error: %v", err)
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, singlePrefix, bcCountFile); err != nil {
+		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
@@ -115,7 +115,7 @@ func TestFilterSingletonsFQ_SplitsSingletonsAndNot(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsFQ_NoSingletonOutput(t *testing.T) {
+func TestRemoveUnlinkedFQ_NoSingletonOutput(t *testing.T) {
 	dir := t.TempDir()
 	r1 := filepath.Join(dir, "r1.fq")
 	reads := padHapReads([]hapRead{
@@ -126,8 +126,8 @@ func TestFilterSingletonsFQ_NoSingletonOutput(t *testing.T) {
 	writeHapFastq(t, r1, reads)
 
 	prefix := filepath.Join(dir, "out")
-	if err := FilterSingletonsFQ([]string{r1}, prefix, "", ""); err != nil {
-		t.Fatalf("FilterSingletonsFQ returned error: %v", err)
+	if err := RemoveUnlinkedFQ([]string{r1}, prefix, "", ""); err != nil {
+		t.Fatalf("RemoveUnlinkedFQ returned error: %v", err)
 	}
 	mainIDs := readGzFastqIDs(t, prefix+".R1.fq.gz")
 	if !contains(mainIDs, "a1") || contains(mainIDs, "c1") {
@@ -135,9 +135,9 @@ func TestFilterSingletonsFQ_NoSingletonOutput(t *testing.T) {
 	}
 }
 
-func TestFilterSingletonsFQ_MissingFile(t *testing.T) {
+func TestRemoveUnlinkedFQ_MissingFile(t *testing.T) {
 	dir := t.TempDir()
-	err := FilterSingletonsFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), "", "")
+	err := RemoveUnlinkedFQ([]string{"/nonexistent/file.fq"}, filepath.Join(dir, "out"), "", "")
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent input file")
 	}

@@ -2,9 +2,10 @@
 package cmd
 
 import (
-	"djinn/singletons"
 	"fmt"
 	"runtime"
+
+	"djinn/unlinked"
 
 	"github.com/spf13/cobra"
 )
@@ -13,8 +14,8 @@ var unlinkedXamCmd = &cobra.Command{
 	Use:     "rm-unlinked [options] file.bam",
 	Short:   "Remove records with unlinked barcodes",
 	Example: "rm-unlinked -t 10 curratum.bam > curratum.linked.bam",
-	Long: "Inputs must be one SAM/BAM file " +
-		"Inputs expect barcodes to follow the standard (BX tag), stlfr (seq_id#barcode), or tellseq " +
+	Long: "Input must be one SAM/BAM file " +
+		"Input expect barcodes to follow the standard (BX tag), stlfr (seq_id#barcode), or tellseq " +
 		"(seq_id:barcode) formats. By default, only writes filtered output. Writes to stdout.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
@@ -67,7 +68,7 @@ var unlinkedXamCmd = &cobra.Command{
 		singles, _ := cmd.Flags().GetString("singletons")
 		bcCount, _ := cmd.Flags().GetString("bc-count")
 
-		return singletons.FilterSingletonsXam(args[0], singles, bcCount, sam, threads)
+		return unlinked.RemoveUnlinkedXam(args[0], singles, bcCount, sam, threads)
 	},
 }
 
@@ -129,7 +130,7 @@ var unlinkedFqCmd = &cobra.Command{
 		singles, _ := cmd.Flags().GetString("singletons")
 		bcCount, _ := cmd.Flags().GetString("bc-count")
 
-		return singletons.FilterSingletonsFQ(args[1:], args[0], singles, bcCount)
+		return unlinked.RemoveUnlinkedFQ(args[1:], args[0], singles, bcCount)
 	},
 }
 

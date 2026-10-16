@@ -9,7 +9,7 @@ import (
 
 func Extract(infile string, invalid bool, threads int) error {
 	infile = xam.FileOrStdin(infile)
-	set := make(map[string]struct{}, 7_000_000)
+	set := make(map[string]struct{}, 4_000_000)
 
 	// ── open reader ───────────────────────────────────────────────────────────
 	recChan, br := xam.NewXamReaderChan(infile, xam.ChanCap, xam.IoBuf, threads)
