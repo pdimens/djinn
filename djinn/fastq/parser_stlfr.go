@@ -2,25 +2,32 @@ package fastq
 
 import "github.com/shenwei356/bio/seqio/fastx"
 
-// isStlfrBody reports whether b matches "[0-9]+_[0-9]+_[0-9]+" exactly.
+// isStlfrBody reports whether b matches "[0-9]+_[0-9]+_[0-9]+", optionally
+// followed by "-" and a suffix (any non-whitespace content) -- a
+// technology-agnostic allowance for a trailing tag, e.g. Cell Ranger's
+// "-1" GEM well suffix convention, generalized here to every linked-read
+// technology this package recognizes.
 func isStlfrBody(b []byte) bool {
-	parts, start, digits := 0, 0, false
-	for i := 0; i <= len(b); i++ {
-		if i == len(b) || b[i] == '_' {
-			if !digits || i == start {
-				return false
-			}
-			parts++
-			start = i + 1
-			digits = false
-			continue
+	i, parts := 0, 0
+	for parts < 3 {
+		start := i
+		for i < len(b) && isDigit(b[i]) {
+			i++
 		}
-		if !isDigit(b[i]) {
+		if i == start {
 			return false
 		}
-		digits = true
+		parts++
+		if parts == 3 {
+			break
+		}
+		if i >= len(b) || b[i] != '_' {
+			return false
+		}
+		i++
 	}
-	return parts == 3
+	rest := b[i:]
+	return len(rest) == 0 || (rest[0] == '-' && len(rest) > 1)
 }
 
 // findStlfrBarcode locates a "#<n>_<n>_<n>" suffix in id, mirroring

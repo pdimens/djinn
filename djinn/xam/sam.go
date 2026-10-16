@@ -14,8 +14,15 @@ var VxTag = sam.Tag{'V', 'X'}
 var BxTag = sam.Tag{'B', 'X'}
 
 // Returns a true if a barcode is valid (i.e. not invalid) in either
-// haplotagging, tellseq, or stlfr formats
+// haplotagging, tellseq, or stlfr formats. Only the portion before an
+// optional "-"+suffix (see hasHyphenSuffix in parsers.go) is checked --
+// no recognized barcode shape contains a hyphen itself, so any hyphen
+// present marks the start of a technology-agnostic trailing tag (e.g. a
+// GEM well index) that is never itself part of the barcode's validity.
 func IsValid(barcode string) bool {
+	if i := strings.IndexByte(barcode, '-'); i != -1 {
+		barcode = barcode[:i]
+	}
 	if strings.IndexByte(barcode, 'N') != -1 {
 		return false
 	}
@@ -62,46 +69,59 @@ func isBase(b byte) bool {
 
 func isDigit(b byte) bool { return b >= '0' && b <= '9' }
 
-// isStlfrBody reports whether s matches "[0-9]+_[0-9]+_[0-9]+" exactly.
+// isStlfrBody reports whether s matches "[0-9]+_[0-9]+_[0-9]+", optionally
+// followed by "-" and a suffix (see hasHyphenSuffix in parsers.go).
 func isStlfrBody(s string) bool {
-	parts, start, digits := 0, 0, false
-	for i := 0; i <= len(s); i++ {
-		if i == len(s) || s[i] == '_' {
-			if !digits || i == start {
-				return false
-			}
-			parts++
-			start = i + 1
-			digits = false
-			continue
+	i, parts := 0, 0
+	for parts < 3 {
+		start := i
+		for i < len(s) && isDigit(s[i]) {
+			i++
 		}
-		if !isDigit(s[i]) {
+		if i == start {
 			return false
 		}
-		digits = true
+		parts++
+		if parts == 3 {
+			break
+		}
+		if i >= len(s) || s[i] != '_' {
+			return false
+		}
+		i++
 	}
-	return parts == 3
+	return hasHyphenSuffix(s[i:])
 }
 
 // findInlineBarcode locates a linked-read barcode inline in name, in
 // either TELLseq (":<bases>" suffix) or stLFR ("#<n>_<n>_<n>" suffix)
 // style, mirroring what the pattern `(?:\:([ATCGN]+)$|#(\d+_\d+_\d+$))`
-// matched, but as a pair of native byte scans instead of a regexp.
+// matched, but as a pair of native byte scans instead of a regexp. Either
+// shape may be followed by "-" and a suffix (see hasHyphenSuffix); the
+// returned barcode includes that suffix, same as a BX:Z tag's value
+// would never have had it stripped in the first place.
 func findInlineBarcode(name string) (barcode string, ok bool) {
-	// TELLseq: a run of bases at the very end of name, preceded by ':'.
-	n := len(name)
-	i := n
-	for i > 0 && isBase(name[i-1]) {
-		i--
-	}
-	if i < n && i > 0 && name[i-1] == ':' {
-		return name[i:n], true
+	// TELLseq: "<bases>" (optionally "-"+suffix) right after a ':',
+	// reaching to the end of name. Scan candidate colons from the right,
+	// mirroring the original right-anchored match when there's no suffix.
+	for i := len(name) - 1; i >= 0; i-- {
+		if name[i] != ':' {
+			continue
+		}
+		tail := name[i+1:]
+		j := 0
+		for j < len(tail) && isBase(tail[j]) {
+			j++
+		}
+		if j > 0 && hasHyphenSuffix(tail[j:]) {
+			return tail, true
+		}
 	}
 
-	// stLFR: "#<n>_<n>_<n>" at the end of name. Scan every '#' left to
-	// right (mirroring the leftmost-match behavior of the regexp) and
-	// take the first whose remainder matches the full n_n_n shape.
-	for j := range n {
+	// stLFR: "#<n>_<n>_<n>" (optionally "-"+suffix) at the end of name.
+	// Scan every '#' left to right (mirroring the leftmost-match behavior
+	// of the regexp) and take the first whose remainder matches.
+	for j := range name {
 		if name[j] != '#' {
 			continue
 		}
