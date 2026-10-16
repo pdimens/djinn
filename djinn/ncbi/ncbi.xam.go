@@ -24,13 +24,12 @@ func NcbiXam(infile, prefix string, threads int) error {
 	if err != nil {
 		return fmt.Errorf("Error opening R1 output: %v\n", err)
 	}
-	defer fw1.Close()
 
 	fw2, err := fastq.NewFastqWriter(r2Path, "/2", 4, threadsPerWriter)
 	if err != nil {
+		fw1.Close()
 		return fmt.Errorf("Error opening R2 output: %v\n", err)
 	}
-	defer fw2.Close()
 
 	// ── loop record channel ──────────────────────────────────────────────
 	var fw *fastq.FastqWriter
@@ -43,8 +42,16 @@ func NcbiXam(infile, prefix string, threads int) error {
 		}
 
 		if err := fw.WriteRecord(rec.Name, rec.AuxFields, rec.Seq.Expand(), rec.Qual); err != nil {
+			fw1.Close()
+			fw2.Close()
 			return fmt.Errorf("Error writing record %v:\n %v\n", rec.Name, err)
 		}
+	}
+	if err := fw1.Close(); err != nil {
+		return fmt.Errorf("Error closing R1 output: %v\n", err)
+	}
+	if err := fw2.Close(); err != nil {
+		return fmt.Errorf("Error closing R2 output: %v\n", err)
 	}
 	return nil
 }
