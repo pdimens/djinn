@@ -22,17 +22,11 @@ var countXamCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		//TODO not exact args, needs min/max
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
 		if err := filecheck(args[0]); err != nil {
 			return err
-		}
-		if len(args) == 2 {
-			if err := filecheck(args[1]); err != nil {
-				return err
-			}
 		}
 		return nil
 	},
@@ -64,6 +58,9 @@ var countFqCmd = &cobra.Command{
 			return fmt.Errorf("please provide inputs")
 		}
 		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		if err := cobra.MaximumNArgs(2)(cmd, args); err != nil {
 			return err
 		}
 		for i := range args {

@@ -1,8 +1,10 @@
 package sample
 
 import (
+	"bufio"
 	"djinn/xam"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"os"
@@ -15,6 +17,23 @@ func SampleXam(infile string, downsample float64, seed, threads int, invalid, as
 
 	// --- Get barcode map --------------------------
 	infile = xam.FileOrStdin(infile)
+
+	// guard against draining stdin on the first of two passes over infile
+	if infile == "-" {
+		f, err := os.CreateTemp("", "xam-spool-*.bam")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(f.Name())
+		if _, err := io.Copy(f, os.Stdin); err != nil {
+			return err
+		}
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return err
+		}
+		infile = f.Name()
+	}
+
 	set := make(map[string]struct{}, 4_000_000)
 
 	// ── open reader ───────────────────────────────────────────────────────────
@@ -71,9 +90,14 @@ func SampleXam(infile string, downsample float64, seed, threads int, invalid, as
 		nBcToKeep = int(math.Round(float64(nBC) * downsample))
 	}
 	bcToKeep := make(map[string]struct{}, nBcToKeep)
+	bcWriter := bufio.NewWriter(bcFile)
 	for i := range nBcToKeep {
 		bcToKeep[keys[i]] = struct{}{}
-		bcFile.WriteString(keys[i] + "\n")
+		bcWriter.WriteString(keys[i])
+		bcWriter.WriteByte('\n')
+	}
+	if err := bcWriter.Flush(); err != nil {
+		return err
 	}
 
 	err = bcFile.Close()

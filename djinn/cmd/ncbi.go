@@ -85,7 +85,7 @@ var ncbiFq2XamCmd = &cobra.Command{
 // THIS IS PRETTY INCOMPLETE
 func init() {
 	samCmd.AddCommand(ncbiXam2FqCmd)
-	samCmd.AddCommand(ncbiFq2XamCmd)
+	fqCmd.AddCommand(ncbiFq2XamCmd)
 
 	//---Command line arguments-------------
 	ncbiXam2FqCmd.Flags().BoolP("sam", "S", false, "Output sam instead of BAM")

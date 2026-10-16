@@ -29,10 +29,14 @@ func ConcatXam(infiles []string, threads int, asSam bool) error {
 	case "nucleotide-16":
 		bcs = barcodes.NewTenX()
 	default:
-		// generic-XX
-		n, err := strconv.Atoi(bcFmt[len(bcFmt)-2:])
+		// "nucleotide-<length>", length is not always 2 digits
+		_, lenStr, ok := strings.Cut(bcFmt, "-")
+		if !ok {
+			return fmt.Errorf("unrecognized barcode format: %s", bcFmt)
+		}
+		n, err := strconv.Atoi(lenStr)
 		if err != nil {
-			return err
+			return fmt.Errorf("unrecognized barcode format %q: %w", bcFmt, err)
 		}
 		bcs, err = barcodes.NewGeneric(n)
 		if err != nil {

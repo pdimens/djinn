@@ -29,11 +29,6 @@ var extractXamCmd = &cobra.Command{
 		if err := filecheck(args[0]); err != nil {
 			return err
 		}
-		if len(args) == 3 {
-			if err := filecheck(args[1]); err != nil {
-				return err
-			}
-		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {

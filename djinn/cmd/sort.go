@@ -22,17 +22,11 @@ var sortXamCmd = &cobra.Command{
 			fmt.Printf("%s", cmd.UsageString())
 			return fmt.Errorf("please provide inputs")
 		}
-		//TODO not exact args, needs min/max
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
 		if err := filecheck(args[0]); err != nil {
 			return err
-		}
-		if len(args) == 2 {
-			if err := filecheck(args[1]); err != nil {
-				return err
-			}
 		}
 		_, err := cmd.Flags().GetString("tmp-prefix")
 		if err != nil {
